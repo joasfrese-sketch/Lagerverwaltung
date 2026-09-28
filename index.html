@@ -39,8 +39,19 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        /* DIN A4 ETIKETTEN DRUCK-LAYOUT (70mm x 35mm = 3 Spalten x 8 Zeilen per A4) */
+        /* EXAKTES DIN A4 ETIKETTEN DRUCK-LAYOUT (3 Spalten x 8 Zeilen = 24 Etiketten) */
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0mm !important; /* Blendet Browser-Kopf- und Fußzeilen komplett aus */
+            }
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                width: 210mm !important;
+                height: 297mm !important;
+            }
             body * { visibility: hidden !important; }
             #a4PrintArea, #a4PrintArea * { visibility: visible !important; }
             #a4PrintArea {
@@ -48,23 +59,26 @@
                 left: 0;
                 top: 0;
                 width: 210mm;
-                padding: 5mm;
+                height: 297mm;
+                padding: 8mm 6mm;
                 display: grid;
-                grid-template-columns: repeat(3, 68mm);
-                grid-auto-rows: 34mm;
-                gap: 2mm;
+                grid-template-columns: repeat(3, 64mm);
+                grid-template-rows: repeat(8, 33.5mm);
+                gap: 2mm 3mm;
                 box-sizing: border-box;
+                background: white !important;
+                page-break-after: avoid;
             }
             .qr-sticker {
-                width: 68mm;
-                height: 34mm;
+                width: 64mm;
+                height: 33.5mm;
                 border: 1px dashed #cbd5e1;
                 border-radius: 4px;
-                padding: 3mm;
+                padding: 2mm;
                 box-sizing: border-box;
                 display: flex;
                 align-items: center;
-                gap: 3mm;
+                gap: 2mm;
                 page-break-inside: avoid;
                 overflow: hidden;
                 background: white;
@@ -133,10 +147,9 @@
     <!-- 2. HAUPTANWENDUNG -->
     <div id="appLayout" class="hidden flex-1 flex min-h-screen relative">
         
-        <!-- SIDEBAR (EINKLAPPBAR & RESPONSIVE FOR MOBILE/HYBRID) -->
+        <!-- SIDEBAR -->
         <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-64 bg-[#0f172a] text-slate-300 flex flex-col justify-between border-r border-slate-800 shrink-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
             <div>
-                <!-- Brand Header -->
                 <div class="p-5 flex items-center justify-between border-b border-slate-800/60">
                     <div class="flex items-center gap-3 overflow-hidden">
                         <div class="w-9 h-9 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 shrink-0">
@@ -149,13 +162,9 @@
                             <span class="text-[9px] text-slate-500 uppercase tracking-wider font-semibold">VERWALTUNG</span>
                         </div>
                     </div>
-                    <!-- Close button for mobile -->
-                    <button onclick="closeSidebar()" class="md:hidden text-slate-400 hover:text-white p-1">
-                        ✕
-                    </button>
+                    <button onclick="closeSidebar()" class="md:hidden text-slate-400 hover:text-white p-1">✕</button>
                 </div>
 
-                <!-- Navigation Items -->
                 <nav class="p-3 space-y-1 text-sm font-medium">
                     <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white bg-slate-800/90 transition">
                         <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
@@ -184,12 +193,9 @@
                 </nav>
             </div>
 
-            <!-- User Footer Profile -->
             <div class="p-3 border-t border-slate-800/60 flex items-center justify-between">
                 <div class="flex items-center gap-2 overflow-hidden">
-                    <div id="userAvatar" class="w-8 h-8 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center shrink-0 text-xs">
-                        U
-                    </div>
+                    <div id="userAvatar" class="w-8 h-8 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center shrink-0 text-xs">U</div>
                     <div class="truncate sidebar-text">
                         <h4 id="userNameDisplay" class="font-bold text-white text-xs truncate">Nutzer</h4>
                         <span id="userRoleBadge" class="text-[9px] text-slate-400 font-bold tracking-wider">BENUTZER</span>
@@ -203,10 +209,8 @@
 
         <!-- MAIN CONTENT AREA -->
         <main class="flex-1 bg-[#f8fafc] flex flex-col min-w-0">
-            <!-- Header Top Bar -->
             <header class="h-16 md:h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-200/80 bg-white/70 backdrop-blur sticky top-0 z-20">
                 <div class="flex items-center gap-3">
-                    <!-- HAMBURGER MENU BUTTON (TOGGLE SIDEBAR) -->
                     <button onclick="toggleSidebar()" class="p-2 text-slate-600 hover:text-slate-900 focus:outline-none rounded-xl hover:bg-slate-100">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
@@ -221,12 +225,10 @@
                 </div>
             </header>
 
-            <!-- Tab Content Container -->
             <div class="p-4 md:p-8 flex-1 overflow-y-auto">
                 
-                <!-- TAB 1: ÜBERSICHT (MIT EINBETTIETEM KALENDER & CHAT NEBENEINANDER) -->
+                <!-- TAB 1: ÜBERSICHT -->
                 <div id="tab-dashboard" class="space-y-6">
-                    <!-- Meine Aktiven Ausleihen Banner (falls vorhanden) -->
                     <div id="myRentalsCard" class="hidden bg-white p-4 md:p-5 rounded-2xl border border-slate-200/70 shadow-sm space-y-2">
                         <h4 class="font-bold text-xs text-emerald-600 flex items-center gap-1.5">
                             <span>📦</span> Meine aktiven Ausleihen
@@ -234,20 +236,15 @@
                         <div id="myRentalsList" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
                     </div>
 
-                    <!-- Haupt-Grid: BELEGUNGSPLAN & CHAT NEBENEINANDER -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- LINKS: Eingebetteter Belegungsplan / Kalender -->
                         <div class="bg-white p-4 md:p-6 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col">
                             <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                                    📅 Belegungsplan & Reservierungen
-                                </h3>
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">📅 Belegungsplan & Reservierungen</h3>
                                 <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded">Live</span>
                             </div>
                             <div id="dashboardCalendar" class="min-h-[380px] text-xs"></div>
                         </div>
 
-                        <!-- RECHTS: Eingebetteter Team-Chat -->
                         <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm flex flex-col h-[500px]">
                             <div class="p-4 border-b border-slate-100 flex justify-between items-center gap-2">
                                 <h4 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">💬 Team-Chat</h4>
@@ -270,32 +267,20 @@
 
                 <!-- TAB 2: LAGERBESTAND -->
                 <div id="tab-inventory" class="hidden space-y-6">
-                    <!-- Bulk Bar (Sammelaktionen-Leiste) -->
                     <div id="bulkActionBar" class="hidden bg-slate-900 text-white p-4 rounded-2xl shadow-xl flex flex-wrap items-center justify-between gap-4 border border-slate-700">
                         <div class="flex items-center gap-3">
                             <span id="selectedCountBadge" class="bg-emerald-500 text-white font-extrabold text-xs px-3 py-1 rounded-full">0 ausgewählt</span>
                             <span class="text-xs text-slate-300">Sammelaktion für alle ausgewählten Objekte:</span>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
-                            <button onclick="bulkRentModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">
-                                📅 Sammel-Ausleihe
-                            </button>
-                            <button onclick="bulkToggleInventur()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">
-                                📋 In Inventur setzen / Freigeben
-                            </button>
-                            <button onclick="bulkPrintQrCodes()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">
-                                🖨️ Etiketten Drucken (DIN A4)
-                            </button>
-                            <button id="bulkDeleteBtn" onclick="bulkDelete()" class="hidden bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">
-                                🗑️ Löschen
-                            </button>
-                            <button onclick="clearSelection()" class="text-xs text-slate-400 hover:text-white px-2 py-1">
-                                ✖️ Auswahl aufheben
-                            </button>
+                            <button onclick="bulkRentModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">📅 Sammel-Ausleihe</button>
+                            <button onclick="bulkToggleInventur()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">📋 In Inventur setzen / Freigeben</button>
+                            <button onclick="bulkPrintQrCodes()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">🖨️ Etiketten Drucken (DIN A4)</button>
+                            <button id="bulkDeleteBtn" onclick="bulkDelete()" class="hidden bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">🗑️ Löschen</button>
+                            <button onclick="clearSelection()" class="text-xs text-slate-400 hover:text-white px-2 py-1">✖️ Auswahl aufheben</button>
                         </div>
                     </div>
 
-                    <!-- Filter- & Such-Leiste -->
                     <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
                         <div class="flex flex-wrap items-center gap-1.5 md:gap-2">
                             <button onclick="setStatusFilter('ALL')" id="filter-ALL" class="status-filter-btn bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl">Alle</button>
@@ -311,19 +296,15 @@
                                 <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                             </div>
                             
-                            <button id="importExcelBtn" onclick="openExcelImportModal()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2.5 rounded-xl flex items-center gap-1 transition shrink-0">
-                                📊 <span class="hidden sm:inline">Excel Import</span>
-                            </button>
-                            <button id="addItemBtn" onclick="openItemModal()" class="hidden bg-[#059669] hover:bg-[#047857] text-white text-xs font-semibold px-3 py-2.5 rounded-xl flex items-center gap-1 transition shrink-0">
-                                <span>+</span> <span class="hidden sm:inline">Neuer Artikel</span>
-                            </button>
+                            <button id="importExcelBtn" onclick="openExcelImportModal()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2.5 rounded-xl flex items-center gap-1 transition shrink-0">📊 <span class="hidden sm:inline">Excel Import</span></button>
+                            <button id="addItemBtn" onclick="openItemModal()" class="hidden bg-[#059669] hover:bg-[#047857] text-white text-xs font-semibold px-3 py-2.5 rounded-xl flex items-center gap-1 transition shrink-0"><span>+</span> <span class="hidden sm:inline">Neuer Artikel</span></button>
                         </div>
                     </div>
 
                     <div id="itemsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                 </div>
 
-                <!-- TAB 3: WARENBEWEGUNGEN (DATENSCHUTZ: NUR EIGENE ODER ADMIN ALLE) -->
+                <!-- TAB 3: WARENBEWEGUNGEN -->
                 <div id="tab-movements" class="hidden space-y-6">
                     <div class="flex justify-between items-center">
                         <h3 class="font-bold text-slate-800 text-sm">Protokollierte Warenein- & Ausgänge</h3>
@@ -346,7 +327,7 @@
                     </div>
                 </div>
 
-                <!-- TAB 4: SEPARATER TEAM-CHAT TAB -->
+                <!-- TAB 4: SEPARATER TEAM-CHAT -->
                 <div id="tab-chat" class="hidden space-y-4">
                     <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm flex flex-col h-[540px]">
                         <div class="p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3">
@@ -371,7 +352,7 @@
                     </div>
                 </div>
 
-                <!-- TAB 5: BENUTZERVERWALTUNG (NUR ADMIN) -->
+                <!-- TAB 5: BENUTZERVERWALTUNG -->
                 <div id="tab-users" class="hidden space-y-6">
                     <div class="flex justify-between items-center">
                         <div>
@@ -578,11 +559,11 @@
         </div>
     </div>
 
-    <!-- MODAL & PRINT-AREA: QR-CODE DRUCK (DIN A4 ETIKETTENBOGEN) -->
+    <!-- MODAL & PRINT-AREA: QR-CODE DRUCK (DIN A4 EXAKT 3x8 ETIKETTENBOGEN) -->
     <div id="qrModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
             <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="text-base font-bold">🖨️ Etikettendruck (DIN A4 Raster: 7,0 cm × 3,5 cm)</h3>
+                <h3 class="text-base font-bold">🖨️ Etikettendruck Vorschau (DIN A4 Raster: 24 Etiketten)</h3>
                 <button onclick="closeQrModal()" class="text-slate-400 font-bold">✕</button>
             </div>
 
@@ -651,7 +632,6 @@
         let html5QrScanner = null;
         let calendar = null;
 
-        // MEHRFACHAUSWAHL & FILTER STATE
         let selectedItemIds = new Set();
         let currentStatusFilter = 'ALL';
         let importedExcelData = [];
@@ -675,7 +655,6 @@
             document.getElementById('currentDateDisplay').innerText = now.toLocaleDateString('de-DE', options);
         }
 
-        // SIDEBAR RESPONSIVE / EINKLAPPBAR TOGGLE
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
@@ -874,7 +853,6 @@
             } catch(e) {}
         }
 
-        // WARENBEWEGUNGEN (NUR EIGENE FÜR USER, ALLE FÜR ADMIN)
         async function fetchActivityLogs() {
             try {
                 const { data } = await db.from('activity_log').select('*').order('created_at', { ascending: false });
@@ -887,7 +865,6 @@
             const body = document.getElementById('activityLogTableBody');
             const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
 
-            // FILTER: Normaler User sieht NUR eigene Warenbewegungen
             const visibleLogs = activityLogs.filter(l => {
                 if (isAdmin) return true;
                 return (l.user_id && l.user_id === currentUser?.id) || (l.user_name === userProfile?.full_name);
@@ -944,7 +921,6 @@
             });
         }
 
-        // DYNAMISCHER EFFECTIVE STATUS BERECHNER (LÖST DAS DROHNEN-BUG-PROBLEM)
         function getItemEffectiveStatus(item) {
             if (item.status === 'Wartung / Defekt') return 'Wartung / Defekt';
             if (item.status === 'In Inventur') return 'In Inventur';
@@ -953,7 +929,6 @@
             return 'Verfügbar';
         }
 
-        // FILTER BUTTONS
         function setStatusFilter(status) {
             currentStatusFilter = status;
             document.querySelectorAll('.status-filter-btn').forEach(btn => {
@@ -964,7 +939,6 @@
             renderItems();
         }
 
-        // ITEMS RENDERN UND MEHRFACHAUSWAHL
         function renderItems() {
             const grid = document.getElementById('itemsGrid');
             if (!grid) return;
@@ -1045,7 +1019,6 @@
             updateBulkActionBar();
         }
 
-        // SAMMELAKTIONEN LOGIK
         function toggleItemSelection(id) {
             if (selectedItemIds.has(id)) {
                 selectedItemIds.delete(id);
@@ -1110,7 +1083,6 @@
             }
         }
 
-        // EXCEL / CSV IMPORT FUNCTION
         function openExcelImportModal() {
             document.getElementById('excelFileInput').value = '';
             document.getElementById('excelPreviewContainer').classList.add('hidden');
@@ -1219,7 +1191,6 @@
             fetchAllData();
         }
 
-        // BILD-KOMPRIMIERUNG
         function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.75) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1333,7 +1304,6 @@
             renderPhotoStrip();
         }
 
-        // ITEM SPEICHERN / EDITIEREN
         function openItemModal() {
             document.getElementById('editItemId').value = '';
             document.getElementById('itemModalTitle').innerText = 'Neuen Artikel anlegen';
@@ -1421,7 +1391,6 @@
             }
         }
 
-        // AUSLEIHE
         function openRentModal(itemIdString, itemNameDisplay) {
             document.getElementById('rentItemId').value = itemIdString;
             document.getElementById('rentModalTitle').innerText = `Ausleihen: ${itemNameDisplay}`;
@@ -1475,7 +1444,6 @@
             alert("Ausleihe erfolgreich gebucht!");
         }
 
-        // RÜCKGABE & SCHADEN
         function openReturnModal(rentalId, itemId) {
             const item = allItems.find(i => i.id === itemId);
             document.getElementById('returnRentalId').value = rentalId;
@@ -1539,7 +1507,6 @@
             renderItems();
         }
 
-        // FULLCALENDAR EINGEBETTET IM DASHBOARD
         function renderDashboardCalendar() {
             const calendarEl = document.getElementById('dashboardCalendar');
             if (!calendarEl) return;
@@ -1568,7 +1535,7 @@
             }
         }
 
-        // QR CODE PRINT (DIN A4 7cm x 3.5cm)
+        // QR CODE DRUCK (OPTIMIERT FÜR EXAKT 3 COLUMNS x 8 ROWS PRO DIN A4)
         function openQrModal(singleItemId) {
             openA4QrSheet([singleItemId]);
         }
@@ -1587,16 +1554,16 @@
 
                 sticker.innerHTML = `
                     <div id="${canvasId}" class="shrink-0"></div>
-                    <div class="overflow-hidden leading-tight text-left">
-                        <h4 class="font-bold text-xs truncate text-slate-900">${item.name}</h4>
+                    <div class="overflow-hidden leading-tight text-left flex-1 min-w-0">
+                        <h4 class="font-bold text-[11px] truncate text-slate-900">${item.name}</h4>
                         <p class="text-[10px] font-mono text-slate-500 font-semibold">${item.id}</p>
-                        <p class="text-[9px] text-slate-600 truncate mt-0.5">📍 ${item.room || 'Lager'} / ${item.shelf || 'Regal'}</p>
+                        <p class="text-[8px] text-slate-600 truncate mt-0.5">📍 ${item.room || 'Lager'} / ${item.shelf || 'Regal'}</p>
                         <p class="text-[8px] text-emerald-700 font-bold mt-0.5 uppercase truncate">${item.category}</p>
                     </div>
                 `;
 
                 printArea.appendChild(sticker);
-                new QRCode(document.getElementById(canvasId), { text: item.id, width: 68, height: 68 });
+                new QRCode(document.getElementById(canvasId), { text: item.id, width: 56, height: 56 });
             });
 
             document.getElementById('qrModal').classList.remove('hidden');
@@ -1623,7 +1590,6 @@
             document.getElementById('scannerModal').classList.add('hidden');
         }
 
-        // DASHBOARD CHAT LOGIK
         async function loadDashboardChat() {
             try {
                 const targetRecipient = document.getElementById('dashChatRecipientSelect').value;
@@ -1682,7 +1648,6 @@
             loadChatMessages();
         }
 
-        // SEPARATER CHAT TAB LOGIK
         async function loadChatMessages() {
             try {
                 const targetRecipient = document.getElementById('chatRecipientSelect').value;
@@ -1768,7 +1733,7 @@
         }
 
         function switchTab(tabId) {
-            closeSidebar(); // Schließt auf Mobilgeräten die Sidebar beim Navigieren
+            closeSidebar();
 
             document.querySelectorAll('.nav-item').forEach(el => {
                 el.classList.remove('bg-slate-800/90', 'text-white');
