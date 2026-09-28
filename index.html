@@ -83,6 +83,11 @@
                 overflow: hidden;
                 background: white;
             }
+            .qr-sticker img {
+                width: 26mm !important;
+                height: 26mm !important;
+                max-width: none !important;
+            }
         }
     </style>
 </head>
@@ -1563,7 +1568,7 @@
                 `;
 
                 printArea.appendChild(sticker);
-                new QRCode(document.getElementById(canvasId), { text: item.id, width: 56, height: 56 });
+                new QRCode(document.getElementById(canvasId), { text: item.id, width: 90, height: 90, correctLevel: QRCode.CorrectLevel.M });
             });
 
             document.getElementById('qrModal').classList.remove('hidden');
