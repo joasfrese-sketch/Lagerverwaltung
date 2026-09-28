@@ -43,7 +43,7 @@
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 0mm !important; /* Blendet Browser-Kopf- und Fußzeilen komplett aus */
+                margin: 0mm !important;
             }
             html, body {
                 margin: 0 !important;
@@ -186,9 +186,12 @@
                         <span class="sidebar-text truncate">Warenbewegungen</span>
                     </button>
 
-                    <button onclick="switchTab('chat')" id="nav-chat" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                        <span class="sidebar-text truncate">Team-Chat</span>
+                    <button onclick="switchTab('chat')" id="nav-chat" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                            <span class="sidebar-text truncate">Team-Chat</span>
+                        </div>
+                        <span id="chatNavBadge" class="hidden w-2.5 h-2.5 bg-red-500 rounded-full"></span>
                     </button>
 
                     <button onclick="switchTab('users')" id="nav-users" class="nav-item hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
@@ -245,14 +248,20 @@
                         <div class="bg-white p-4 md:p-6 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col">
                             <div class="flex justify-between items-center mb-4 pb-2 border-b">
                                 <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">📅 Belegungsplan & Reservierungen</h3>
-                                <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded">Live</span>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="openCalendarModal()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-lg transition flex items-center gap-1">⛶ Vollbild</button>
+                                    <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded">Live</span>
+                                </div>
                             </div>
                             <div id="dashboardCalendar" class="min-h-[380px] text-xs"></div>
                         </div>
 
                         <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm flex flex-col h-[500px]">
                             <div class="p-4 border-b border-slate-100 flex justify-between items-center gap-2">
-                                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">💬 Team-Chat</h4>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">💬 Team-Chat</h4>
+                                    <span id="dashChatDot" class="hidden w-2 h-2 bg-red-500 rounded-full"></span>
+                                </div>
                                 <select id="dashChatRecipientSelect" onchange="loadDashboardChat()" class="bg-slate-100 border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-semibold text-slate-700 outline-none">
                                     <option value="global">🌐 Alle (Öffentlich)</option>
                                 </select>
@@ -388,6 +397,17 @@
         </main>
     </div>
 
+    <!-- MODAL: VOLLBILD KALENDER -->
+    <div id="calendarModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-5xl w-full h-[85vh] flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h3 class="font-bold text-slate-800 text-base">📅 Belegungsplan (Vollansicht)</h3>
+                <button onclick="closeCalendarModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+            </div>
+            <div id="modalCalendarContainer" class="flex-1 text-sm"></div>
+        </div>
+    </div>
+
     <!-- MODAL: EXCEL / CSV IMPORT -->
     <div id="excelImportModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
@@ -425,12 +445,13 @@
                 <input type="hidden" id="editItemId">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">SKU / Objekt-ID</label>
-                        <input type="text" id="itemIdInput" required placeholder="z. B. K-001" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">SKU / Objekt-ID (Auto)</label>
+                        <input type="text" id="itemIdInput" required class="w-full bg-slate-100 border border-slate-200 rounded-xl p-2.5 text-sm outline-none font-mono">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Kategorie</label>
-                        <input type="text" id="itemCategoryInput" required placeholder="z. B. Kamera" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+                        <input type="text" id="itemCategoryInput" list="categorySuggestions" required placeholder="z. B. Kamera" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+                        <datalist id="categorySuggestions"></datalist>
                     </div>
                 </div>
 
@@ -474,10 +495,15 @@
                 <div class="space-y-2 pt-2 border-t">
                     <label class="block text-xs font-bold text-slate-500 uppercase">Fotos (Maximal 5 Fotos)</label>
                     
-                    <div id="dropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" class="border-2 border-dashed border-slate-200 hover:border-emerald-500 rounded-xl p-4 text-center bg-slate-50 cursor-pointer transition">
-                        <p class="text-xs text-slate-500 font-medium">📷 Datei hierher ziehen, einfügen (Strg+V) oder auswählen</p>
+                    <div id="dropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" class="border-2 border-dashed border-slate-200 hover:border-emerald-500 rounded-xl p-3 text-center bg-slate-50 cursor-pointer transition">
+                        <p class="text-xs text-slate-500 font-medium">📷 Datei hierher ziehen, einfügen (Strg+V) oder:</p>
                         <input type="file" id="photoFileInput" accept="image/*" multiple onchange="handleFileSelect(event)" class="hidden">
-                        <button type="button" onclick="document.getElementById('photoFileInput').click()" class="mt-2 text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1 rounded-lg">Datei wählen</button>
+                        <input type="file" id="cameraCaptureInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)" class="hidden">
+                        
+                        <div class="flex justify-center gap-2 mt-2">
+                            <button type="button" onclick="document.getElementById('photoFileInput').click()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg">📁 Datei wählen</button>
+                            <button type="button" onclick="document.getElementById('cameraCaptureInput').click()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg">📸 Foto aufnehmen</button>
+                        </div>
                     </div>
 
                     <div class="flex gap-2">
@@ -585,7 +611,7 @@
     <div id="scannerModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 text-center shadow-xl">
             <h3 class="text-lg font-bold">📷 QR-Code scannen</h3>
-            <div id="qr-reader" class="w-full"></div>
+            <div id="qr-reader" class="w-full overflow-hidden rounded-2xl border bg-slate-50"></div>
             <button onclick="closeScannerModal()" class="px-4 py-2 text-xs border rounded-xl">Schließen</button>
         </div>
     </div>
@@ -636,10 +662,12 @@
         let currentPhotos = [];
         let html5QrScanner = null;
         let calendar = null;
+        let modalCalendar = null;
 
         let selectedItemIds = new Set();
         let currentStatusFilter = 'ALL';
         let importedExcelData = [];
+        let lastCheckedMessageCount = 0;
 
         window.onload = async () => {
             updateDateDisplay();
@@ -651,6 +679,16 @@
                 }
             } catch (e) {
                 console.log("Supabase bereit.");
+            }
+
+            // URL Deep-Link Check (z.B. QR-Code Scan öffnet direkt Artikel)
+            const urlParams = new URLSearchParams(window.location.search);
+            const scanItem = urlParams.get('item');
+            if (scanItem) {
+                setTimeout(() => {
+                    document.getElementById('searchInput').value = scanItem;
+                    switchTab('inventory');
+                }, 1000);
             }
         };
 
@@ -750,9 +788,10 @@
             loadChatMessages();
             loadDashboardChat();
             renderDashboardCalendar();
+            
+            // Poll for messages & notifications
             setInterval(() => {
-                loadChatMessages();
-                loadDashboardChat();
+                checkChatNotifications();
             }, 4000);
         }
 
@@ -762,6 +801,7 @@
             await fetchRentals();
             await fetchWaitlist();
             await fetchActivityLogs();
+            await checkChatNotifications();
         }
 
         async function fetchAllUsers() {
@@ -789,7 +829,7 @@
             selects.forEach(select => {
                 if (!select) return;
                 const currentVal = select.value;
-                select.innerHTML = `<option value="global">🌐 Alle (Öffentlich)</option>`;
+                select.innerHTML = `<option value="global">🌐 Alle (Öffentlicher Team-Chat)</option>`;
                 allProfiles.forEach(p => {
                     if (p.id !== currentUser?.id) {
                         select.innerHTML += `<option value="${p.id}">👤 ${p.full_name || 'Benutzer'}</option>`;
@@ -837,6 +877,14 @@
             try {
                 const { data } = await db.from('items').select('*');
                 allItems = data || [];
+                
+                // Populate category datalist
+                const categories = [...new Set(allItems.map(i => i.category))];
+                const datalist = document.getElementById('categorySuggestions');
+                if (datalist) {
+                    datalist.innerHTML = categories.map(c => `<option value="${c}">`).join('');
+                }
+
                 renderItems();
             } catch(e) {}
         }
@@ -847,6 +895,7 @@
                 activeRentals = data || [];
                 renderMyRentals();
                 renderDashboardCalendar();
+                if (modalCalendar) renderModalCalendar();
                 renderItems();
             } catch(e) {}
         }
@@ -975,7 +1024,6 @@
 
                 const locationText = `📍 ${item.room || 'Lager'} ➔ ${item.shelf || 'Regal'} ➔ ${item.compartment || 'Fach'}`;
                 const waitCount = waitlistEntries.filter(w => w.item_id === item.id).length;
-                const isOnWaitlist = waitlistEntries.some(w => w.item_id === item.id && w.user_id === currentUser?.id);
 
                 let statusBadge = '';
                 let actionBtn = '';
@@ -1309,11 +1357,15 @@
             renderPhotoStrip();
         }
 
+        function generateUniqueId() {
+            const randomNum = Math.floor(1000 + Math.random() * 9000);
+            return `ART-${randomNum}`;
+        }
+
         function openItemModal() {
             document.getElementById('editItemId').value = '';
             document.getElementById('itemModalTitle').innerText = 'Neuen Artikel anlegen';
-            document.getElementById('itemIdInput').value = '';
-            document.getElementById('itemIdInput').disabled = false;
+            document.getElementById('itemIdInput').value = generateUniqueId();
             document.getElementById('itemNameInput').value = '';
             document.getElementById('itemCategoryInput').value = '';
             document.getElementById('itemPermissionSelect').value = 'Keine';
@@ -1335,7 +1387,6 @@
             document.getElementById('editItemId').value = item.id;
             document.getElementById('itemModalTitle').innerText = 'Artikel bearbeiten';
             document.getElementById('itemIdInput').value = item.id;
-            document.getElementById('itemIdInput').disabled = true;
             document.getElementById('itemNameInput').value = item.name;
             document.getElementById('itemCategoryInput').value = item.category;
             document.getElementById('itemPermissionSelect').value = item.permission || 'Keine';
@@ -1356,7 +1407,7 @@
             saveBtn.disabled = true;
 
             const editId = document.getElementById('editItemId').value;
-            const id = editId || document.getElementById('itemIdInput').value.trim();
+            let id = document.getElementById('itemIdInput').value.trim();
             const name = document.getElementById('itemNameInput').value.trim();
             const category = document.getElementById('itemCategoryInput').value.trim();
             const permission = document.getElementById('itemPermissionSelect').value;
@@ -1364,6 +1415,14 @@
             const shelf = document.getElementById('itemShelfInput').value.trim();
             const compartment = document.getElementById('itemCompartmentInput').value.trim();
             const accessories = document.getElementById('itemAccessoriesInput').value.trim();
+
+            if (!editId) {
+                // Check if ID already exists
+                const existing = allItems.find(i => i.id === id);
+                if (existing) {
+                    id = generateUniqueId();
+                }
+            }
 
             const existingItem = allItems.find(i => i.id === id);
             const status = existingItem ? existingItem.status : 'Verfügbar';
@@ -1491,6 +1550,7 @@
                 await db.from('activity_log').insert([{ user_id: currentUser?.id, user_name: userProfile?.full_name, item_name: item?.name || itemId, action: 'Rückgabe', details: 'Ordnungsgemäß' }]);
             }
 
+            // Sofortiges Löschen der Leihe -> Artikel wird sofort wieder verfügbar!
             await db.from('rentals').delete().eq('id', rentalId);
             closeReturnModal();
             fetchAllData();
@@ -1540,7 +1600,44 @@
             }
         }
 
-        // QR CODE DRUCK (OPTIMIERT FÜR EXAKT 3 COLUMNS x 8 ROWS PRO DIN A4)
+        function openCalendarModal() {
+            document.getElementById('calendarModal').classList.remove('hidden');
+            setTimeout(() => {
+                const container = document.getElementById('modalCalendarContainer');
+                if (!modalCalendar) {
+                    const events = activeRentals.map(r => ({
+                        title: `${r.items?.name || r.item_id} (${r.project || 'Ausleihe'})`,
+                        start: r.start_date,
+                        end: r.end_date,
+                        color: '#059669'
+                    }));
+                    modalCalendar = new FullCalendar.Calendar(container, {
+                        initialView: 'dayGridMonth',
+                        locale: 'de',
+                        height: '100%',
+                        buttonText: { today: 'Heute', month: 'Monat', week: 'Woche' },
+                        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
+                        events: events
+                    });
+                    modalCalendar.render();
+                } else {
+                    modalCalendar.removeAllEvents();
+                    modalCalendar.addEventSource(activeRentals.map(r => ({
+                        title: `${r.items?.name || r.item_id} (${r.project || 'Ausleihe'})`,
+                        start: r.start_date,
+                        end: r.end_date,
+                        color: '#059669'
+                    })));
+                    modalCalendar.render();
+                }
+            }, 150);
+        }
+
+        function closeCalendarModal() {
+            document.getElementById('calendarModal').classList.add('hidden');
+        }
+
+        // QR CODE DRUCK (Mit Deep Link zur App & Artikel)
         function openQrModal(singleItemId) {
             openA4QrSheet([singleItemId]);
         }
@@ -1568,7 +1665,9 @@
                 `;
 
                 printArea.appendChild(sticker);
-                new QRCode(document.getElementById(canvasId), { text: item.id, width: 90, height: 90, correctLevel: QRCode.CorrectLevel.M });
+                // Deep Link URL im QR Code
+                const deepLinkUrl = `https://lagerverwaltung-aose923s9-joas-frese.vercel.app/?item=${item.id}`;
+                new QRCode(document.getElementById(canvasId), { text: deepLinkUrl, width: 90, height: 90, correctLevel: QRCode.CorrectLevel.M });
             });
 
             document.getElementById('qrModal').classList.remove('hidden');
@@ -1581,7 +1680,12 @@
             html5QrScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 });
             html5QrScanner.render(async (decodedText) => {
                 await closeScannerModal();
-                document.getElementById('searchInput').value = decodedText;
+                // Falls Deep Link gescannt wurde, extrahiere ID
+                let searchVal = decodedText;
+                if (decodedText.includes('?item=')) {
+                    searchVal = decodedText.split('?item=')[1];
+                }
+                document.getElementById('searchInput').value = searchVal;
                 switchTab('inventory');
                 renderItems();
             });
@@ -1593,6 +1697,22 @@
                 html5QrScanner = null;
             }
             document.getElementById('scannerModal').classList.add('hidden');
+        }
+
+        async function checkChatNotifications() {
+            try {
+                const { data: messages } = await db.from('messages').select('*');
+                if (!messages) return;
+
+                if (lastCheckedMessageCount > 0 && messages.length > lastCheckedMessageCount) {
+                    const latest = messages[messages.length - 1];
+                    if (latest.sender_id !== currentUser?.id) {
+                        document.getElementById('chatNavBadge').classList.remove('hidden');
+                        document.getElementById('dashChatDot').classList.remove('hidden');
+                    }
+                }
+                lastCheckedMessageCount = messages.length;
+            } catch(e) {}
         }
 
         async function loadDashboardChat() {
@@ -1672,6 +1792,10 @@
                 const box = document.getElementById('chatMessagesBox');
                 if (!box) return;
 
+                // Mark read
+                document.getElementById('chatNavBadge').classList.add('hidden');
+                document.getElementById('dashChatDot').classList.add('hidden');
+
                 if (filteredMessages.length === 0) {
                     box.innerHTML = `<div class="p-8 text-center text-slate-400 italic">Noch keine Nachrichten in diesem Kanal.</div>`;
                     return;
@@ -1747,6 +1871,11 @@
 
             document.getElementById(`nav-${tabId}`).classList.add('bg-slate-800/90', 'text-white');
             document.getElementById(`nav-${tabId}`).classList.remove('text-slate-400');
+
+            if (tabId === 'chat') {
+                document.getElementById('chatNavBadge').classList.add('hidden');
+                document.getElementById('dashChatDot').classList.add('hidden');
+            }
 
             const titles = {
                 'dashboard': 'Übersicht',
