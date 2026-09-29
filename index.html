@@ -302,6 +302,11 @@
                             <button onclick="setStatusFilter('Ausgeliehen')" id="filter-Ausgeliehen" class="status-filter-btn bg-slate-200 text-slate-700 hover:bg-slate-300 text-xs font-bold px-3 py-2 rounded-xl">Ausgeliehen</button>
                             <button onclick="setStatusFilter('In Inventur')" id="filter-In Inventur" class="status-filter-btn bg-slate-200 text-slate-700 hover:bg-slate-300 text-xs font-bold px-3 py-2 rounded-xl">In Inventur</button>
                             <button onclick="setStatusFilter('Wartung / Defekt')" id="filter-Wartung / Defekt" class="status-filter-btn bg-slate-200 text-slate-700 hover:bg-slate-300 text-xs font-bold px-3 py-2 rounded-xl">Defekt</button>
+                            
+                            <!-- DYNAMISCHER BUTTON FÜR ALLE SICHTBAREN OBJEKTE -->
+                            <button onclick="toggleSelectAllVisible()" id="selectAllVisibleBtn" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold px-3 py-2 rounded-xl border border-emerald-300 flex items-center gap-1 transition shrink-0">
+                                ☑️ Alle sichtbaren auswählen
+                            </button>
                         </div>
 
                         <div class="flex items-center gap-2">
@@ -657,6 +662,7 @@
         let userProfile = null;
         let allProfiles = [];
         let allItems = [];
+        let filteredItems = []; // ENTKOPPELTE LISTE DER AKTUELL GEFILTERTEN OBJEKTE
         let activeRentals = [];
         let waitlistEntries = [];
         let activityLogs = [];
@@ -823,6 +829,7 @@
 
         function populateAdminUserSelect() {
             const select = document.getElementById('rentForUserId');
+            if (!select) return;
             select.innerHTML = '';
             allProfiles.forEach(p => {
                 select.innerHTML += `<option value="${p.id}">${p.full_name} (${p.role})</option>`;
@@ -847,6 +854,7 @@
 
         function renderUsersTable() {
             const body = document.getElementById('usersTableBody');
+            if (!body) return;
             body.innerHTML = '';
 
             allProfiles.forEach(p => {
@@ -923,6 +931,7 @@
 
         function renderActivityLogs() {
             const body = document.getElementById('activityLogTableBody');
+            if (!body) return;
             const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
 
             const visibleLogs = activityLogs.filter(l => {
@@ -954,6 +963,7 @@
             const myRentals = activeRentals.filter(r => r.user_id === currentUser?.id);
             const card = document.getElementById('myRentalsCard');
             const list = document.getElementById('myRentalsList');
+            if (!card || !list) return;
 
             if (myRentals.length === 0) {
                 card.classList.add('hidden');
@@ -1027,6 +1037,24 @@
             }
         }
 
+        /* DYNAMISCHES AUSWÄHLEN / ABWÄHLEN ALLER SICHTBAREN (FILTERTEN) OBJEKTE */
+        function toggleSelectAllVisible() {
+            if (!filteredItems || filteredItems.length === 0) return;
+
+            // Prüfen, ob bereits alle aktuell sichtbaren Objekte ausgewählt sind
+            const allSelected = filteredItems.every(item => selectedItemIds.has(item.id));
+
+            if (allSelected) {
+                // Alle aktuell sichtbaren Objekte abwählen
+                filteredItems.forEach(item => selectedItemIds.delete(item.id));
+            } else {
+                // Alle aktuell sichtbaren Objekte auswählen
+                filteredItems.forEach(item => selectedItemIds.add(item.id));
+            }
+
+            renderItems();
+        }
+
         function renderItems() {
             toggleClearSearchBtn();
             const grid = document.getElementById('itemsGrid');
@@ -1035,7 +1063,8 @@
             const query = (document.getElementById('searchInput').value || '').toLowerCase();
             grid.innerHTML = '';
 
-            const filtered = allItems.filter(item => {
+            // Entkoppelte Objektliste dynamisch filtern & speichern
+            filteredItems = allItems.filter(item => {
                 const effectiveStatus = getItemEffectiveStatus(item);
                 const matchesSearch = `${item.id} ${item.name} ${item.category} ${item.permission} ${item.room} ${item.shelf} ${item.compartment} ${item.accessories} ${effectiveStatus}`.toLowerCase().includes(query);
                 
@@ -1043,14 +1072,25 @@
                 return matchesSearch && effectiveStatus === currentStatusFilter;
             });
 
-            if (filtered.length === 0) {
+            // "Alle sichtbaren auswählen"-Button dynamisch beschriften
+            const selectBtn = document.getElementById('selectAllVisibleBtn');
+            if (selectBtn) {
+                if (filteredItems.length > 0 && filteredItems.every(item => selectedItemIds.has(item.id))) {
+                    selectBtn.innerHTML = '☒ Alle sichtbaren abwählen';
+                } else {
+                    selectBtn.innerHTML = '☑️ Alle sichtbaren auswählen';
+                }
+            }
+
+            if (filteredItems.length === 0) {
                 grid.innerHTML = `<div class="col-span-2 p-8 text-center text-slate-400 italic bg-white rounded-2xl border">Keine Artikel im gewählten Status/Suchfilter.</div>`;
+                updateBulkActionBar();
                 return;
             }
 
             const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
 
-            filtered.forEach(item => {
+            filteredItems.forEach(item => {
                 const photos = Array.isArray(item.photos) ? item.photos : (item.image_url ? [item.image_url] : []);
                 const mainPhoto = photos[0] || 'https://via.placeholder.com/300x200?text=Kein+Bild';
 
@@ -1422,8 +1462,8 @@
             document.getElementById('editItemId').value = item.id;
             document.getElementById('itemModalTitle').innerText = 'Artikel bearbeiten';
             document.getElementById('itemIdInput').value = item.id;
-            document.getElementById('itemNameInput').value = item.name;
-            document.getElementById('itemCategoryInput').value = item.category;
+            document.getElementById('itemNameInput').value = item.name || '';
+            document.getElementById('itemCategoryInput').value = item.category || '';
             document.getElementById('itemPermissionSelect').value = item.permission || 'Keine';
             document.getElementById('itemRoomInput').value = item.room || '';
             document.getElementById('itemShelfInput').value = item.shelf || '';
@@ -1435,97 +1475,93 @@
             document.getElementById('itemModal').classList.remove('hidden');
         }
 
-        async function saveItem(e) {
-            e.preventDefault();
-            const saveBtn = document.getElementById('saveItemSubmitBtn');
-            saveBtn.innerText = 'Speichere...';
-            saveBtn.disabled = true;
-
+        async function saveItem(event) {
+            event.preventDefault();
+            const id = document.getElementById('itemIdInput').value.trim();
             const editId = document.getElementById('editItemId').value;
-            let id = document.getElementById('itemIdInput').value.trim();
-            const name = document.getElementById('itemNameInput').value.trim();
-            const category = document.getElementById('itemCategoryInput').value.trim();
-            const permission = document.getElementById('itemPermissionSelect').value;
-            const room = document.getElementById('itemRoomInput').value.trim();
-            const shelf = document.getElementById('itemShelfInput').value.trim();
-            const compartment = document.getElementById('itemCompartmentInput').value.trim();
-            const accessories = document.getElementById('itemAccessoriesInput').value.trim();
 
-            const itemPayload = {
+            const itemData = {
                 id: id,
-                name: name,
-                category: category,
-                permission: permission,
-                room: room,
-                shelf: shelf,
-                compartment: compartment,
-                accessories: accessories,
+                name: document.getElementById('itemNameInput').value.trim(),
+                category: document.getElementById('itemCategoryInput').value.trim(),
+                permission: document.getElementById('itemPermissionSelect').value,
+                room: document.getElementById('itemRoomInput').value.trim(),
+                shelf: document.getElementById('itemShelfInput').value.trim(),
+                compartment: document.getElementById('itemCompartmentInput').value.trim(),
+                accessories: document.getElementById('itemAccessoriesInput').value.trim(),
                 photos: currentPhotos,
-                image_url: currentPhotos[0] || null,
-                status: 'Verfügbar'
+                image_url: currentPhotos[0] || '',
+                status: editId ? (allItems.find(i => i.id === editId)?.status || 'Verfügbar') : 'Verfügbar'
             };
 
-            try {
-                if (editId) {
-                    const { error } = await db.from('items').update(itemPayload).eq('id', editId);
-                    if (error) throw error;
-                } else {
-                    const { error } = await db.from('items').insert([itemPayload]);
-                    if (error) throw error;
-                }
-                closeItemModal();
-                await fetchItems();
-            } catch (err) {
-                alert("Fehler beim Speichern:\n" + (err.message || err));
-            } finally {
-                saveBtn.innerText = 'Speichere';
-                saveBtn.disabled = false;
+            const submitBtn = document.getElementById('saveItemSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Speichere...';
+
+            const { error } = await db.from('items').upsert([itemData]);
+
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Speichern';
+
+            if (error) {
+                alert("Fehler beim Speichern:\n" + error.message);
+                return;
             }
+
+            closeItemModal();
+            fetchAllData();
         }
 
         async function deleteItem(id) {
-            if (confirm("Möchtest du diesen Artikel wirklich löschen?")) {
-                await db.from('items').delete().eq('id', id);
-                await fetchItems();
+            if (confirm(`Möchtest du den Artikel '${id}' wirklich löschen?`)) {
+                const { error } = await db.from('items').delete().eq('id', id);
+                if (error) {
+                    alert("Fehler beim Löschen:\n" + error.message);
+                    return;
+                }
+                selectedItemIds.delete(id);
+                fetchAllData();
             }
         }
 
-        function switchTab(tabId) {
-            ['dashboard', 'inventory', 'movements', 'chat', 'users'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tabId);
-                const navBtn = document.getElementById(`nav-${t}`);
-                if (navBtn) {
-                    if (t === tabId) {
-                        navBtn.className = "nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white bg-slate-800/90 transition";
-                    } else {
-                        navBtn.className = "nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition";
-                    }
-                }
-            });
-
-            const pageTitles = {
-                dashboard: 'Übersicht',
-                inventory: 'Lagerbestand',
-                movements: 'Warenbewegungen',
-                chat: 'Team-Chat',
-                users: 'Benutzerverwaltung'
-            };
-            document.getElementById('pageTitle').innerText = pageTitles[tabId] || 'Lager Pro';
-
-            closeSidebar();
+        async function clearMaintenance(id) {
+            const { error } = await db.from('items').update({ status: 'Verfügbar' }).eq('id', id);
+            if (error) {
+                alert("Fehler bei der Statusänderung:\n" + error.message);
+                return;
+            }
+            fetchAllData();
         }
 
-        function logout() {
-            db.auth.signOut();
-            window.location.reload();
+        async function toggleWaitlist(id) {
+            const existing = waitlistEntries.find(w => w.item_id === id && w.user_id === currentUser?.id);
+            if (existing) {
+                await db.from('waitlist').delete().eq('id', existing.id);
+                alert("Du wurdest von der Warteliste entfernt.");
+            } else {
+                await db.from('waitlist').insert([{
+                    item_id: id,
+                    user_id: currentUser.id,
+                    user_name: userProfile?.full_name || currentUser.email
+                }]);
+                alert("Du wurdest auf die Warteliste gesetzt!");
+            }
+            fetchAllData();
         }
 
         function openRentModal(itemId, itemName) {
             document.getElementById('rentItemId').value = itemId;
             document.getElementById('rentModalTitle').innerText = `Ausleihe: ${itemName || itemId}`;
-            const now = new Date().toISOString().slice(0, 16);
-            document.getElementById('rentStart').value = now;
-            
+            document.getElementById('rentProject').value = '';
+
+            const now = new Date();
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+            const formatISO = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+            document.getElementById('rentStart').value = formatISO(now);
+            document.getElementById('rentEnd').value = formatISO(tomorrow);
+
             const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
             document.getElementById('adminUserSelectGroup').classList.toggle('hidden', !isAdmin);
 
@@ -1536,67 +1572,76 @@
             document.getElementById('rentModal').classList.add('hidden');
         }
 
-        async function confirmRental(e) {
-            e.preventDefault();
-            const itemIdStr = document.getElementById('rentItemId').value;
+        async function confirmRental(event) {
+            event.preventDefault();
+            const itemIdsStr = document.getElementById('rentItemId').value;
             const project = document.getElementById('rentProject').value.trim();
-            const startDate = document.getElementById('rentStart').value;
-            const endDate = document.getElementById('rentEnd').value;
-            
+            const start_date = document.getElementById('rentStart').value;
+            const end_date = document.getElementById('rentEnd').value;
+
             const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
             const selectedUserId = isAdmin ? document.getElementById('rentForUserId').value : currentUser.id;
+            const selectedUser = allProfiles.find(p => p.id === selectedUserId);
+            const userName = selectedUser?.full_name || currentUser.email;
 
-            const itemIds = itemIdStr.split(',');
+            const itemIds = itemIdsStr.split(',').map(s => s.trim()).filter(Boolean);
 
             for (let id of itemIds) {
-                await db.from('rentals').insert([{
+                const { error } = await db.from('rentals').insert([{
                     item_id: id,
                     user_id: selectedUserId,
                     project: project,
-                    start_date: startDate,
-                    end_date: endDate
+                    start_date: start_date,
+                    end_date: end_date,
+                    status: 'Aktiv'
                 }]);
 
-                const itemObj = allItems.find(i => i.id === id);
+                if (error) {
+                    alert(`Fehler beim Buchen von ${id}:\n` + error.message);
+                    return;
+                }
+
                 await db.from('activity_log').insert([{
-                    action: 'AUSLEIHE',
-                    item_name: itemObj ? itemObj.name : id,
+                    item_name: id,
+                    user_name: userName,
                     user_id: selectedUserId,
-                    user_name: userProfile?.full_name || 'Nutzer',
-                    details: `Projekt: ${project || 'Keins'} bis ${endDate}`
+                    action: 'AUSLEIHE',
+                    details: project ? `Projekt: ${project}` : 'Keine Notiz'
                 }]);
             }
 
+            alert(`Erfolgreich gebucht (${itemIds.length} Artikel)!`);
             closeRentModal();
+            clearSelection();
             fetchAllData();
-            alert("Ausleihe erfolgreich gebucht!");
         }
 
         function openReturnModal(rentalId, itemId) {
-            const item = allItems.find(i => i.id === itemId);
             document.getElementById('returnRentalId').value = rentalId;
             document.getElementById('returnItemId').value = itemId;
 
+            const item = allItems.find(i => i.id === itemId);
             const checklist = document.getElementById('accessoriesChecklist');
             checklist.innerHTML = '';
-            
-            const accList = item?.accessories ? item.accessories.split(',') : [];
-            if (accList.length === 0) {
-                checklist.innerHTML = `<span class="text-slate-400 italic">Keine Zubehörteile gelistet.</span>`;
-            } else {
-                accList.forEach(acc => {
+
+            if (item && item.accessories) {
+                const parts = item.accessories.split(',').map(s => s.trim()).filter(Boolean);
+                parts.forEach((part) => {
                     checklist.innerHTML += `
                         <label class="flex items-center gap-2 text-slate-700">
-                            <input type="checkbox" checked class="rounded text-emerald-600">
-                            <span>${acc.trim()}</span>
+                            <input type="checkbox" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                            <span>${part}</span>
                         </label>
                     `;
                 });
+            } else {
+                checklist.innerHTML = `<p class="text-slate-400 italic">Keine Zubehörteile erfasst.</p>`;
             }
 
             document.getElementById('hasDamage').checked = false;
-            document.getElementById('damageFields').classList.add('hidden');
             document.getElementById('damageReport').value = '';
+            document.getElementById('damageFields').classList.add('hidden');
+
             document.getElementById('returnModal').classList.remove('hidden');
         }
 
@@ -1605,12 +1650,12 @@
         }
 
         function toggleDamageFields() {
-            const isChecked = document.getElementById('hasDamage').checked;
-            document.getElementById('damageFields').classList.toggle('hidden', !isChecked);
+            const hasDamage = document.getElementById('hasDamage').checked;
+            document.getElementById('damageFields').classList.toggle('hidden', !hasDamage);
         }
 
-        async function confirmReturn(e) {
-            e.preventDefault();
+        async function confirmReturn(event) {
+            event.preventDefault();
             const rentalId = document.getElementById('returnRentalId').value;
             const itemId = document.getElementById('returnItemId').value;
             const hasDamage = document.getElementById('hasDamage').checked;
@@ -1620,91 +1665,89 @@
 
             if (hasDamage) {
                 await db.from('items').update({ status: 'Wartung / Defekt' }).eq('id', itemId);
+                await db.from('activity_log').insert([{
+                    item_name: itemId,
+                    user_name: userProfile?.full_name || currentUser.email,
+                    user_id: currentUser.id,
+                    action: 'DEFECT',
+                    details: `Schaden gemeldet: ${damageReport}`
+                }]);
+            } else {
+                await db.from('activity_log').insert([{
+                    item_name: itemId,
+                    user_name: userProfile?.full_name || currentUser.email,
+                    user_id: currentUser.id,
+                    action: 'RÜCKGABE',
+                    details: 'Ordnungsgemäß zurückgegeben'
+                }]);
             }
 
-            const itemObj = allItems.find(i => i.id === itemId);
-            await db.from('activity_log').insert([{
-                action: 'RÜCKGABE',
-                item_name: itemObj ? itemObj.name : itemId,
-                user_id: currentUser.id,
-                user_name: userProfile?.full_name || 'Nutzer',
-                details: hasDamage ? `⚠️ DEFEKT GEMELDET: ${damageReport}` : 'Ordnungsgemäß zurückgegeben'
-            }]);
-
+            alert("Rückgabe erfolgreich abgeschlossen!");
             closeReturnModal();
             fetchAllData();
-            alert("Rückgabe erfolgreich registriert!");
-        }
-
-        async function clearMaintenance(itemId) {
-            await db.from('items').update({ status: 'Verfügbar' }).eq('id', itemId);
-            fetchAllData();
-        }
-
-        async function toggleWaitlist(itemId) {
-            const existing = waitlistEntries.find(w => w.item_id === itemId && w.user_id === currentUser.id);
-            if (existing) {
-                await db.from('waitlist').delete().eq('id', existing.id);
-                alert("Von der Warteliste entfernt.");
-            } else {
-                await db.from('waitlist').insert([{ item_id: itemId, user_id: currentUser.id }]);
-                alert("Erfolgreich auf die Warteliste eingetragen!");
-            }
-            fetchWaitlist();
         }
 
         function openQrModal(itemId) {
             openA4QrSheet([itemId]);
         }
 
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+
         function openA4QrSheet(itemIds) {
-            const area = document.getElementById('a4PrintArea');
-            area.innerHTML = '';
+            const printArea = document.getElementById('a4PrintArea');
+            printArea.innerHTML = '';
 
             itemIds.forEach(id => {
-                const item = allItems.find(i => i.id === id);
-                const qrUrl = `${window.location.origin}${window.location.pathname}?item=${id}`;
-
+                const item = allItems.find(i => i.id === id) || { id: id, name: id, room: 'Lager' };
                 const sticker = document.createElement('div');
                 sticker.className = 'qr-sticker';
-                sticker.innerHTML = `
-                    <div id="qr-target-${id}" class="shrink-0"></div>
-                    <div class="overflow-hidden text-slate-800">
-                        <div class="font-extrabold text-[11px] truncate leading-tight">${item?.name || id}</div>
-                        <div class="text-[9px] font-mono text-emerald-700 font-bold leading-tight mt-0.5">${id}</div>
-                        <div class="text-[8px] text-slate-500 truncate leading-tight mt-1">📍 ${item?.room || 'Lager'} / ${item?.shelf || 'Regal'}</div>
-                    </div>
-                `;
-                area.appendChild(sticker);
 
-                setTimeout(() => {
-                    new QRCode(document.getElementById(`qr-target-${id}`), {
-                        text: qrUrl,
-                        width: 90,
-                        height: 90
-                    });
-                }, 50);
+                const qrContainer = document.createElement('div');
+                qrContainer.className = 'shrink-0';
+
+                new QRCode(qrContainer, {
+                    text: `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(id)}`,
+                    width: 80,
+                    height: 80
+                });
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'flex-1 min-w-0 text-[10px] leading-tight';
+                infoDiv.innerHTML = `
+                    <div class="font-extrabold text-slate-900 truncate">${item.name}</div>
+                    <div class="font-mono text-emerald-700 font-bold mt-0.5">${item.id}</div>
+                    <div class="text-slate-500 mt-1 truncate">📍 ${item.room || 'Lager'}</div>
+                    <div class="text-[8px] text-slate-400 mt-0.5">Lagerverwaltung Pro</div>
+                `;
+
+                sticker.appendChild(qrContainer);
+                sticker.appendChild(infoDiv);
+                printArea.appendChild(sticker);
             });
 
             document.getElementById('qrModal').classList.remove('hidden');
         }
 
-        function closeQrModal() {
-            document.getElementById('qrModal').classList.add('hidden');
-        }
-
         function openScannerModal() {
             document.getElementById('scannerModal').classList.remove('hidden');
-            html5QrScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 });
+            html5QrScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 220, height: 220 } });
             html5QrScanner.render((decodedText) => {
-                let itemId = decodedText;
-                if (decodedText.includes('item=')) {
-                    itemId = decodedText.split('item=')[1].split('&')[0];
-                }
+                if (html5QrScanner) html5QrScanner.clear();
                 closeScannerModal();
+
+                let itemVal = decodedText;
+                try {
+                    const url = new URL(decodedText);
+                    if (url.searchParams.get('item')) {
+                        itemVal = url.searchParams.get('item');
+                    }
+                } catch(e) {}
+
                 const searchInput = document.getElementById('searchInput');
                 if (searchInput) {
-                    searchInput.value = itemId;
+                    searchInput.value = itemVal;
                     handleSearchInput();
                 }
                 switchTab('inventory');
@@ -1713,87 +1756,136 @@
 
         function closeScannerModal() {
             if (html5QrScanner) {
-                html5QrScanner.clear();
+                try { html5QrScanner.clear(); } catch(e){}
             }
             document.getElementById('scannerModal').classList.add('hidden');
         }
 
-        function openNewUserModal() { document.getElementById('newUserModal').classList.remove('hidden'); }
-        function closeNewUserModal() { document.getElementById('newUserModal').classList.add('hidden'); }
-
-        async function adminCreateUser(e) {
-            e.preventDefault();
-            const name = document.getElementById('newUserName').value.trim();
-            const email = document.getElementById('newUserEmail').value.trim();
-            const password = document.getElementById('newUserPass').value.trim();
-            const role = document.getElementById('newUserRole').value;
-
-            const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: name, role: role } } });
-            if (error) {
-                alert("Fehler beim Erstellen:\n" + error.message);
-            } else {
-                alert("Benutzer erfolgreich angelegt!");
-                closeNewUserModal();
-                fetchAllUsers();
-            }
-        }
-
-        function renderDashboardCalendar() {
-            const calendarEl = document.getElementById('dashboardCalendar');
-            if (!calendarEl) return;
-
-            const events = activeRentals.map(r => ({
-                title: `${r.items ? r.items.name : r.item_id} (${r.project || 'Ausleihe'})`,
-                start: r.start_date,
-                end: r.end_date,
-                color: r.user_id === currentUser?.id ? '#059669' : '#3b82f6'
-            }));
-
-            if (calendar) calendar.destroy();
-            calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'de',
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-                events: events,
-                height: '100%'
-            });
-            calendar.render();
-        }
-
         function openCalendarModal() {
             document.getElementById('calendarModal').classList.remove('hidden');
-            setTimeout(() => renderModalCalendar(), 100);
+            renderModalCalendar();
         }
 
         function closeCalendarModal() {
             document.getElementById('calendarModal').classList.add('hidden');
         }
 
+        function renderDashboardCalendar() {
+            const calendarEl = document.getElementById('dashboardCalendar');
+            if (!calendarEl) return;
+            if (calendar) calendar.destroy();
+
+            const events = activeRentals.map(r => ({
+                title: `${r.items?.name || r.item_id} (${r.project || 'Ausleihe'})`,
+                start: r.start_date,
+                end: r.end_date,
+                backgroundColor: '#059669',
+                borderColor: '#047857'
+            }));
+
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'de',
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
+                events: events,
+                height: 380
+            });
+            calendar.render();
+        }
+
         function renderModalCalendar() {
             const calendarEl = document.getElementById('modalCalendarContainer');
             if (!calendarEl) return;
+            if (modalCalendar) modalCalendar.destroy();
 
             const events = activeRentals.map(r => ({
-                title: `${r.items ? r.items.name : r.item_id} (${r.project || 'Ausleihe'})`,
+                title: `${r.items?.name || r.item_id} (${r.project || 'Ausleihe'})`,
                 start: r.start_date,
                 end: r.end_date,
-                color: r.user_id === currentUser?.id ? '#059669' : '#3b82f6'
+                backgroundColor: '#059669',
+                borderColor: '#047857'
             }));
 
-            if (modalCalendar) modalCalendar.destroy();
             modalCalendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'de',
                 headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
-                events: events,
-                height: '100%'
+                events: events
             });
             modalCalendar.render();
         }
 
+        function openNewUserModal() {
+            document.getElementById('newUserModal').classList.remove('hidden');
+        }
+
+        function closeNewUserModal() {
+            document.getElementById('newUserModal').classList.add('hidden');
+        }
+
+        async function adminCreateUser(event) {
+            event.preventDefault();
+            const name = document.getElementById('newUserName').value.trim();
+            const email = document.getElementById('newUserEmail').value.trim();
+            const password = document.getElementById('newUserPass').value.trim();
+            const role = document.getElementById('newUserRole').value;
+
+            const { data, error } = await db.auth.signUp({
+                email,
+                password,
+                options: { data: { full_name: name, role: role } }
+            });
+
+            if (error) {
+                alert("Fehler beim Erstellen des Benutzers:\n" + error.message);
+                return;
+            }
+
+            alert("Benutzer erfolgreich angelegt!");
+            closeNewUserModal();
+            fetchAllUsers();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('bg-slate-800/90', 'text-white'));
+
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            if (targetTab) targetTab.classList.remove('hidden');
+
+            const targetNav = document.getElementById(`nav-${tabId}`);
+            if (targetNav) targetNav.classList.add('bg-slate-800/90', 'text-white');
+
+            const titles = {
+                'dashboard': 'Übersicht',
+                'inventory': 'Lagerbestand',
+                'movements': 'Warenbewegungen',
+                'chat': 'Team-Chat',
+                'users': 'Benutzerverwaltung'
+            };
+            document.getElementById('pageTitle').innerText = titles[tabId] || 'Übersicht';
+
+            if (tabId === 'chat') {
+                document.getElementById('chatNavBadge')?.classList.add('hidden');
+                loadChatMessages();
+            } else if (tabId === 'dashboard') {
+                document.getElementById('dashChatDot')?.classList.add('hidden');
+                loadDashboardChat();
+                if (calendar) calendar.render();
+            }
+
+            closeSidebar();
+        }
+
+        async function logout() {
+            await db.auth.signOut();
+            location.reload();
+        }
+
         async function loadChatMessages() {
+            if (!currentUser) return;
             const recipient = document.getElementById('chatRecipientSelect')?.value || 'global';
-            let query = db.from('messages').select('*').order('created_at', { ascending: true });
+            let query = db.from('chat_messages').select('*').order('created_at', { ascending: true });
 
             if (recipient === 'global') {
                 query = query.eq('recipient_id', 'global');
@@ -1803,20 +1895,28 @@
 
             const { data } = await query;
             chatMessages = data || [];
+            renderChatBox('chatMessagesBox', chatMessages);
+        }
 
-            const box = document.getElementById('chatMessagesBox');
+        function renderChatBox(boxId, msgs) {
+            const box = document.getElementById(boxId);
             if (!box) return;
             box.innerHTML = '';
 
-            chatMessages.forEach(m => {
-                const isMe = m.sender_id === currentUser.id;
+            if (msgs.length === 0) {
+                box.innerHTML = `<div class="text-center text-slate-400 italic py-8">Keine Nachrichten vorhanden.</div>`;
+                return;
+            }
+
+            msgs.forEach(m => {
+                const isMe = m.sender_id === currentUser?.id;
                 const time = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 
                 box.innerHTML += `
-                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
-                        <span class="text-[10px] text-slate-400 px-1">${m.sender_name || 'Nutzer'} • ${time}</span>
-                        <div class="max-w-[80%] rounded-2xl px-4 py-2 text-xs ${isMe ? 'bg-emerald-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none'}">
-                            ${m.content}
+                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+                        <div class="text-[10px] text-slate-400 mb-0.5">${m.sender_name || 'Anonym'} • ${time}</div>
+                        <div class="${isMe ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-800'} px-3.5 py-2 rounded-2xl max-w-[80%] text-xs shadow-sm">
+                            ${m.message}
                         </div>
                     </div>
                 `;
@@ -1827,16 +1927,15 @@
         async function sendChatMessage(e) {
             e.preventDefault();
             const input = document.getElementById('chatInput');
-            const content = input.value.trim();
-            const recipient = document.getElementById('chatRecipientSelect').value;
+            const msg = input.value.trim();
+            const recipient = document.getElementById('chatRecipientSelect')?.value || 'global';
+            if (!msg || !currentUser) return;
 
-            if (!content) return;
-
-            await db.from('messages').insert([{
+            await db.from('chat_messages').insert([{
                 sender_id: currentUser.id,
-                sender_name: userProfile?.full_name || 'Nutzer',
+                sender_name: userProfile?.full_name || currentUser.email,
                 recipient_id: recipient,
-                content: content
+                message: msg
             }]);
 
             input.value = '';
@@ -1844,8 +1943,9 @@
         }
 
         async function loadDashboardChat() {
+            if (!currentUser) return;
             const recipient = document.getElementById('dashChatRecipientSelect')?.value || 'global';
-            let query = db.from('messages').select('*').order('created_at', { ascending: true });
+            let query = db.from('chat_messages').select('*').order('created_at', { ascending: true });
 
             if (recipient === 'global') {
                 query = query.eq('recipient_id', 'global');
@@ -1854,39 +1954,21 @@
             }
 
             const { data } = await query;
-            const box = document.getElementById('dashChatMessagesBox');
-            if (!box) return;
-            box.innerHTML = '';
-
-            (data || []).forEach(m => {
-                const isMe = m.sender_id === currentUser.id;
-                const time = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-
-                box.innerHTML += `
-                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-0.5">
-                        <span class="text-[9px] text-slate-400 px-1">${m.sender_name || 'Nutzer'} • ${time}</span>
-                        <div class="max-w-[85%] rounded-xl px-3 py-1.5 text-xs ${isMe ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-800'}">
-                            ${m.content}
-                        </div>
-                    </div>
-                `;
-            });
-            box.scrollTop = box.scrollHeight;
+            renderChatBox('dashChatMessagesBox', data || []);
         }
 
         async function sendDashChatMessage(e) {
             e.preventDefault();
             const input = document.getElementById('dashChatInput');
-            const content = input.value.trim();
-            const recipient = document.getElementById('dashChatRecipientSelect').value;
+            const msg = input.value.trim();
+            const recipient = document.getElementById('dashChatRecipientSelect')?.value || 'global';
+            if (!msg || !currentUser) return;
 
-            if (!content) return;
-
-            await db.from('messages').insert([{
+            await db.from('chat_messages').insert([{
                 sender_id: currentUser.id,
-                sender_name: userProfile?.full_name || 'Nutzer',
+                sender_name: userProfile?.full_name || currentUser.email,
                 recipient_id: recipient,
-                content: content
+                message: msg
             }]);
 
             input.value = '';
@@ -1894,15 +1976,16 @@
         }
 
         async function checkChatNotifications() {
-            if (!currentUser) return;
-            const { data } = await db.from('messages').select('id').or(`recipient_id.eq.global,recipient_id.eq.${currentUser.id}`);
-            const count = data ? data.length : 0;
-
-            if (lastCheckedMessageCount > 0 && count > lastCheckedMessageCount) {
-                document.getElementById('chatNavBadge').classList.remove('hidden');
-                document.getElementById('dashChatDot').classList.remove('hidden');
-            }
-            lastCheckedMessageCount = count;
+            try {
+                const { count } = await db.from('chat_messages').select('*', { count: 'exact', head: true });
+                if (count && count > lastCheckedMessageCount) {
+                    if (lastCheckedMessageCount !== 0) {
+                        document.getElementById('chatNavBadge')?.classList.remove('hidden');
+                        document.getElementById('dashChatDot')?.classList.remove('hidden');
+                    }
+                    lastCheckedMessageCount = count;
+                }
+            } catch(e) {}
         }
     </script>
 </body>
