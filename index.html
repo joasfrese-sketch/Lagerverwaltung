@@ -305,9 +305,11 @@
                         </div>
 
                         <div class="flex items-center gap-2">
+                            <!-- SUCHFELD MIT DYNAMISCHEM "X" BUTTON -->
                             <div class="relative flex-1 min-w-[200px]">
-                                <input type="text" id="searchInput" onkeyup="renderItems()" placeholder="Suchen (SKU, Name, Ort)..." class="w-full bg-white border border-slate-200/80 rounded-xl pl-9 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+                                <input type="text" id="searchInput" oninput="handleSearchInput()" placeholder="Suchen (SKU, Name, Ort)..." class="w-full bg-white border border-slate-200/80 rounded-xl pl-9 pr-8 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
                                 <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <button id="clearSearchBtn" onclick="clearSearch()" title="Suche löschen" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none p-1 rounded-full text-xs font-bold leading-none">✕</button>
                             </div>
                             
                             <button id="importExcelBtn" onclick="openExcelImportModal()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2.5 rounded-xl flex items-center gap-1 transition shrink-0">📊 <span class="hidden sm:inline">Excel Import</span></button>
@@ -686,7 +688,11 @@
             const scanItem = urlParams.get('item');
             if (scanItem) {
                 setTimeout(() => {
-                    document.getElementById('searchInput').value = scanItem;
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput) {
+                        searchInput.value = scanItem;
+                        handleSearchInput();
+                    }
                     switchTab('inventory');
                 }, 1000);
             }
@@ -993,7 +999,36 @@
             renderItems();
         }
 
+        /* DYNAMISCHE SUCHFELD-LOGIK (X BUTTON) */
+        function handleSearchInput() {
+            toggleClearSearchBtn();
+            renderItems();
+        }
+
+        function toggleClearSearchBtn() {
+            const input = document.getElementById('searchInput');
+            const btn = document.getElementById('clearSearchBtn');
+            if (input && btn) {
+                if (input.value.length > 0) {
+                    btn.classList.remove('hidden');
+                } else {
+                    btn.classList.add('hidden');
+                }
+            }
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('searchInput');
+            if (input) {
+                input.value = '';
+                toggleClearSearchBtn();
+                renderItems();
+                input.focus();
+            }
+        }
+
         function renderItems() {
+            toggleClearSearchBtn();
             const grid = document.getElementById('itemsGrid');
             if (!grid) return;
 
@@ -1416,94 +1451,123 @@
             const compartment = document.getElementById('itemCompartmentInput').value.trim();
             const accessories = document.getElementById('itemAccessoriesInput').value.trim();
 
-            if (!editId) {
-                // Check if ID already exists
-                const existing = allItems.find(i => i.id === id);
-                if (existing) {
-                    id = generateUniqueId();
-                }
-            }
-
-            const existingItem = allItems.find(i => i.id === id);
-            const status = existingItem ? existingItem.status : 'Verfügbar';
-
-            const newItem = {
-                id, name, category, permission, room, shelf, compartment, accessories,
+            const itemPayload = {
+                id: id,
+                name: name,
+                category: category,
+                permission: permission,
+                room: room,
+                shelf: shelf,
+                compartment: compartment,
+                accessories: accessories,
                 photos: currentPhotos,
                 image_url: currentPhotos[0] || null,
-                status: status
+                status: 'Verfügbar'
             };
 
-            const { error } = await db.from('items').upsert([newItem]);
-
-            saveBtn.innerText = 'Speichern';
-            saveBtn.disabled = false;
-
-            if (error) {
-                alert("Fehler beim Speichern:\n" + error.message);
-                return;
+            try {
+                if (editId) {
+                    const { error } = await db.from('items').update(itemPayload).eq('id', editId);
+                    if (error) throw error;
+                } else {
+                    const { error } = await db.from('items').insert([itemPayload]);
+                    if (error) throw error;
+                }
+                closeItemModal();
+                await fetchItems();
+            } catch (err) {
+                alert("Fehler beim Speichern:\n" + (err.message || err));
+            } finally {
+                saveBtn.innerText = 'Speichere';
+                saveBtn.disabled = false;
             }
-
-            closeItemModal();
-            await fetchItems();
         }
 
         async function deleteItem(id) {
             if (confirm("Möchtest du diesen Artikel wirklich löschen?")) {
                 await db.from('items').delete().eq('id', id);
-                fetchItems();
+                await fetchItems();
             }
         }
 
-        function openRentModal(itemIdString, itemNameDisplay) {
-            document.getElementById('rentItemId').value = itemIdString;
-            document.getElementById('rentModalTitle').innerText = `Ausleihen: ${itemNameDisplay}`;
+        function switchTab(tabId) {
+            ['dashboard', 'inventory', 'movements', 'chat', 'users'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tabId);
+                const navBtn = document.getElementById(`nav-${t}`);
+                if (navBtn) {
+                    if (t === tabId) {
+                        navBtn.className = "nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white bg-slate-800/90 transition";
+                    } else {
+                        navBtn.className = "nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition";
+                    }
+                }
+            });
 
+            const pageTitles = {
+                dashboard: 'Übersicht',
+                inventory: 'Lagerbestand',
+                movements: 'Warenbewegungen',
+                chat: 'Team-Chat',
+                users: 'Benutzerverwaltung'
+            };
+            document.getElementById('pageTitle').innerText = pageTitles[tabId] || 'Lager Pro';
+
+            closeSidebar();
+        }
+
+        function logout() {
+            db.auth.signOut();
+            window.location.reload();
+        }
+
+        function openRentModal(itemId, itemName) {
+            document.getElementById('rentItemId').value = itemId;
+            document.getElementById('rentModalTitle').innerText = `Ausleihe: ${itemName || itemId}`;
+            const now = new Date().toISOString().slice(0, 16);
+            document.getElementById('rentStart').value = now;
+            
             const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
             document.getElementById('adminUserSelectGroup').classList.toggle('hidden', !isAdmin);
-
-            const now = new Date();
-            const tomorrow = new Date(Date.now() + 86400000);
-            document.getElementById('rentStart').value = now.toISOString().slice(0, 16);
-            document.getElementById('rentEnd').value = tomorrow.toISOString().slice(0, 16);
 
             document.getElementById('rentModal').classList.remove('hidden');
         }
 
-        function closeRentModal() { document.getElementById('rentModal').classList.add('hidden'); }
+        function closeRentModal() {
+            document.getElementById('rentModal').classList.add('hidden');
+        }
 
         async function confirmRental(e) {
             e.preventDefault();
-            const rawItemIds = document.getElementById('rentItemId').value;
-            const itemIds = rawItemIds.split(',');
-            const project = document.getElementById('rentProject').value;
-            const startTime = new Date(document.getElementById('rentStart').value).toISOString();
-            const endTime = new Date(document.getElementById('rentEnd').value).toISOString();
-
+            const itemIdStr = document.getElementById('rentItemId').value;
+            const project = document.getElementById('rentProject').value.trim();
+            const startDate = document.getElementById('rentStart').value;
+            const endDate = document.getElementById('rentEnd').value;
+            
             const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
-            const targetUserId = isAdmin ? document.getElementById('rentForUserId').value : currentUser.id;
+            const selectedUserId = isAdmin ? document.getElementById('rentForUserId').value : currentUser.id;
+
+            const itemIds = itemIdStr.split(',');
 
             for (let id of itemIds) {
-                const item = allItems.find(i => i.id === id);
                 await db.from('rentals').insert([{
                     item_id: id,
-                    user_id: targetUserId,
+                    user_id: selectedUserId,
                     project: project,
-                    start_date: startTime,
-                    end_date: endTime
+                    start_date: startDate,
+                    end_date: endDate
                 }]);
 
+                const itemObj = allItems.find(i => i.id === id);
                 await db.from('activity_log').insert([{
-                    user_id: targetUserId,
-                    user_name: userProfile?.full_name,
-                    item_name: item?.name || id,
-                    action: 'Ausleihe',
-                    details: `Projekt: ${project || 'Keines'}`
+                    action: 'AUSLEIHE',
+                    item_name: itemObj ? itemObj.name : id,
+                    user_id: selectedUserId,
+                    user_name: userProfile?.full_name || 'Nutzer',
+                    details: `Projekt: ${project || 'Keins'} bis ${endDate}`
                 }]);
             }
 
             closeRentModal();
-            clearSelection();
             fetchAllData();
             alert("Ausleihe erfolgreich gebucht!");
         }
@@ -1513,47 +1577,63 @@
             document.getElementById('returnRentalId').value = rentalId;
             document.getElementById('returnItemId').value = itemId;
 
-            const list = document.getElementById('accessoriesChecklist');
-            list.innerHTML = '';
-
-            const accessories = item?.accessories ? item.accessories.split(',') : ['Hauptgerät'];
-            accessories.forEach(acc => {
-                list.innerHTML += `
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" required class="rounded text-emerald-600">
-                        <span>${acc.trim()}</span>
-                    </label>
-                `;
-            });
+            const checklist = document.getElementById('accessoriesChecklist');
+            checklist.innerHTML = '';
+            
+            const accList = item?.accessories ? item.accessories.split(',') : [];
+            if (accList.length === 0) {
+                checklist.innerHTML = `<span class="text-slate-400 italic">Keine Zubehörteile gelistet.</span>`;
+            } else {
+                accList.forEach(acc => {
+                    checklist.innerHTML += `
+                        <label class="flex items-center gap-2 text-slate-700">
+                            <input type="checkbox" checked class="rounded text-emerald-600">
+                            <span>${acc.trim()}</span>
+                        </label>
+                    `;
+                });
+            }
 
             document.getElementById('hasDamage').checked = false;
             document.getElementById('damageFields').classList.add('hidden');
+            document.getElementById('damageReport').value = '';
             document.getElementById('returnModal').classList.remove('hidden');
         }
 
-        function closeReturnModal() { document.getElementById('returnModal').classList.add('hidden'); }
-        function toggleDamageFields() { document.getElementById('damageFields').classList.toggle('hidden', !document.getElementById('hasDamage').checked); }
+        function closeReturnModal() {
+            document.getElementById('returnModal').classList.add('hidden');
+        }
+
+        function toggleDamageFields() {
+            const isChecked = document.getElementById('hasDamage').checked;
+            document.getElementById('damageFields').classList.toggle('hidden', !isChecked);
+        }
 
         async function confirmReturn(e) {
             e.preventDefault();
             const rentalId = document.getElementById('returnRentalId').value;
             const itemId = document.getElementById('returnItemId').value;
             const hasDamage = document.getElementById('hasDamage').checked;
-            const damageReport = document.getElementById('damageReport').value;
+            const damageReport = document.getElementById('damageReport').value.trim();
 
-            const item = allItems.find(i => i.id === itemId);
+            await db.from('rentals').delete().eq('id', rentalId);
 
             if (hasDamage) {
                 await db.from('items').update({ status: 'Wartung / Defekt' }).eq('id', itemId);
-                await db.from('activity_log').insert([{ user_id: currentUser?.id, user_name: userProfile?.full_name, item_name: item?.name || itemId, action: 'Schadensmeldung', details: damageReport }]);
-            } else {
-                await db.from('activity_log').insert([{ user_id: currentUser?.id, user_name: userProfile?.full_name, item_name: item?.name || itemId, action: 'Rückgabe', details: 'Ordnungsgemäß' }]);
             }
 
-            // Sofortiges Löschen der Leihe -> Artikel wird sofort wieder verfügbar!
-            await db.from('rentals').delete().eq('id', rentalId);
+            const itemObj = allItems.find(i => i.id === itemId);
+            await db.from('activity_log').insert([{
+                action: 'RÜCKGABE',
+                item_name: itemObj ? itemObj.name : itemId,
+                user_id: currentUser.id,
+                user_name: userProfile?.full_name || 'Nutzer',
+                details: hasDamage ? `⚠️ DEFEKT GEMELDET: ${damageReport}` : 'Ordnungsgemäß zurückgegeben'
+            }]);
+
             closeReturnModal();
             fetchAllData();
+            alert("Rückgabe erfolgreich registriert!");
         }
 
         async function clearMaintenance(itemId) {
@@ -1562,279 +1642,80 @@
         }
 
         async function toggleWaitlist(itemId) {
-            const isOnList = waitlistEntries.some(w => w.item_id === itemId && w.user_id === currentUser?.id);
-            if (isOnList) {
-                await db.from('waitlist').delete().eq('item_id', itemId).eq('user_id', currentUser?.id);
+            const existing = waitlistEntries.find(w => w.item_id === itemId && w.user_id === currentUser.id);
+            if (existing) {
+                await db.from('waitlist').delete().eq('id', existing.id);
+                alert("Von der Warteliste entfernt.");
             } else {
-                await db.from('waitlist').insert([{ item_id: itemId, user_id: currentUser?.id }]);
+                await db.from('waitlist').insert([{ item_id: itemId, user_id: currentUser.id }]);
+                alert("Erfolgreich auf die Warteliste eingetragen!");
             }
             fetchWaitlist();
-            renderItems();
         }
 
-        function renderDashboardCalendar() {
-            const calendarEl = document.getElementById('dashboardCalendar');
-            if (!calendarEl) return;
-
-            const events = activeRentals.map(r => ({
-                title: `${r.items?.name || r.item_id} (${r.project || 'Ausleihe'})`,
-                start: r.start_date,
-                end: r.end_date,
-                color: '#059669'
-            }));
-
-            if (!calendar) {
-                calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'dayGridMonth',
-                    locale: 'de',
-                    height: 380,
-                    buttonText: { today: 'Heute', month: 'Monat', week: 'Woche' },
-                    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
-                    events: events
-                });
-                calendar.render();
-            } else {
-                calendar.removeAllEvents();
-                calendar.addEventSource(events);
-                calendar.render();
-            }
-        }
-
-        function openCalendarModal() {
-            document.getElementById('calendarModal').classList.remove('hidden');
-            setTimeout(() => {
-                const container = document.getElementById('modalCalendarContainer');
-                if (!modalCalendar) {
-                    const events = activeRentals.map(r => ({
-                        title: `${r.items?.name || r.item_id} (${r.project || 'Ausleihe'})`,
-                        start: r.start_date,
-                        end: r.end_date,
-                        color: '#059669'
-                    }));
-                    modalCalendar = new FullCalendar.Calendar(container, {
-                        initialView: 'dayGridMonth',
-                        locale: 'de',
-                        height: '100%',
-                        buttonText: { today: 'Heute', month: 'Monat', week: 'Woche' },
-                        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-                        events: events
-                    });
-                    modalCalendar.render();
-                } else {
-                    modalCalendar.removeAllEvents();
-                    modalCalendar.addEventSource(activeRentals.map(r => ({
-                        title: `${r.items?.name || r.item_id} (${r.project || 'Ausleihe'})`,
-                        start: r.start_date,
-                        end: r.end_date,
-                        color: '#059669'
-                    })));
-                    modalCalendar.render();
-                }
-            }, 150);
-        }
-
-        function closeCalendarModal() {
-            document.getElementById('calendarModal').classList.add('hidden');
-        }
-
-        // QR CODE DRUCK (Mit Deep Link zur App & Artikel)
-        function openQrModal(singleItemId) {
-            openA4QrSheet([singleItemId]);
+        function openQrModal(itemId) {
+            openA4QrSheet([itemId]);
         }
 
         function openA4QrSheet(itemIds) {
-            const printArea = document.getElementById('a4PrintArea');
-            printArea.innerHTML = '';
+            const area = document.getElementById('a4PrintArea');
+            area.innerHTML = '';
 
-            itemIds.forEach((itemId, idx) => {
-                const item = allItems.find(i => i.id === itemId);
-                if (!item) return;
+            itemIds.forEach(id => {
+                const item = allItems.find(i => i.id === id);
+                const qrUrl = `${window.location.origin}${window.location.pathname}?item=${id}`;
 
                 const sticker = document.createElement('div');
                 sticker.className = 'qr-sticker';
-                const canvasId = `qr-canvas-${idx}`;
-
                 sticker.innerHTML = `
-                    <div id="${canvasId}" class="shrink-0"></div>
-                    <div class="overflow-hidden leading-tight text-left flex-1 min-w-0">
-                        <h4 class="font-bold text-[11px] truncate text-slate-900">${item.name}</h4>
-                        <p class="text-[10px] font-mono text-slate-500 font-semibold">${item.id}</p>
-                        <p class="text-[8px] text-slate-600 truncate mt-0.5">📍 ${item.room || 'Lager'} / ${item.shelf || 'Regal'}</p>
-                        <p class="text-[8px] text-emerald-700 font-bold mt-0.5 uppercase truncate">${item.category}</p>
+                    <div id="qr-target-${id}" class="shrink-0"></div>
+                    <div class="overflow-hidden text-slate-800">
+                        <div class="font-extrabold text-[11px] truncate leading-tight">${item?.name || id}</div>
+                        <div class="text-[9px] font-mono text-emerald-700 font-bold leading-tight mt-0.5">${id}</div>
+                        <div class="text-[8px] text-slate-500 truncate leading-tight mt-1">📍 ${item?.room || 'Lager'} / ${item?.shelf || 'Regal'}</div>
                     </div>
                 `;
+                area.appendChild(sticker);
 
-                printArea.appendChild(sticker);
-                // Deep Link URL im QR Code
-                const deepLinkUrl = `https://lagerverwaltung-aose923s9-joas-frese.vercel.app/?item=${item.id}`;
-                new QRCode(document.getElementById(canvasId), { text: deepLinkUrl, width: 90, height: 90, correctLevel: QRCode.CorrectLevel.M });
+                setTimeout(() => {
+                    new QRCode(document.getElementById(`qr-target-${id}`), {
+                        text: qrUrl,
+                        width: 90,
+                        height: 90
+                    });
+                }, 50);
             });
 
             document.getElementById('qrModal').classList.remove('hidden');
         }
 
-        function closeQrModal() { document.getElementById('qrModal').classList.add('hidden'); }
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
 
-        async function openScannerModal() {
+        function openScannerModal() {
             document.getElementById('scannerModal').classList.remove('hidden');
             html5QrScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 });
-            html5QrScanner.render(async (decodedText) => {
-                await closeScannerModal();
-                // Falls Deep Link gescannt wurde, extrahiere ID
-                let searchVal = decodedText;
-                if (decodedText.includes('?item=')) {
-                    searchVal = decodedText.split('?item=')[1];
+            html5QrScanner.render((decodedText) => {
+                let itemId = decodedText;
+                if (decodedText.includes('item=')) {
+                    itemId = decodedText.split('item=')[1].split('&')[0];
                 }
-                document.getElementById('searchInput').value = searchVal;
+                closeScannerModal();
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.value = itemId;
+                    handleSearchInput();
+                }
                 switchTab('inventory');
-                renderItems();
             });
         }
 
-        async function closeScannerModal() {
+        function closeScannerModal() {
             if (html5QrScanner) {
-                try { await html5QrScanner.clear(); } catch(e) {}
-                html5QrScanner = null;
+                html5QrScanner.clear();
             }
             document.getElementById('scannerModal').classList.add('hidden');
-        }
-
-        async function checkChatNotifications() {
-            try {
-                const { data: messages } = await db.from('messages').select('*');
-                if (!messages) return;
-
-                if (lastCheckedMessageCount > 0 && messages.length > lastCheckedMessageCount) {
-                    const latest = messages[messages.length - 1];
-                    if (latest.sender_id !== currentUser?.id) {
-                        document.getElementById('chatNavBadge').classList.remove('hidden');
-                        document.getElementById('dashChatDot').classList.remove('hidden');
-                    }
-                }
-                lastCheckedMessageCount = messages.length;
-            } catch(e) {}
-        }
-
-        async function loadDashboardChat() {
-            try {
-                const targetRecipient = document.getElementById('dashChatRecipientSelect').value;
-                const { data: messages } = await db.from('messages').select('*').order('created_at', { ascending: true });
-                chatMessages = messages || [];
-
-                let filtered = [];
-                if (targetRecipient === 'global') {
-                    filtered = chatMessages.filter(m => !m.recipient_id);
-                } else {
-                    filtered = chatMessages.filter(m => 
-                        (m.sender_id === currentUser?.id && m.recipient_id === targetRecipient) ||
-                        (m.sender_id === targetRecipient && m.recipient_id === currentUser?.id)
-                    );
-                }
-
-                const box = document.getElementById('dashChatMessagesBox');
-                if (!box) return;
-
-                if (filtered.length === 0) {
-                    box.innerHTML = `<div class="p-8 text-center text-slate-400 italic">Keine Nachrichten vorhanden.</div>`;
-                    return;
-                }
-
-                box.innerHTML = filtered.map(m => {
-                    const isMe = m.sender_id === currentUser?.id;
-                    return `
-                        <div class="bg-slate-50 p-2.5 rounded-xl max-w-[85%] ${isMe ? 'ml-auto bg-emerald-50 border border-emerald-100' : ''}">
-                            <div class="flex justify-between font-bold text-[11px] text-slate-700 mb-0.5">
-                                <span>${m.sender_name || 'Anonym'}</span>
-                                <span class="text-[9px] text-slate-400 font-normal">${new Date(m.created_at).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})}</span>
-                            </div>
-                            <p class="text-xs text-slate-600">${m.text}</p>
-                        </div>
-                    `;
-                }).join('');
-                box.scrollTop = box.scrollHeight;
-            } catch(e) {}
-        }
-
-        async function sendDashChatMessage(e) {
-            e.preventDefault();
-            const input = document.getElementById('dashChatInput');
-            const targetRecipient = document.getElementById('dashChatRecipientSelect').value;
-            if (!input.value.trim()) return;
-
-            await db.from('messages').insert([{
-                sender_id: currentUser?.id,
-                sender_name: userProfile?.full_name,
-                text: input.value.trim(),
-                recipient_id: targetRecipient === 'global' ? null : targetRecipient
-            }]);
-
-            input.value = '';
-            loadDashboardChat();
-            loadChatMessages();
-        }
-
-        async function loadChatMessages() {
-            try {
-                const targetRecipient = document.getElementById('chatRecipientSelect').value;
-                const { data: messages } = await db.from('messages').select('*').order('created_at', { ascending: true });
-                chatMessages = messages || [];
-
-                let filteredMessages = [];
-                if (targetRecipient === 'global') {
-                    filteredMessages = chatMessages.filter(m => !m.recipient_id);
-                } else {
-                    filteredMessages = chatMessages.filter(m => 
-                        (m.sender_id === currentUser?.id && m.recipient_id === targetRecipient) ||
-                        (m.sender_id === targetRecipient && m.recipient_id === currentUser?.id)
-                    );
-                }
-
-                const box = document.getElementById('chatMessagesBox');
-                if (!box) return;
-
-                // Mark read
-                document.getElementById('chatNavBadge').classList.add('hidden');
-                document.getElementById('dashChatDot').classList.add('hidden');
-
-                if (filteredMessages.length === 0) {
-                    box.innerHTML = `<div class="p-8 text-center text-slate-400 italic">Noch keine Nachrichten in diesem Kanal.</div>`;
-                    return;
-                }
-
-                box.innerHTML = filteredMessages.map(m => {
-                    const isMe = m.sender_id === currentUser?.id;
-                    const isPrivate = !!m.recipient_id;
-
-                    return `
-                        <div class="bg-slate-50 p-3 rounded-2xl max-w-md ${isMe ? 'self-end bg-emerald-50 border border-emerald-100' : ''}">
-                            <div class="flex justify-between font-bold text-xs text-slate-700 mb-1 gap-2">
-                                <span>${m.sender_name || 'Anonym'} ${isPrivate ? '<span class="text-[9px] text-purple-600 font-normal">(Direktnachricht)</span>' : ''}</span>
-                                <span class="text-[10px] text-slate-400 font-normal">${new Date(m.created_at).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})} Uhr</span>
-                            </div>
-                            <p class="text-xs text-slate-600">${m.text}</p>
-                        </div>
-                    `;
-                }).join('');
-                box.scrollTop = box.scrollHeight;
-            } catch(e) {}
-        }
-
-        async function sendChatMessage(e) {
-            e.preventDefault();
-            const input = document.getElementById('chatInput');
-            const targetRecipient = document.getElementById('chatRecipientSelect').value;
-            if (!input.value.trim()) return;
-
-            await db.from('messages').insert([{
-                sender_id: currentUser?.id,
-                sender_name: userProfile?.full_name,
-                text: input.value.trim(),
-                recipient_id: targetRecipient === 'global' ? null : targetRecipient
-            }]);
-
-            input.value = '';
-            loadChatMessages();
-            loadDashboardChat();
         }
 
         function openNewUserModal() { document.getElementById('newUserModal').classList.remove('hidden'); }
@@ -1847,56 +1728,181 @@
             const password = document.getElementById('newUserPass').value.trim();
             const role = document.getElementById('newUserRole').value;
 
-            try {
-                const { data, error } = await db.auth.signUp({
-                    email, password, options: { data: { full_name: name, role: role } }
-                });
-                if (error) throw error;
-
-                alert("Neuer Benutzer angelegt!");
+            const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: name, role: role } } });
+            if (error) {
+                alert("Fehler beim Erstellen:\n" + error.message);
+            } else {
+                alert("Benutzer erfolgreich angelegt!");
                 closeNewUserModal();
                 fetchAllUsers();
-            } catch(err) {
-                alert("Fehler beim Anlegen: " + err.message);
             }
         }
 
-        function switchTab(tabId) {
-            closeSidebar();
+        function renderDashboardCalendar() {
+            const calendarEl = document.getElementById('dashboardCalendar');
+            if (!calendarEl) return;
 
-            document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.remove('bg-slate-800/90', 'text-white');
-                el.classList.add('text-slate-400');
+            const events = activeRentals.map(r => ({
+                title: `${r.items ? r.items.name : r.item_id} (${r.project || 'Ausleihe'})`,
+                start: r.start_date,
+                end: r.end_date,
+                color: r.user_id === currentUser?.id ? '#059669' : '#3b82f6'
+            }));
+
+            if (calendar) calendar.destroy();
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'de',
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
+                events: events,
+                height: '100%'
             });
-
-            document.getElementById(`nav-${tabId}`).classList.add('bg-slate-800/90', 'text-white');
-            document.getElementById(`nav-${tabId}`).classList.remove('text-slate-400');
-
-            if (tabId === 'chat') {
-                document.getElementById('chatNavBadge').classList.add('hidden');
-                document.getElementById('dashChatDot').classList.add('hidden');
-            }
-
-            const titles = {
-                'dashboard': 'Übersicht',
-                'inventory': 'Lagerbestand',
-                'movements': 'Warenbewegungen',
-                'chat': 'Team-Chat',
-                'users': 'Benutzerverwaltung'
-            };
-            document.getElementById('pageTitle').innerText = titles[tabId];
-
-            document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-
-            if (tabId === 'dashboard') {
-                setTimeout(renderDashboardCalendar, 100);
-            }
+            calendar.render();
         }
 
-        async function logout() {
-            try { await db.auth.signOut(); } catch(e) {}
-            window.location.reload();
+        function openCalendarModal() {
+            document.getElementById('calendarModal').classList.remove('hidden');
+            setTimeout(() => renderModalCalendar(), 100);
+        }
+
+        function closeCalendarModal() {
+            document.getElementById('calendarModal').classList.add('hidden');
+        }
+
+        function renderModalCalendar() {
+            const calendarEl = document.getElementById('modalCalendarContainer');
+            if (!calendarEl) return;
+
+            const events = activeRentals.map(r => ({
+                title: `${r.items ? r.items.name : r.item_id} (${r.project || 'Ausleihe'})`,
+                start: r.start_date,
+                end: r.end_date,
+                color: r.user_id === currentUser?.id ? '#059669' : '#3b82f6'
+            }));
+
+            if (modalCalendar) modalCalendar.destroy();
+            modalCalendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'de',
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+                events: events,
+                height: '100%'
+            });
+            modalCalendar.render();
+        }
+
+        async function loadChatMessages() {
+            const recipient = document.getElementById('chatRecipientSelect')?.value || 'global';
+            let query = db.from('messages').select('*').order('created_at', { ascending: true });
+
+            if (recipient === 'global') {
+                query = query.eq('recipient_id', 'global');
+            } else {
+                query = query.or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${recipient}),and(sender_id.eq.${recipient},recipient_id.eq.${currentUser.id})`);
+            }
+
+            const { data } = await query;
+            chatMessages = data || [];
+
+            const box = document.getElementById('chatMessagesBox');
+            if (!box) return;
+            box.innerHTML = '';
+
+            chatMessages.forEach(m => {
+                const isMe = m.sender_id === currentUser.id;
+                const time = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+                box.innerHTML += `
+                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
+                        <span class="text-[10px] text-slate-400 px-1">${m.sender_name || 'Nutzer'} • ${time}</span>
+                        <div class="max-w-[80%] rounded-2xl px-4 py-2 text-xs ${isMe ? 'bg-emerald-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none'}">
+                            ${m.content}
+                        </div>
+                    </div>
+                `;
+            });
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function sendChatMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const content = input.value.trim();
+            const recipient = document.getElementById('chatRecipientSelect').value;
+
+            if (!content) return;
+
+            await db.from('messages').insert([{
+                sender_id: currentUser.id,
+                sender_name: userProfile?.full_name || 'Nutzer',
+                recipient_id: recipient,
+                content: content
+            }]);
+
+            input.value = '';
+            loadChatMessages();
+        }
+
+        async function loadDashboardChat() {
+            const recipient = document.getElementById('dashChatRecipientSelect')?.value || 'global';
+            let query = db.from('messages').select('*').order('created_at', { ascending: true });
+
+            if (recipient === 'global') {
+                query = query.eq('recipient_id', 'global');
+            } else {
+                query = query.or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${recipient}),and(sender_id.eq.${recipient},recipient_id.eq.${currentUser.id})`);
+            }
+
+            const { data } = await query;
+            const box = document.getElementById('dashChatMessagesBox');
+            if (!box) return;
+            box.innerHTML = '';
+
+            (data || []).forEach(m => {
+                const isMe = m.sender_id === currentUser.id;
+                const time = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+                box.innerHTML += `
+                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-0.5">
+                        <span class="text-[9px] text-slate-400 px-1">${m.sender_name || 'Nutzer'} • ${time}</span>
+                        <div class="max-w-[85%] rounded-xl px-3 py-1.5 text-xs ${isMe ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-800'}">
+                            ${m.content}
+                        </div>
+                    </div>
+                `;
+            });
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function sendDashChatMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('dashChatInput');
+            const content = input.value.trim();
+            const recipient = document.getElementById('dashChatRecipientSelect').value;
+
+            if (!content) return;
+
+            await db.from('messages').insert([{
+                sender_id: currentUser.id,
+                sender_name: userProfile?.full_name || 'Nutzer',
+                recipient_id: recipient,
+                content: content
+            }]);
+
+            input.value = '';
+            loadDashboardChat();
+        }
+
+        async function checkChatNotifications() {
+            if (!currentUser) return;
+            const { data } = await db.from('messages').select('id').or(`recipient_id.eq.global,recipient_id.eq.${currentUser.id}`);
+            const count = data ? data.length : 0;
+
+            if (lastCheckedMessageCount > 0 && count > lastCheckedMessageCount) {
+                document.getElementById('chatNavBadge').classList.remove('hidden');
+                document.getElementById('dashChatDot').classList.remove('hidden');
+            }
+            lastCheckedMessageCount = count;
         }
     </script>
 </body>
