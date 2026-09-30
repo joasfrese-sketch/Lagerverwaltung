@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lagerverwaltung Pro</title>
+    <title>Lagerverwaltung - Bestand</title>
     
     <!-- PWA & Mobile Meta Tags -->
     <link rel="manifest" href="manifest.json">
@@ -21,6 +21,13 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
+
+        /* Eingefügte Styles aus Fragment 1 */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .card { background: #1e293b; border-radius: 8px; padding: 16px; border: 1px solid #334155; color: #fff; }
+        .pagination-bar { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 20px; }
+        .pagination-bar button { background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        .pagination-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* FullCalendar Design & Responsiveness Anpassungen */
         .fc {
@@ -102,12 +109,14 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans overflow-x-hidden">
 
-    <!-- SUPABASE KONFIGURATION -->
+    <!-- SUPABASE KONFIGURATION (Fragment 2 Client-Initialisierung integriert) -->
     <script>
-        const RAW_URL = 'https://qqjtlcdqhyglhbcixvbr.supabase.co/rest/v1/';
-        const SUPABASE_URL = RAW_URL.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
-        const SUPABASE_KEY = 'sb_publishable_Q7rXTPgk9oZVj86Cpow8Dw_0mK2K3Aa';
-        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_URL = 'https://qqjtlcdqhyglhbcixvbr.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_Q7rXTPgk9oZVj86Cpow8Dw_0mK2K3Aa';
+        
+        // Supabase-Client initialisieren
+        const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+        const db = supabase; // Alias für Abwärtskompatibilität
     </script>
 
     <!-- 1. LOGIN / REGISTRIERUNG -->
@@ -293,7 +302,7 @@
                     </div>
                 </div>
 
-                <!-- TAB 2: LAGERBESTAND -->
+                <!-- TAB 2: LAGERBESTAND (Integrierte Kartenansicht & Paginierung aus Fragment 1) -->
                 <div id="tab-inventory" class="hidden space-y-6">
                     <div id="bulkActionBar" class="hidden bg-slate-900 text-white p-4 rounded-2xl shadow-xl flex flex-wrap items-center justify-between gap-4 border border-slate-700">
                         <div class="flex items-center gap-3">
@@ -336,7 +345,16 @@
                         </div>
                     </div>
 
-                    <div id="itemsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    <!-- Container aus Fragment 1 & 2 für Artikel-Karten -->
+                    <div id="item-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    <div id="itemsGrid" class="hidden"></div> <!-- Kompatibilitätshook -->
+
+                    <!-- Seitennavigation aus Fragment 1 -->
+                    <div class="pagination-bar">
+                        <button id="prev-btn" onclick="changePage(-1)">← Vorherige</button>
+                        <span id="page-info" class="text-xs font-semibold text-slate-600">Seite 1 von 1</span>
+                        <button id="next-btn" onclick="changePage(1)">Nächste →</button>
+                    </div>
                 </div>
 
                 <!-- TAB 3: WARENBEWEGUNGEN -->
@@ -673,8 +691,12 @@
         </div>
     </div>
 
-    <!-- MAIN JAVASCRIPT LOGIK -->
+    <!-- MAIN JAVASCRIPT LOGIK (Fragment 2 Logik integriert) -->
     <script>
+        const PAGE_SIZE = 20; // Zeige maximal 20 Einträge pro Seite
+        let currentPage = 1;
+        let totalPages = 1;
+
         let isRegisterMode = false;
         let currentUser = null;
         let userProfile = null;
@@ -719,7 +741,115 @@
                     switchTab('inventory');
                 }, 1000);
             }
+
+            // Beim Aufrufen der Seite direkt Seite 1 laden (aus Fragment 2)
+            fetchItems(1);
         };
+
+        // Objekte aus Supabase mit Range-Limit laden (Eingefügt aus Fragment 2)
+        async function fetchItems(page = 1) {
+            const grid = document.getElementById('item-grid');
+            if (!grid) return;
+            grid.innerHTML = '<p class="p-4 text-slate-400">Lade Objekte...</p>';
+
+            // Berechne Start- und End-Index für Supabase .range()
+            const from = (page - 1) * PAGE_SIZE;
+            const to = from + PAGE_SIZE - 1;
+
+            try {
+                const { data, count, error } = await db
+                    .from('items') // Name der Tabelle in deiner DB
+                    .select('*', { count: 'exact' }) // holt Objekte & die Gesamtzahl
+                    .order('id', { ascending: true })
+                    .range(from, to);
+
+                if (error) throw error;
+
+                allItems = data || [];
+
+                // Seitenzahlen berechnen
+                totalPages = Math.ceil((count || 1) / PAGE_SIZE);
+                currentPage = page;
+
+                // UI aktualisieren
+                renderCards(data);
+                updatePaginationControls(count || 0);
+
+                const categories = [...new Set(allItems.map(i => i.category))];
+                const datalist = document.getElementById('categorySuggestions');
+                if (datalist) {
+                    datalist.innerHTML = categories.map(c => `<option value="${c}">`).join('');
+                }
+
+            } catch (err) {
+                console.error('Fehler beim Laden der Daten:', err.message);
+                grid.innerHTML = '<p class="p-4 text-red-500">Fehler beim Laden der Objekte.</p>';
+            }
+        }
+
+        // Rendert die geladenen Elemente (Kombination aus Fragment 1 & 2)
+        function renderCards(items) {
+            const grid = document.getElementById('item-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            if (!items || items.length === 0) {
+                grid.innerHTML = '<p class="p-4 text-slate-400">Keine Objekte gefunden.</p>';
+                return;
+            }
+
+            const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
+
+            items.forEach(item => {
+                const isChecked = selectedItemIds.has(item.id);
+                const effectiveStatus = getItemEffectiveStatus(item);
+                const photos = Array.isArray(item.photos) ? item.photos : (item.image_url ? [item.image_url] : []);
+                const mainPhoto = photos[0] || 'https://via.placeholder.com/300x200?text=Kein+Bild';
+
+                const card = document.createElement('div');
+                card.className = `card flex gap-3 items-center ${isChecked ? 'ring-2 ring-emerald-500 bg-slate-800' : ''}`;
+                
+                card.innerHTML = `
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleItemSelection('${item.id}')" class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer shrink-0">
+                    <img src="${mainPhoto}" class="w-16 h-16 object-cover rounded-lg border border-slate-700 shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-white text-sm truncate">${item.name || 'Unbenannt'}</h3>
+                        <p class="text-xs text-slate-400"><strong>SKU/ID:</strong> ${item.id}</p>
+                        <p class="text-xs text-slate-400"><strong>Kategorie:</strong> ${item.category || '-'}</p>
+                        <p class="text-xs text-slate-400"><strong>Status:</strong> ${effectiveStatus}</p>
+                        
+                        <div class="flex items-center gap-2 mt-2">
+                            <button onclick="openRentModal('${item.id}', '${item.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 py-1 rounded">Ausleihen</button>
+                            <button onclick="openQrModal('${item.id}')" class="text-xs border border-slate-600 px-2 py-1 rounded hover:bg-slate-700">QR</button>
+                            ${isAdmin ? `
+                                <button onclick="editItem('${item.id}')" class="text-xs text-blue-400 hover:underline">✏️</button>
+                                <button onclick="deleteItem('${item.id}')" class="text-xs text-red-400 hover:underline">🗑️️</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Aktualisiert den Zustand der Weiter/Zurück-Buttons (aus Fragment 2)
+        function updatePaginationControls(totalCount) {
+            const pageInfo = document.getElementById('page-info');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+
+            if (pageInfo) pageInfo.textContent = `Seite ${currentPage} von ${totalPages} (${totalCount} Objekte gesamt)`;
+            if (prevBtn) prevBtn.disabled = currentPage <= 1;
+            if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+        }
+
+        // Blättern (aus Fragment 2)
+        function changePage(direction) {
+            const newPage = currentPage + direction;
+            if (newPage >= 1 && newPage <= totalPages) {
+                fetchItems(newPage);
+            }
+        }
 
         function updateDateDisplay() {
             const now = new Date();
@@ -825,7 +955,7 @@
 
         async function fetchAllData() {
             await fetchAllUsers();
-            await fetchItems();
+            await fetchItems(currentPage);
             await fetchRentals();
             await fetchWaitlist();
             await fetchActivityLogs();
@@ -903,21 +1033,6 @@
             await fetchAllUsers();
         }
 
-        async function fetchItems() {
-            try {
-                const { data } = await db.from('items').select('*');
-                allItems = data || [];
-                
-                const categories = [...new Set(allItems.map(i => i.category))];
-                const datalist = document.getElementById('categorySuggestions');
-                if (datalist) {
-                    datalist.innerHTML = categories.map(c => `<option value="${c}">`).join('');
-                }
-
-                renderItems();
-            } catch(e) {}
-        }
-
         async function fetchRentals() {
             try {
                 const { data } = await db.from('rentals').select('*, items(*)');
@@ -925,7 +1040,7 @@
                 renderMyRentals();
                 renderDashboardCalendar();
                 if (modalCalendar) renderModalCalendar();
-                renderItems();
+                fetchItems(currentPage);
             } catch(e) {}
         }
 
@@ -1021,12 +1136,12 @@
             });
             const activeBtn = document.getElementById(`filter-${status}`);
             if (activeBtn) activeBtn.className = 'status-filter-btn bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl';
-            renderItems();
+            fetchItems(1);
         }
 
         function handleSearchInput() {
             toggleClearSearchBtn();
-            renderItems();
+            fetchItems(1);
         }
 
         function toggleClearSearchBtn() {
@@ -1046,112 +1161,23 @@
             if (input) {
                 input.value = '';
                 toggleClearSearchBtn();
-                renderItems();
+                fetchItems(1);
                 input.focus();
             }
         }
 
         function toggleSelectAllVisible() {
-            if (!filteredItems || filteredItems.length === 0) return;
+            if (!allItems || allItems.length === 0) return;
 
-            const allSelected = filteredItems.every(item => selectedItemIds.has(item.id));
+            const allSelected = allItems.every(item => selectedItemIds.has(item.id));
 
             if (allSelected) {
-                filteredItems.forEach(item => selectedItemIds.delete(item.id));
+                allItems.forEach(item => selectedItemIds.delete(item.id));
             } else {
-                filteredItems.forEach(item => selectedItemIds.add(item.id));
+                allItems.forEach(item => selectedItemIds.add(item.id));
             }
 
-            renderItems();
-        }
-
-        function renderItems() {
-            toggleClearSearchBtn();
-            const grid = document.getElementById('itemsGrid');
-            if (!grid) return;
-
-            const query = (document.getElementById('searchInput').value || '').toLowerCase();
-            grid.innerHTML = '';
-
-            filteredItems = allItems.filter(item => {
-                const effectiveStatus = getItemEffectiveStatus(item);
-                const matchesSearch = `${item.id} ${item.name} ${item.category} ${item.permission} ${item.room} ${item.shelf} ${item.compartment} ${item.accessories} ${effectiveStatus}`.toLowerCase().includes(query);
-                
-                if (currentStatusFilter === 'ALL') return matchesSearch;
-                return matchesSearch && effectiveStatus === currentStatusFilter;
-            });
-
-            const selectBtn = document.getElementById('selectAllVisibleBtn');
-            if (selectBtn) {
-                if (filteredItems.length > 0 && filteredItems.every(item => selectedItemIds.has(item.id))) {
-                    selectBtn.innerHTML = '☒ Alle sichtbaren abwählen';
-                } else {
-                    selectBtn.innerHTML = '☑️ Alle sichtbaren auswählen';
-                }
-            }
-
-            if (filteredItems.length === 0) {
-                grid.innerHTML = `<div class="col-span-2 p-8 text-center text-slate-400 italic bg-white rounded-2xl border">Keine Artikel im gewählten Status/Suchfilter.</div>`;
-                updateBulkActionBar();
-                return;
-            }
-
-            const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
-
-            filteredItems.forEach(item => {
-                const photos = Array.isArray(item.photos) ? item.photos : (item.image_url ? [item.image_url] : []);
-                const mainPhoto = photos[0] || 'https://via.placeholder.com/300x200?text=Kein+Bild';
-
-                const isChecked = selectedItemIds.has(item.id);
-                const effectiveStatus = getItemEffectiveStatus(item);
-
-                const locationText = `📍 ${item.room || 'Lager'} ➔ ${item.shelf || 'Regal'} ➔ ${item.compartment || 'Fach'}`;
-                const waitCount = waitlistEntries.filter(w => w.item_id === item.id).length;
-
-                let statusBadge = '';
-                let actionBtn = '';
-
-                if (effectiveStatus === 'Wartung / Defekt') {
-                    statusBadge = `<span class="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded">🛠️ Defekt</span>`;
-                    if (isAdmin) actionBtn = `<button onclick="clearMaintenance('${item.id}')" class="bg-emerald-600 text-white text-xs px-2.5 py-1.5 rounded-lg">✅ Freigeben</button>`;
-                } else if (effectiveStatus === 'In Inventur') {
-                    statusBadge = `<span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded">📋 In Inventur</span>`;
-                    actionBtn = `<button onclick="clearMaintenance('${item.id}')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg">✓ Abschließen</button>`;
-                } else if (effectiveStatus === 'Ausgeliehen') {
-                    statusBadge = `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">Ausgeliehen</span>`;
-                    actionBtn = `<button onclick="toggleWaitlist('${item.id}')" class="text-xs text-emerald-600 hover:underline">⏳ Warteliste (${waitCount})</button>`;
-                } else {
-                    statusBadge = `<span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded">Verfügbar</span>`;
-                    actionBtn = `<button onclick="openRentModal('${item.id}', '${item.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">📅 Ausleihen</button>`;
-                }
-
-                grid.innerHTML += `
-                    <div class="bg-white rounded-2xl p-4 border border-slate-200/70 shadow-sm flex gap-3 items-center ${isChecked ? 'ring-2 ring-emerald-500 bg-emerald-50/20' : ''}">
-                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleItemSelection('${item.id}')" class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer shrink-0">
-                        
-                        <img src="${mainPhoto}" class="w-20 h-20 object-cover rounded-xl border shrink-0">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-start">
-                                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">${item.category}</span>
-                                ${statusBadge}
-                            </div>
-                            <h4 class="font-bold text-slate-800 text-sm truncate">${item.name}</h4>
-                            <p class="text-[11px] text-slate-400 truncate">${locationText}</p>
-                            <p class="text-[10px] text-slate-500 mt-0.5 truncate">Zubehör: ${item.accessories || 'Keins'}</p>
-
-                            <div class="flex items-center gap-2 mt-2">
-                                ${actionBtn}
-                                <button onclick="openQrModal('${item.id}')" class="text-xs border px-2 py-1 rounded-lg hover:bg-slate-50">🖨️ QR</button>
-                                ${isAdmin ? `
-                                    <button onclick="editItem('${item.id}')" class="text-xs text-blue-600 hover:underline">✏️</button>
-                                    <button onclick="deleteItem('${item.id}')" class="text-xs text-red-600 hover:underline">🗑️</button>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-
+            renderCards(allItems);
             updateBulkActionBar();
         }
 
@@ -1161,12 +1187,14 @@
             } else {
                 selectedItemIds.add(id);
             }
-            renderItems();
+            renderCards(allItems);
+            updateBulkActionBar();
         }
 
         function clearSelection() {
             selectedItemIds.clear();
-            renderItems();
+            renderCards(allItems);
+            updateBulkActionBar();
         }
 
         function updateBulkActionBar() {
@@ -1229,7 +1257,6 @@
             document.getElementById('excelImportModal').classList.add('hidden');
         }
 
-        // EXCEL PROCESSOR - AUTOMATISCHE ID GENERIERUNG & KEINE VERWENDUNG DER EXCEL-ID
         function processExcelFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1246,7 +1273,6 @@
                     return;
                 }
 
-                // Ermittlung der höchsten existierenden Nummern-ID im Bestand
                 let highestNum = 1000;
                 allItems.forEach(item => {
                     if (item.id && item.id.startsWith('ART-')) {
@@ -1261,7 +1287,6 @@
                     const keys = Object.keys(row);
                     const findKey = (terms) => keys.find(k => terms.some(t => k.toLowerCase().includes(t)));
 
-                    // ID wird ignoriert und strikt fortlaufend neu vom Programm generiert
                     highestNum++;
                     const autoGeneratedId = `ART-${highestNum}`;
 
@@ -1320,14 +1345,13 @@
             container.classList.remove('hidden');
         }
 
-        // BATCH IMPORT FÜR ANZAHL > 1000 UNTERSTÜTZUNG
         async function confirmExcelImport() {
             if (importedExcelData.length === 0) return;
 
             const btn = document.getElementById('confirmImportBtn');
             btn.disabled = true;
 
-            const batchSize = 100; // In Chunks senden, um Payload-Limits zu umgehen
+            const batchSize = 100;
             const total = importedExcelData.length;
             let successCount = 0;
 
@@ -1834,17 +1858,20 @@
                     today: 'Heute',
                     month: 'Monat',
                     week: 'Woche',
-                    day: 'Tag',
-                    list: 'Liste'
+                    day: 'Tag'
                 },
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                },
                 events: events,
                 height: 'auto'
             });
+
             calendar.render();
         }
 
-        // DEUTSCHE LOKALISIERUNG FÜR DEN VOLLBILD KALENDER
         function renderModalCalendar() {
             const calendarEl = document.getElementById('modalCalendarContainer');
             if (!calendarEl) return;
@@ -1865,73 +1892,47 @@
                     today: 'Heute',
                     month: 'Monat',
                     week: 'Woche',
-                    day: 'Tag',
-                    list: 'Liste'
+                    day: 'Tag'
                 },
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                },
                 events: events,
                 height: '100%'
             });
+
             modalCalendar.render();
         }
 
-        function openNewUserModal() {
-            document.getElementById('newUserModal').classList.remove('hidden');
-        }
-
-        function closeNewUserModal() {
-            document.getElementById('newUserModal').classList.add('hidden');
-        }
-
-        async function adminCreateUser(event) {
-            event.preventDefault();
-            const name = document.getElementById('newUserName').value.trim();
-            const email = document.getElementById('newUserEmail').value.trim();
-            const password = document.getElementById('newUserPass').value.trim();
-            const role = document.getElementById('newUserRole').value;
-
-            const { data, error } = await db.auth.signUp({
-                email,
-                password,
-                options: { data: { full_name: name, role: role } }
+        function switchTab(tabId) {
+            ['dashboard', 'inventory', 'movements', 'chat', 'users'].forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                const nav = document.getElementById(`nav-${t}`);
+                if (el) el.classList.add('hidden');
+                if (nav) nav.className = 'nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition';
             });
 
-            if (error) {
-                alert("Fehler beim Erstellen des Benutzers:\n" + error.message);
-                return;
-            }
-
-            alert("Benutzer erfolgreich angelegt!");
-            closeNewUserModal();
-            fetchAllUsers();
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('bg-slate-800/90', 'text-white'));
-
             const targetTab = document.getElementById(`tab-${tabId}`);
-            if (targetTab) targetTab.classList.remove('hidden');
-
             const targetNav = document.getElementById(`nav-${tabId}`);
-            if (targetNav) targetNav.classList.add('bg-slate-800/90', 'text-white');
+            if (targetTab) targetTab.classList.remove('hidden');
+            if (targetNav) targetNav.className = 'nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white bg-slate-800/90 transition';
 
             const titles = {
-                'dashboard': 'Übersicht',
-                'inventory': 'Lagerbestand',
-                'movements': 'Warenbewegungen',
-                'chat': 'Team-Chat',
-                'users': 'Benutzerverwaltung'
+                dashboard: 'Übersicht',
+                inventory: 'Lagerbestand',
+                movements: 'Warenbewegungen',
+                chat: 'Team-Chat',
+                users: 'Benutzerverwaltung'
             };
-            document.getElementById('pageTitle').innerText = titles[tabId] || 'Übersicht';
+            document.getElementById('pageTitle').innerText = titles[tabId] || 'Lagerverwaltung';
 
-            if (tabId === 'chat') {
-                document.getElementById('chatNavBadge')?.classList.add('hidden');
-                loadChatMessages();
-            } else if (tabId === 'dashboard') {
-                document.getElementById('dashChatDot')?.classList.add('hidden');
-                loadDashboardChat();
-                if (calendar) calendar.render();
+            if (tabId === 'dashboard') {
+                setTimeout(() => { if (calendar) calendar.render(); }, 100);
+            }
+            if (tabId === 'inventory') {
+                fetchItems(currentPage);
             }
 
             closeSidebar();
@@ -1942,9 +1943,12 @@
             location.reload();
         }
 
+        // Chat Logik
         async function loadChatMessages() {
-            if (!currentUser) return;
             const recipient = document.getElementById('chatRecipientSelect')?.value || 'global';
+            const box = document.getElementById('chatMessagesBox');
+            if (!box) return;
+
             let query = db.from('chat_messages').select('*').order('created_at', { ascending: true });
 
             if (recipient === 'global') {
@@ -1955,56 +1959,48 @@
 
             const { data } = await query;
             chatMessages = data || [];
-            renderChatBox('chatMessagesBox', chatMessages);
-        }
 
-        function renderChatBox(boxId, msgs) {
-            const box = document.getElementById(boxId);
-            if (!box) return;
-            box.innerHTML = '';
-
-            if (msgs.length === 0) {
-                box.innerHTML = `<div class="text-center text-slate-400 italic py-8">Keine Nachrichten vorhanden.</div>`;
-                return;
-            }
-
-            msgs.forEach(m => {
+            box.innerHTML = chatMessages.map(m => {
                 const isMe = m.sender_id === currentUser?.id;
-                const time = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-
-                box.innerHTML += `
+                const date = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                return `
                     <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                        <div class="text-[10px] text-slate-400 mb-0.5">${m.sender_name || 'Anonym'} • ${time}</div>
-                        <div class="${isMe ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-800'} px-3.5 py-2 rounded-2xl max-w-[80%] text-xs shadow-sm">
+                        <div class="text-[10px] text-slate-400 mb-0.5">${m.sender_name} • ${date}</div>
+                        <div class="max-w-[80%] rounded-2xl px-3.5 py-2 text-xs ${isMe ? 'bg-emerald-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none'}">
                             ${m.message}
                         </div>
                     </div>
                 `;
-            });
+            }).join('');
+
             box.scrollTop = box.scrollHeight;
         }
 
-        async function sendChatMessage(e) {
-            e.preventDefault();
+        async function sendChatMessage(event) {
+            event.preventDefault();
             const input = document.getElementById('chatInput');
-            const msg = input.value.trim();
-            const recipient = document.getElementById('chatRecipientSelect')?.value || 'global';
-            if (!msg || !currentUser) return;
+            const message = input.value.trim();
+            const recipient = document.getElementById('chatRecipientSelect').value;
+
+            if (!message) return;
 
             await db.from('chat_messages').insert([{
                 sender_id: currentUser.id,
                 sender_name: userProfile?.full_name || currentUser.email,
                 recipient_id: recipient,
-                message: msg
+                message: message
             }]);
 
             input.value = '';
             loadChatMessages();
+            loadDashboardChat();
         }
 
         async function loadDashboardChat() {
-            if (!currentUser) return;
             const recipient = document.getElementById('dashChatRecipientSelect')?.value || 'global';
+            const box = document.getElementById('dashChatMessagesBox');
+            if (!box) return;
+
             let query = db.from('chat_messages').select('*').order('created_at', { ascending: true });
 
             if (recipient === 'global') {
@@ -2014,39 +2010,84 @@
             }
 
             const { data } = await query;
-            renderChatBox('dashChatMessagesBox', data || []);
+            const messages = data || [];
+
+            box.innerHTML = messages.map(m => {
+                const isMe = m.sender_id === currentUser?.id;
+                const date = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                return `
+                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+                        <div class="text-[9px] text-slate-400 mb-0.5">${m.sender_name} • ${date}</div>
+                        <div class="max-w-[85%] rounded-xl px-3 py-1.5 text-xs ${isMe ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-800'}">
+                            ${m.message}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            box.scrollTop = box.scrollHeight;
         }
 
-        async function sendDashChatMessage(e) {
-            e.preventDefault();
+        async function sendDashChatMessage(event) {
+            event.preventDefault();
             const input = document.getElementById('dashChatInput');
-            const msg = input.value.trim();
-            const recipient = document.getElementById('dashChatRecipientSelect')?.value || 'global';
-            if (!msg || !currentUser) return;
+            const message = input.value.trim();
+            const recipient = document.getElementById('dashChatRecipientSelect').value;
+
+            if (!message) return;
 
             await db.from('chat_messages').insert([{
                 sender_id: currentUser.id,
                 sender_name: userProfile?.full_name || currentUser.email,
                 recipient_id: recipient,
-                message: msg
+                message: message
             }]);
 
             input.value = '';
             loadDashboardChat();
+            loadChatMessages();
         }
 
         async function checkChatNotifications() {
-            try {
-                const { count } = await db.from('chat_messages').select('*', { count: 'exact', head: true });
-                if (count && count > lastCheckedMessageCount) {
-                    if (lastCheckedMessageCount !== 0) {
-                        document.getElementById('chatNavBadge')?.classList.remove('hidden');
-                        document.getElementById('dashChatDot')?.classList.remove('hidden');
-                    }
-                    lastCheckedMessageCount = count;
-                }
-            } catch(e) {}
+            if (!currentUser) return;
+            const { count } = await db.from('chat_messages')
+                .select('*', { count: 'exact', head: true })
+                .or(`recipient_id.eq.global,recipient_id.eq.${currentUser.id}`);
+
+            if (lastCheckedMessageCount > 0 && count > lastCheckedMessageCount) {
+                document.getElementById('chatNavBadge')?.classList.remove('hidden');
+                document.getElementById('dashChatDot')?.classList.remove('hidden');
+            }
+            lastCheckedMessageCount = count || 0;
         }
+
+        async function adminCreateUser(event) {
+            event.preventDefault();
+            const name = document.getElementById('newUserName').value.trim();
+            const email = document.getElementById('newUserEmail').value.trim();
+            const password = document.getElementById('newUserPass').value.trim();
+            const role = document.getElementById('newUserRole').value;
+
+            const { data, error } = await db.auth.signUp({
+                email, password, options: { data: { full_name: name, role: role } }
+            });
+
+            if (error) {
+                alert("Fehler beim Erstellen des Benutzers:\n" + error.message);
+                return;
+            }
+
+            if (data.user) {
+                await db.from('profiles').upsert([{ id: data.user.id, full_name: name, role: role }]);
+            }
+
+            alert("Benutzer erfolgreich angelegt!");
+            closeNewUserModal();
+            fetchAllUsers();
+        }
+
+        function openNewUserModal() { document.getElementById('newUserModal').classList.remove('hidden'); }
+        function closeNewUserModal() { document.getElementById('newUserModal').classList.add('hidden'); }
     </script>
 </body>
 </html>
