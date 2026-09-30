@@ -695,7 +695,6 @@
         let userProfile = null;
         let allProfiles = [];
         let allItems = [];
-        let filteredItems = [];
         let activeRentals = [];
         let waitlistEntries = [];
         let activityLogs = [];
@@ -746,25 +745,52 @@
             const to = from + PAGE_SIZE - 1;
 
             try {
-                const { data, count, error } = await db
-                    .from('items')
-                    .select('*', { count: 'exact' })
+                let query = db.from('items').select('*', { count: 'exact' });
+
+                if (currentStatusFilter !== 'ALL') {
+                    if (currentStatusFilter === 'Ausgeliehen') {
+                        const rentedItemIds = activeRentals.map(r => r.item_id);
+                        if (rentedItemIds.length > 0) {
+                            query = query.in('id', rentedItemIds);
+                        } else {
+                            query = query.eq('id', '___NONE___');
+                        }
+                    } else if (currentStatusFilter === 'Verfügbar') {
+                        const rentedItemIds = activeRentals.map(r => r.item_id);
+                        if (rentedItemIds.length > 0) {
+                            query = query.not('id', 'in', `(${rentedItemIds.join(',')})`);
+                        }
+                        query = query.neq('status', 'In Inventur').neq('status', 'Wartung / Defekt');
+                    } else {
+                        query = query.eq('status', currentStatusFilter);
+                    }
+                }
+
+                const searchTerm = document.getElementById('searchInput')?.value.trim();
+                if (searchTerm) {
+                    query = query.or(`name.ilike.%${searchTerm}%,id.ilike.%${searchTerm}%,room.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`);
+                }
+
+                const { data, count, error } = await query
                     .order('id', { ascending: true })
                     .range(from, to);
 
                 if (error) throw error;
 
                 allItems = data || [];
-                totalPages = Math.ceil((count || 1) / PAGE_SIZE);
+                totalPages = Math.ceil((count || 1) / PAGE_SIZE) || 1;
                 currentPage = page;
 
-                renderCards(data);
+                renderCards(allItems);
                 updatePaginationControls(count || 0);
 
-                const categories = [...new Set(allItems.map(i => i.category))];
-                const datalist = document.getElementById('categorySuggestions');
-                if (datalist) {
-                    datalist.innerHTML = categories.map(c => `<option value="${c}">`).join('');
+                const { data: categoriesData } = await db.from('items').select('category');
+                if (categoriesData) {
+                    const categories = [...new Set(categoriesData.map(i => i.category).filter(Boolean))];
+                    const datalist = document.getElementById('categorySuggestions');
+                    if (datalist) {
+                        datalist.innerHTML = categories.map(c => `<option value="${c}">`).join('');
+                    }
                 }
 
             } catch (err) {
@@ -934,10 +960,10 @@
 
         async function fetchAllData() {
             await fetchAllUsers();
-            await fetchItems(currentPage);
             await fetchRentals();
             await fetchWaitlist();
             await fetchActivityLogs();
+            await fetchItems(currentPage);
         }
 
         async function fetchAllUsers() {
@@ -1018,7 +1044,6 @@
                 renderMyRentals();
                 renderDashboardCalendar();
                 if (modalCalendar) renderModalCalendar();
-                fetchItems(currentPage);
             } catch(e) {}
         }
 
