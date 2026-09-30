@@ -22,7 +22,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
 
-        /* FullCalendar Design-Anpassungen */
+        /* FullCalendar Design & Responsiveness Anpassungen */
         .fc {
             --fc-border-color: rgba(226, 232, 240, 0.8);
             --fc-button-bg-color: #059669;
@@ -30,13 +30,22 @@
             --fc-button-hover-bg-color: #047857;
             --fc-button-active-bg-color: #065f46;
             font-family: inherit;
+            width: 100%;
         }
         .fc-event {
             border-radius: 6px;
             padding: 2px 4px;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             border: none;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .calendar-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .calendar-container-inner {
+            min-width: 600px; /* Garantiert gute Ansicht auch auf Handys */
         }
 
         /* EXAKTES DIN A4 ETIKETTEN DRUCK-LAYOUT (3 Spalten x 8 Zeilen = 24 Etiketten) */
@@ -253,7 +262,12 @@
                                     <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded">Live</span>
                                 </div>
                             </div>
-                            <div id="dashboardCalendar" class="min-h-[380px] text-xs"></div>
+                            <!-- BELEGUNGSPLAN RESPONSIVE WRAPPER -->
+                            <div class="calendar-wrapper overflow-x-auto">
+                                <div class="calendar-container-inner">
+                                    <div id="dashboardCalendar" class="min-h-[380px] text-xs"></div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm flex flex-col h-[500px]">
@@ -411,7 +425,11 @@
                 <h3 class="font-bold text-slate-800 text-base">📅 Belegungsplan (Vollansicht)</h3>
                 <button onclick="closeCalendarModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
             </div>
-            <div id="modalCalendarContainer" class="flex-1 text-sm"></div>
+            <div class="calendar-wrapper flex-1 overflow-y-auto">
+                <div class="calendar-container-inner h-full">
+                    <div id="modalCalendarContainer" class="h-full text-sm"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -424,7 +442,7 @@
             </div>
 
             <div class="space-y-3">
-                <p class="text-xs text-slate-500">Wähle eine Excel-Datei (.xlsx, .xls) oder CSV-Datei aus. Die Spalten werden automatisch erkannt:</p>
+                <p class="text-xs text-slate-500">Wähle eine Excel-Datei (.xlsx, .xls) oder CSV-Datei aus. Die Objekt-IDs werden automatisch fortlaufend vom System generiert:</p>
                 <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="processExcelFile(event)" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
             </div>
 
@@ -662,7 +680,7 @@
         let userProfile = null;
         let allProfiles = [];
         let allItems = [];
-        let filteredItems = []; // ENTKOPPELTE LISTE DER AKTUELL GEFILTERTEN OBJEKTE
+        let filteredItems = [];
         let activeRentals = [];
         let waitlistEntries = [];
         let activityLogs = [];
@@ -689,7 +707,6 @@
                 console.log("Supabase bereit.");
             }
 
-            // URL Deep-Link Check (z.B. QR-Code Scan öffnet direkt Artikel)
             const urlParams = new URLSearchParams(window.location.search);
             const scanItem = urlParams.get('item');
             if (scanItem) {
@@ -801,7 +818,6 @@
             loadDashboardChat();
             renderDashboardCalendar();
             
-            // Poll for messages & notifications
             setInterval(() => {
                 checkChatNotifications();
             }, 4000);
@@ -892,7 +908,6 @@
                 const { data } = await db.from('items').select('*');
                 allItems = data || [];
                 
-                // Populate category datalist
                 const categories = [...new Set(allItems.map(i => i.category))];
                 const datalist = document.getElementById('categorySuggestions');
                 if (datalist) {
@@ -1009,7 +1024,6 @@
             renderItems();
         }
 
-        /* DYNAMISCHE SUCHFELD-LOGIK (X BUTTON) */
         function handleSearchInput() {
             toggleClearSearchBtn();
             renderItems();
@@ -1037,18 +1051,14 @@
             }
         }
 
-        /* DYNAMISCHES AUSWÄHLEN / ABWÄHLEN ALLER SICHTBAREN (FILTERTEN) OBJEKTE */
         function toggleSelectAllVisible() {
             if (!filteredItems || filteredItems.length === 0) return;
 
-            // Prüfen, ob bereits alle aktuell sichtbaren Objekte ausgewählt sind
             const allSelected = filteredItems.every(item => selectedItemIds.has(item.id));
 
             if (allSelected) {
-                // Alle aktuell sichtbaren Objekte abwählen
                 filteredItems.forEach(item => selectedItemIds.delete(item.id));
             } else {
-                // Alle aktuell sichtbaren Objekte auswählen
                 filteredItems.forEach(item => selectedItemIds.add(item.id));
             }
 
@@ -1063,7 +1073,6 @@
             const query = (document.getElementById('searchInput').value || '').toLowerCase();
             grid.innerHTML = '';
 
-            // Entkoppelte Objektliste dynamisch filtern & speichern
             filteredItems = allItems.filter(item => {
                 const effectiveStatus = getItemEffectiveStatus(item);
                 const matchesSearch = `${item.id} ${item.name} ${item.category} ${item.permission} ${item.room} ${item.shelf} ${item.compartment} ${item.accessories} ${effectiveStatus}`.toLowerCase().includes(query);
@@ -1072,7 +1081,6 @@
                 return matchesSearch && effectiveStatus === currentStatusFilter;
             });
 
-            // "Alle sichtbaren auswählen"-Button dynamisch beschriften
             const selectBtn = document.getElementById('selectAllVisibleBtn');
             if (selectBtn) {
                 if (filteredItems.length > 0 && filteredItems.every(item => selectedItemIds.has(item.id))) {
@@ -1221,6 +1229,7 @@
             document.getElementById('excelImportModal').classList.add('hidden');
         }
 
+        // EXCEL PROCESSOR - AUTOMATISCHE ID GENERIERUNG & KEINE VERWENDUNG DER EXCEL-ID
         function processExcelFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1237,20 +1246,34 @@
                     return;
                 }
 
-                importedExcelData = jsonData.map((row, idx) => {
+                // Ermittlung der höchsten existierenden Nummern-ID im Bestand
+                let highestNum = 1000;
+                allItems.forEach(item => {
+                    if (item.id && item.id.startsWith('ART-')) {
+                        const num = parseInt(item.id.replace('ART-', ''), 10);
+                        if (!isNaN(num) && num > highestNum) {
+                            highestNum = num;
+                        }
+                    }
+                });
+
+                importedExcelData = jsonData.map((row) => {
                     const keys = Object.keys(row);
                     const findKey = (terms) => keys.find(k => terms.some(t => k.toLowerCase().includes(t)));
 
-                    const idKey = findKey(['id', 'sku', 'code', 'nummer', 'inv']) || keys[0];
-                    const nameKey = findKey(['name', 'bezeichnung', 'titel', 'artikel']) || keys[1] || keys[0];
-                    const catKey = findKey(['kategorie', 'typ', 'gruppe']) || keys[2];
-                    const roomKey = findKey(['raum', 'ort', 'gebäude']);
+                    // ID wird ignoriert und strikt fortlaufend neu vom Programm generiert
+                    highestNum++;
+                    const autoGeneratedId = `ART-${highestNum}`;
+
+                    const nameKey = findKey(['name', 'bezeichnung', 'titel', 'artikel', 'objekt']) || keys[0];
+                    const catKey = findKey(['kategorie', 'typ', 'gruppe']) || keys[1];
+                    const roomKey = findKey(['raum', 'ort', 'gebäude', 'standort']);
                     const shelfKey = findKey(['regal', 'bereich']);
                     const compKey = findKey(['fach', 'ebene']);
                     const accKey = findKey(['zubehör', 'inhalt', 'beschreibung']);
 
                     return {
-                        id: String(row[idKey] || `EX-${Date.now()}-${idx}`).trim(),
+                        id: autoGeneratedId,
                         name: String(row[nameKey] || 'Unbenanntes Objekt').trim(),
                         category: String(row[catKey] || 'Allgemein').trim(),
                         room: String(row[roomKey] || 'Lager').trim(),
@@ -1276,7 +1299,7 @@
 
             head.innerHTML = `
                 <tr>
-                    <th class="p-2">ID / SKU</th>
+                    <th class="p-2">GENERIERTE ID</th>
                     <th class="p-2">BEZEICHNUNG</th>
                     <th class="p-2">KATEGORIE</th>
                     <th class="p-2">STANDORT</th>
@@ -1286,7 +1309,7 @@
 
             body.innerHTML = importedExcelData.slice(0, 10).map(item => `
                 <tr class="hover:bg-slate-50 text-slate-700">
-                    <td class="p-2 font-mono font-bold">${item.id}</td>
+                    <td class="p-2 font-mono font-bold text-emerald-700">${item.id}</td>
                     <td class="p-2 font-semibold">${item.name}</td>
                     <td class="p-2 text-emerald-600 font-bold">${item.category}</td>
                     <td class="p-2">${item.room} / ${item.shelf} / ${item.compartment}</td>
@@ -1297,24 +1320,36 @@
             container.classList.remove('hidden');
         }
 
+        // BATCH IMPORT FÜR ANZAHL > 1000 UNTERSTÜTZUNG
         async function confirmExcelImport() {
             if (importedExcelData.length === 0) return;
 
             const btn = document.getElementById('confirmImportBtn');
-            btn.innerText = 'Speichere in Datenbank...';
             btn.disabled = true;
 
-            const { error } = await db.from('items').upsert(importedExcelData);
+            const batchSize = 100; // In Chunks senden, um Payload-Limits zu umgehen
+            const total = importedExcelData.length;
+            let successCount = 0;
+
+            for (let i = 0; i < total; i += batchSize) {
+                const batch = importedExcelData.slice(i, i + batchSize);
+                btn.innerText = `Speichere in Datenbank (${Math.min(i + batchSize, total)} / ${total})...`;
+
+                const { error } = await db.from('items').upsert(batch);
+
+                if (error) {
+                    alert(`Fehler beim Importieren ab Eintrag ${i + 1}:\n` + error.message);
+                    btn.innerText = 'Import Durchführen';
+                    btn.disabled = false;
+                    return;
+                }
+                successCount += batch.length;
+            }
 
             btn.innerText = 'Import Durchführen';
             btn.disabled = false;
 
-            if (error) {
-                alert("Fehler beim Import:\n" + error.message);
-                return;
-            }
-
-            alert(`Erfolgreich ${importedExcelData.length} Objekte aus der Liste importiert!`);
+            alert(`Erfolgreich ${successCount} Objekte mit neu generierten IDs importiert!`);
             closeExcelImportModal();
             fetchAllData();
         }
@@ -1433,8 +1468,16 @@
         }
 
         function generateUniqueId() {
-            const randomNum = Math.floor(1000 + Math.random() * 9000);
-            return `ART-${randomNum}`;
+            let highestNum = 1000;
+            allItems.forEach(item => {
+                if (item.id && item.id.startsWith('ART-')) {
+                    const num = parseInt(item.id.replace('ART-', ''), 10);
+                    if (!isNaN(num) && num > highestNum) {
+                        highestNum = num;
+                    }
+                }
+            });
+            return `ART-${highestNum + 1}`;
         }
 
         function openItemModal() {
@@ -1770,6 +1813,7 @@
             document.getElementById('calendarModal').classList.add('hidden');
         }
 
+        // DEUTSCHE LOKALISIERUNG FÜR DEN BELEGUNGSPLAN / DASHBOARD KALENDER
         function renderDashboardCalendar() {
             const calendarEl = document.getElementById('dashboardCalendar');
             if (!calendarEl) return;
@@ -1786,13 +1830,21 @@
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'de',
+                buttonText: {
+                    today: 'Heute',
+                    month: 'Monat',
+                    week: 'Woche',
+                    day: 'Tag',
+                    list: 'Liste'
+                },
                 headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
                 events: events,
-                height: 380
+                height: 'auto'
             });
             calendar.render();
         }
 
+        // DEUTSCHE LOKALISIERUNG FÜR DEN VOLLBILD KALENDER
         function renderModalCalendar() {
             const calendarEl = document.getElementById('modalCalendarContainer');
             if (!calendarEl) return;
@@ -1809,8 +1861,16 @@
             modalCalendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'de',
+                buttonText: {
+                    today: 'Heute',
+                    month: 'Monat',
+                    week: 'Woche',
+                    day: 'Tag',
+                    list: 'Liste'
+                },
                 headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
-                events: events
+                events: events,
+                height: '100%'
             });
             modalCalendar.render();
         }
