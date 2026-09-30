@@ -2020,8 +2020,34 @@
 
         async function adminCreateUser(event) {
             event.preventDefault();
-            alert("Hinweis: Direktes Anlegen von Benutzern erfordert die Supabase Admin API oder Bestätigung per Mail.");
-            closeNewUserModal();
+            const name = document.getElementById('newUserName').value.trim();
+            const email = document.getElementById('newUserEmail').value.trim();
+            const password = document.getElementById('newUserPass').value.trim();
+            const role = document.getElementById('newUserRole').value;
+
+            try {
+                const { data, error } = await db.auth.signUp({
+                    email,
+                    password,
+                    options: { data: { full_name: name, role: role } }
+                });
+
+                if (error) throw error;
+
+                if (data.user) {
+                    await db.from('profiles').upsert([{
+                        id: data.user.id,
+                        full_name: name,
+                        role: role
+                    }]);
+                }
+
+                alert(`Benutzer ${name} (${email}) wurde erfolgreich angelegt!`);
+                closeNewUserModal();
+                fetchAllUsers();
+            } catch (err) {
+                alert("Fehler beim Erstellen des Benutzers:\n" + (err.message || err));
+            }
         }
     </script>
 </body>
