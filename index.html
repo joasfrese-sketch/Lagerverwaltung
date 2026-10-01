@@ -818,7 +818,7 @@
                 const mainPhoto = photos[0] || 'https://via.placeholder.com/300x200?text=Kein+Bild';
 
                 const card = document.createElement('div');
-                card.className = `card flex gap-3 items-center ${isChecked ? 'ring-2 ring-emerald-500 bg-slate-800' : ''}`;
+                card.className = `card flex gap-3 items-center ${isChecked ? 'ring-2 ring-emerald-500 bg-slate-180' : ''}`;
                 
                 card.innerHTML = `
                     <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleItemSelection('${item.id}')" class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer shrink-0">
