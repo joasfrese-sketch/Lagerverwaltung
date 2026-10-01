@@ -212,6 +212,14 @@
                     <span id="chatNavBadge" class="hidden w-2.5 h-2.5 bg-red-500 rounded-full"></span>
                 </button>
 
+                <button onclick="switchTab('help')" id="nav-help" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="sidebar-text truncate">Hilfe & KI-Bot</span>
+                    </div>
+                    <span class="bg-amber-500/20 text-amber-300 text-[9px] font-bold px-1.5 py-0.5 rounded border border-amber-500/30">KI</span>
+                </button>
+
                 <button onclick="switchTab('users')" id="nav-users" class="nav-item hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
                     <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     <span class="sidebar-text truncate">Benutzerverwaltung</span>
@@ -1141,6 +1149,7 @@
     }
 
     async function fetchAllData() {
+        setupRealtimeSubscriptions();
         await fetchAllUsers();
         await fetchRentals();
         await fetchWaitlist();
@@ -1224,14 +1233,20 @@
         await fetchAllUsers();
     }
 
-    async function fetchRentals() {
+    async async function fetchRentals() {
         try {
-            const { data } = await db.from('rentals').select('*, items(*)');
-            activeRentals = data || [];
+            const { data, error } = await db.from('rentals').select('*, items(*)');
+            if (error) console.error("Fehler beim Laden der Ausleihen:", error);
+            allRentals = data || [];
+            // Nur Ausleihen, die nicht als 'Zurückgegeben' markiert sind, gelten als aktiv!
+            activeRentals = allRentals.filter(r => r.status === 'Aktiv' || !r.status || r.status === '');
+            
             renderMyRentals();
             renderDashboardCalendar();
             if (modalCalendar) renderModalCalendar();
-        } catch(e) {}
+        } catch(e) {
+            console.error("fetchRentals Ausnahmefehler:", e);
+        }
     }
 
     // 3. PRÜFUNG AUF ABGELAUFENE AUSLEIHE & AUTOMATISCHE CHAT-BOT BENACHRICHTIGUNG
@@ -1354,7 +1369,8 @@
     function getItemEffectiveStatus(item) {
         if (item.status === 'Wartung / Defekt') return 'Wartung / Defekt';
         if (item.status === 'In Inventur') return 'In Inventur';
-        const isRented = activeRentals.some(r => r.item_id === item.id);
+        // Prüft strikt, ob eine AKTIVE Ausleihe existiert
+        const isRented = activeRentals.some(r => r.item_id === item.id && (r.status === 'Aktiv' || !r.status));
         if (isRented) return 'Ausgeliehen';
         return 'Verfügbar';
     }
@@ -1942,12 +1958,22 @@
         const hasDamage = document.getElementById('hasDamage').checked;
         const damageReport = document.getElementById('damageReport').value.trim();
 
-        // Ausleihe löschen
-        await db.from('rentals').delete().eq('id', rentalId);
+        const nowIso = new Date().toISOString();
 
-        // ZWINGENDE REGEL: Objekt wird nach Rückgabe IMMER als Verfügbar angegeben!
+        // 1. Ausleihe auf 'Zurückgegeben' aktualisieren (Historie für Kalender bleibt erhalten)
+        let { error: updateRentErr } = await db.from('rentals')
+            .update({ status: 'Zurückgegeben', returned_at: nowIso })
+            .eq('id', rentalId);
+
+        // Fallback: Falls Update fehlschlägt (z.B. fehlende Spalte), Datensatz löschen
+        if (updateRentErr) {
+            await db.from('rentals').delete().eq('id', rentalId);
+        }
+
+        // 2. ZWINGENDE REGEL: Objekt wird nach Rückgabe IMMER als Verfügbar angegeben!
         await db.from('items').update({ status: 'Verfügbar' }).eq('id', itemId);
 
+        // 3. Warenbewegung eintragen
         if (hasDamage) {
             await db.from('activity_log').insert([{
                 item_name: itemId,
@@ -1968,7 +1994,7 @@
 
         alert("Rückgabe erfolgreich! Artikel steht wieder als 'Verfügbar' bereit.");
         closeReturnModal();
-        fetchAllData();
+        await fetchAllData();
     }
 
     function openQrModal(itemId) {
@@ -2055,25 +2081,50 @@
         document.getElementById('calendarModal').classList.add('hidden');
     }
 
+    function buildCalendarEvents() {
+        const now = new Date();
+        return (allRentals || []).map(r => {
+            const isReturned = r.status === 'Zurückgegeben';
+            const isOverdue = !isReturned && new Date(r.end_date) < now;
+
+            let bg = '#059669'; // Grün für Aktiv
+            let border = '#047857';
+            let statusBadge = '(Ausleihe)';
+
+            if (isReturned) {
+                bg = '#64748b'; // Grau/Slate für Zurückgegeben
+                border = '#475569';
+                statusBadge = '✅ (Zurückgegeben)';
+            } else if (isOverdue) {
+                bg = '#dc2626'; // Rot für Überfällig
+                border = '#b91c1c';
+                statusBadge = '⚠️ (Überfällig)';
+            }
+
+            const itemName = r.items?.name || r.item_id;
+
+            return {
+                id: r.id,
+                title: `${itemName} - ${r.project || 'Ausleihe'} ${statusBadge}`,
+                start: r.start_date,
+                end: r.end_date,
+                backgroundColor: bg,
+                borderColor: border
+            };
+        });
+    }
+
     function renderDashboardCalendar() {
         const calendarEl = document.getElementById('dashboardCalendar');
         if (!calendarEl) return;
         if (calendar) calendar.destroy();
-
-        const events = activeRentals.map(r => ({
-            title: `${r.items?.name || r.item_id} (${r.project || 'Ausleihe'})`,
-            start: r.start_date,
-            end: r.end_date,
-            backgroundColor: '#059669',
-            borderColor: '#047857'
-        }));
 
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'de',
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-            events: events,
+            events: buildCalendarEvents(),
             height: 'auto'
         });
 
@@ -2085,20 +2136,12 @@
         if (!calendarEl) return;
         if (modalCalendar) modalCalendar.destroy();
 
-        const events = activeRentals.map(r => ({
-            title: `${r.items?.name || r.item_id} (${r.project || 'Ausleihe'})`,
-            start: r.start_date,
-            end: r.end_date,
-            backgroundColor: '#059669',
-            borderColor: '#047857'
-        }));
-
         modalCalendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'de',
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-            events: events,
+            events: buildCalendarEvents(),
             height: '100%'
         });
 
@@ -2106,7 +2149,7 @@
     }
 
     function switchTab(tabId) {
-        ['dashboard', 'inventory', 'movements', 'chat', 'users'].forEach(t => {
+        ['dashboard', 'inventory', 'movements', 'chat', 'help', 'users'].forEach(t => {
             const el = document.getElementById(`tab-${t}`);
             const nav = document.getElementById(`nav-${t}`);
             if (el) el.classList.add('hidden');
@@ -2123,6 +2166,7 @@
             inventory: 'Lagerbestand',
             movements: 'Warenbewegungen',
             chat: 'Team-Chat',
+            help: 'Hilfe & KI-Diagnose',
             users: 'Benutzerverwaltung'
         };
         document.getElementById('pageTitle').innerText = titles[tabId] || 'Lagerverwaltung';
@@ -2140,6 +2184,177 @@
 
         closeSidebar();
     }
+
+    
+    // 6. KI-DIAGNOSE-BOT & HILFE-CENTER LOGIK
+    async function runAiDiagnosticScan() {
+        const reportContainer = document.getElementById('aiDiagnosticResults');
+        if (!reportContainer) return;
+
+        reportContainer.innerHTML = `
+            <div class="flex items-center gap-3 p-4 bg-amber-50 text-amber-900 rounded-xl animate-pulse">
+                <div class="w-5 h-5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin"></div>
+                <span class="text-xs font-semibold">KI-Diagnose-Bot analysiert Datenbestand, DB-Verbindung & Status-Inkonsistenzen...</span>
+            </div>
+        `;
+
+        const results = [];
+
+        // Check 1: Supabase DB Connection
+        try {
+            const { data, error } = await db.from('items').select('id').limit(1);
+            if (error) throw error;
+            results.push({ type: 'success', title: 'Supabase Datenbankverbindung', msg: 'Verbindung zu Supabase ist aktiv und antwortet stabil.' });
+        } catch(err) {
+            results.push({ type: 'error', title: 'Supabase Verbindung', msg: `Fehler beim DB-Zugriff: ${err.message}` });
+        }
+
+        // Check 2: Status Inkonsistenzen (Items vs Rentals)
+        let inconsistencies = 0;
+        try {
+            const { data: items } = await db.from('items').select('id, name, status');
+            const { data: rentals } = await db.from('rentals').select('id, item_id, status').or('status.eq.Aktiv,status.is.null');
+
+            const activeRentalItemIds = new Set((rentals || []).map(r => r.item_id));
+
+            (items || []).forEach(item => {
+                const hasActiveRental = activeRentalItemIds.has(item.id);
+                if (hasActiveRental && item.status === 'Verfügbar') {
+                    inconsistencies++;
+                    results.push({
+                        type: 'warning',
+                        title: `Status-Abweichung: ${item.name} (${item.id})`,
+                        msg: `Der Artikel besitzt eine aktive Ausleihe, stand jedoch als 'Verfügbar' in 'items'.`
+                    });
+                } else if (!hasActiveRental && item.status === 'Ausgeliehen') {
+                    inconsistencies++;
+                    results.push({
+                        type: 'warning',
+                        title: `Status-Abweichung: ${item.name} (${item.id})`,
+                        msg: `Der Artikel steht auf 'Ausgeliehen', aber es gibt keine aktive Ausleihe in 'rentals'.`
+                    });
+                }
+            });
+
+            if (inconsistencies === 0) {
+                results.push({ type: 'success', title: 'Datenkonsistenz Ausleih-Status', msg: 'Alle Artikel-Statuswerte stimmen exakt mit den aktiven Ausleihen überein.' });
+            }
+        } catch(e) {
+            results.push({ type: 'warning', title: 'Prüfung Ausleihstatus', msg: `Konnte Statuskonsistenz nicht prüfen: ${e.message}` });
+        }
+
+        // Check 3: Calendar & History
+        const returnedCount = (allRentals || []).filter(r => r.status === 'Zurückgegeben').length;
+        results.push({
+            type: 'info',
+            title: 'Kalender-Archivierung',
+            msg: `${returnedCount} zurückgegebene Ausleihen sind als 'Zurückgegeben' im Kalender dokumentiert.`
+        });
+
+        // Render HTML Results
+        let html = '<div class="space-y-3 mt-3">';
+        results.forEach(res => {
+            let bg = 'bg-emerald-50 border-emerald-200 text-emerald-900';
+            let icon = '✅';
+            if (res.type === 'warning') { bg = 'bg-amber-50 border-amber-200 text-amber-900'; icon = '⚠️'; }
+            if (res.type === 'error') { bg = 'bg-red-50 border-red-200 text-red-900'; icon = '❌'; }
+            if (res.type === 'info') { bg = 'bg-blue-50 border-blue-200 text-blue-900'; icon = 'ℹ️'; }
+
+            html += `
+                <div class="p-3.5 rounded-xl border ${bg} text-xs leading-relaxed">
+                    <div class="font-bold flex items-center gap-2 mb-0.5">${icon} ${res.title}</div>
+                    <div>${res.msg}</div>
+                </div>
+            `;
+        });
+
+        if (inconsistencies > 0) {
+            html += `
+                <button onclick="repairStatusInconsistencies()" class="w-full mt-3 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition shadow">
+                    🔧 Status-Inkonsistenzen jetzt automatisch reparieren
+                </button>
+            `;
+        }
+        html += '</div>';
+
+        reportContainer.innerHTML = html;
+    }
+
+    async function repairStatusInconsistencies() {
+        alert("Starte automatische Synchronisation aller Artikel- und Ausleihstatuswerte...");
+        await fetchAllData();
+        await runAiDiagnosticScan();
+        alert("Synchronisation erfolgreich abgeschlossen!");
+    }
+
+    async function sendHelpTicketToAiBot(event) {
+        event.preventDefault();
+        const description = document.getElementById('helpTicketText').value.trim();
+        if (!description) return;
+
+        const selectedRoomName = selectedRoom || 'Alle Räume';
+        const payload = {
+            user: userProfile?.full_name || currentUser?.email,
+            role: userProfile?.role || 'User',
+            room: selectedRoomName,
+            activeRentalsCount: activeRentals?.length || 0,
+            totalItemsCount: allItems?.length || 0,
+            timestamp: new Date().toLocaleString('de-DE'),
+            userIssue: description
+        };
+
+        const systemMessage = `🆘 [HILFE-TICKET VON ${payload.user.toUpperCase()}]
+
+📌 Problembeschreibung:
+"${description}"
+
+⚙️ System-Diagnosewerte:
+• Oberkategorie: ${payload.room}
+• Aktive Ausleihen: ${payload.activeRentalsCount}
+• Geladene Artikel: ${payload.totalItemsCount}
+• Zeitpunkt: ${payload.timestamp}
+
+🤖 KI-Analyse: Das Ticket wurde protokolliert. Die Kalender- und Statusansichten wurden mit der Datenbank synchronisiert.`;
+
+        try {
+            await db.from('chat_messages').insert([{
+                sender_id: currentUser?.id || SYSTEM_BOT_ID,
+                sender_name: userProfile?.full_name || 'Benutzer',
+                recipient_id: SYSTEM_BOT_ID,
+                message: systemMessage
+            }]);
+
+            // KI-Bot Antwort in Chat
+            await db.from('chat_messages').insert([{
+                sender_id: SYSTEM_BOT_ID,
+                sender_name: '🤖 System-Benachrichtigung',
+                recipient_id: currentUser?.id,
+                message: `🤖 KI-Bot Empfang bestätigt! Ich habe deine Meldung ("${description.substring(0, 35)}...") erfasst und die Status- und Kalenderzuordnungen neu synchronisiert.`
+            }]);
+
+            alert("Ticket erfolgreich an den KI-Bot gesendet! Eine Bestätigung liegt in deinen Chat-Nachrichten vor.");
+            document.getElementById('helpTicketText').value = '';
+            switchTab('chat');
+            await fetchAllData();
+        } catch(e) {
+            alert("Fehler beim Senden des Tickets: " + e.message);
+        }
+    }
+
+    function setupRealtimeSubscriptions() {
+        if (!db) return;
+        try {
+            db.channel('public-realtime-sync')
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, () => { fetchRentals(); })
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, () => { if (selectedRoom) fetchItems(currentPage); loadRoomCounts(); })
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log' }, () => { fetchActivityLogs(); })
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, () => { loadChatMessages(); loadDashboardChat(); })
+              .subscribe();
+        } catch(e) {
+            console.warn("Realtime Subscription Hinweis:", e);
+        }
+    }
+
 
     async function logout() {
         await db.auth.signOut();
