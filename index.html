@@ -22,6 +22,21 @@
     .pagination-bar button { background: #2563eb; color: #ffffff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
     .pagination-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    /* FullCalendar Design & Button-Styling */
+    .fc-event {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+    .fc-event-button {
+        transition: all 0.2s ease-in-out;
+        cursor: pointer !important;
+    }
+    .fc-event-button:hover {
+        transform: translateY(-1px) scale(1.02);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.18) !important;
+    }
     /* FullCalendar Design & Responsiveness Anpassungen */
     .fc {
         --fc-border-color: rgba(226, 232, 240, 0.8);
@@ -2133,6 +2148,7 @@ function populateAdminUserSelect() {
         document.getElementById('hasDamage').checked = false;
         document.getElementById('damageReport').value = '';
         document.getElementById('damageFields').classList.add('hidden');
+        if (document.getElementById('returnNote')) document.getElementById('returnNote').value = '';
 
         document.getElementById('returnModal').classList.remove('hidden');
     }
@@ -2347,6 +2363,17 @@ function populateAdminUserSelect() {
         document.getElementById('calendarEventDetailModal').classList.add('hidden');
     }
 
+    function locateItemInInventory() {
+        if (!selectedCalEventData) return;
+        closeCalendarEventDetailModal();
+        switchTab('inventory');
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.value = selectedCalEventData.itemName || selectedCalEventData.itemId;
+            handleSearchInput();
+        }
+    }
+
     function exportToGoogleCalendar() {
         if (!selectedCalEventData) return;
         const { itemName, project, startDate, endDate } = selectedCalEventData;
@@ -2415,7 +2442,30 @@ function renderDashboardCalendar() {
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             events: events,
+            eventContent: function(arg) {
+                const props = arg.event.extendedProps || {};
+                const isOverdue = props.status === 'Überfällig';
+                const isReturned = props.status === 'Zurückgegeben';
+                
+                let btnBg = 'bg-emerald-600 hover:bg-emerald-700';
+                if (isOverdue) btnBg = 'bg-red-600 hover:bg-red-700';
+                if (isReturned) btnBg = 'bg-slate-500 hover:bg-slate-600';
+
+                const container = document.createElement('div');
+                container.className = `fc-event-button w-full ${btnBg} text-white rounded-lg p-1.5 shadow-sm hover:shadow-md transition flex items-center justify-between gap-1 text-[11px] font-medium cursor-pointer border border-white/20`;
+                container.setAttribute('role', 'button');
+                container.setAttribute('title', 'Klicken für Ausleih-Details & Kalender-Export');
+                container.innerHTML = `
+                    <div class="truncate flex items-center gap-1">
+                        <span>📌</span>
+                        <span class="font-bold truncate">${arg.event.title}</span>
+                    </div>
+                    <span class="text-[9px] bg-white/20 hover:bg-white/30 px-1.5 py-0.5 rounded text-white font-semibold shrink-0">Info ➔</span>
+                `;
+                return { domNodes: [container] };
+            },
             eventClick: function(info) {
+                info.jsEvent.preventDefault();
                 if (info.event.extendedProps) {
                     openCalendarEventDetailModal(info.event.extendedProps);
                 }
@@ -2439,7 +2489,30 @@ function renderDashboardCalendar() {
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             events: events,
+            eventContent: function(arg) {
+                const props = arg.event.extendedProps || {};
+                const isOverdue = props.status === 'Überfällig';
+                const isReturned = props.status === 'Zurückgegeben';
+                
+                let btnBg = 'bg-emerald-600 hover:bg-emerald-700';
+                if (isOverdue) btnBg = 'bg-red-600 hover:bg-red-700';
+                if (isReturned) btnBg = 'bg-slate-500 hover:bg-slate-600';
+
+                const container = document.createElement('div');
+                container.className = `fc-event-button w-full ${btnBg} text-white rounded-lg p-1.5 shadow-sm hover:shadow-md transition flex items-center justify-between gap-1 text-[11px] font-medium cursor-pointer border border-white/20`;
+                container.setAttribute('role', 'button');
+                container.setAttribute('title', 'Klicken für Ausleih-Details & Kalender-Export');
+                container.innerHTML = `
+                    <div class="truncate flex items-center gap-1">
+                        <span>📌</span>
+                        <span class="font-bold truncate">${arg.event.title}</span>
+                    </div>
+                    <span class="text-[9px] bg-white/20 hover:bg-white/30 px-1.5 py-0.5 rounded text-white font-semibold shrink-0">Info ➔</span>
+                `;
+                return { domNodes: [container] };
+            },
             eventClick: function(info) {
+                info.jsEvent.preventDefault();
                 if (info.event.extendedProps) {
                     openCalendarEventDetailModal(info.event.extendedProps);
                 }
