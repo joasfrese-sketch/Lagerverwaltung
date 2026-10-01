@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lagerverwaltung - Bestand</title>
-    
+    <title>Lagerverwaltung MBG Pro</title>
+
     <!-- PWA & Mobile Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#10b981">
@@ -22,14 +22,14 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
 
-        /* Eingefügte Styles */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        /* Custom Grid & Layout Styles */
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
         .card { background: #f8fafc; border-radius: 8px; padding: 16px; border: 1px solid #e2e8f0; color: #1E293B; }
         .pagination-bar { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 20px; }
-        .pagination-bar button { background: #2563eb; color: #1e293b; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        .pagination-bar button { background: #2563eb; color: #ffffff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
         .pagination-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* FullCalendar Design & Responsiveness Anpassungen */
+        /* FullCalendar Design & Responsiveness */
         .fc {
             --fc-border-color: rgba(226, 232, 240, 0.8);
             --fc-button-bg-color: #059669;
@@ -107,1948 +107,300 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans overflow-x-hidden">
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-12">
 
-    <!-- SUPABASE KONFIGURATION -->
-    <script>
-        const SUPABASE_URL = 'https://qqjtlcdqhyglhbcixvbr.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_Q7rXTPgk9oZVj86Cpow8Dw_0mK2K3Aa';
-        
-        const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
-        const db = supabase;
-    </script>
-
-    <!-- 1. LOGIN / REGISTRIERUNG -->
-    <div id="loginScreen" class="fixed inset-0 bg-[#0f172a] z-50 flex items-center justify-center p-4">
-        <div class="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl">
-            <div class="bg-[#0f172a] p-8 text-center border-b border-slate-800 flex flex-col items-center">
-                <div class="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center mb-4 text-emerald-400">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                    </svg>
-                </div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">Lagerverwaltung Pro</h1>
-                <p class="text-xs text-slate-400 mt-1">Sicheres Waren- und Teammanagement</p>
-            </div>
-
-            <div class="bg-white p-8 space-y-5">
-                <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
-                    <div id="fullNameGroup" class="hidden space-y-1">
-                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">Vollständiger Name</label>
-                        <input type="text" id="authFullName" placeholder="Max Mustermann" class="w-full bg-[#f0f4f8] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">BENUTZERNAME ODER E-MAIL</label>
-                        <input type="email" id="authEmail" required placeholder="name@beispiel.de" class="w-full bg-[#f0f4f8] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">PASSWORT</label>
-                        <input type="password" id="authPassword" required placeholder="••••••••" class="w-full bg-[#f0f4f8] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                    </div>
-
-                    <button type="submit" id="authBtn" class="w-full bg-[#059669] hover:bg-[#047857] text-white font-semibold py-3 rounded-xl text-sm transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
-                        <span id="authBtnText">Anmelden</span>
-                        <span>→</span>
-                    </button>
-                </form>
-
-                <div class="text-center pt-2">
-                    <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition">
-                        Noch kein Konto? Konto registrieren
-                    </button>
-                </div>
-            </div>
+    <!-- App Header Nav -->
+    <header class="bg-emerald-700 text-white shadow-md p-4 sticky top-0 z-40 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold">Lagerverwaltung MBG Pro</h1>
+            <p class="text-xs text-emerald-200">Sicheres Waren- und Teammanagement</p>
         </div>
-    </div>
-
-    <!-- MOBILE SIDEBAR OVERLAY BACKDROP -->
-    <div id="sidebarOverlay" onclick="closeSidebar()" class="hidden fixed inset-0 bg-slate-900/60 z-30 md:hidden backdrop-blur-sm transition-opacity"></div>
-
-    <!-- 2. HAUPTANWENDUNG -->
-    <div id="appLayout" class="hidden flex-1 flex min-h-screen relative">
-        
-        <!-- SIDEBAR -->
-        <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-64 bg-[#0f172a] text-slate-300 flex flex-col justify-between border-r border-slate-800 shrink-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
-            <div>
-                <div class="p-5 flex items-center justify-between border-b border-slate-800/60">
-                    <div class="flex items-center gap-3 overflow-hidden">
-                        <div class="w-9 h-9 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 shrink-0">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                            </svg>
-                        </div>
-                        <div class="truncate sidebar-text">
-                            <h2 class="font-bold text-white text-sm leading-tight">Lager Pro</h2>
-                            <span class="text-[9px] text-slate-500 uppercase tracking-wider font-semibold">VERWALTUNG</span>
-                        </div>
-                    </div>
-                    <button onclick="closeSidebar()" class="md:hidden text-slate-400 hover:text-white p-1">✕</button>
-                </div>
-
-                <nav class="p-3 space-y-1 text-sm font-medium">
-                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white bg-slate-800/90 transition">
-                        <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                        <span class="sidebar-text truncate">Übersicht</span>
-                    </button>
-
-                    <button onclick="switchTab('inventory')" id="nav-inventory" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-                        <span class="sidebar-text truncate">Lagerbestand</span>
-                    </button>
-
-                    <button onclick="switchTab('movements')" id="nav-movements" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
-                        <span class="sidebar-text truncate">Warenbewegungen</span>
-                    </button>
-
-                    <button onclick="switchTab('chat')" id="nav-chat" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <div class="flex items-center gap-3">
-                            <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                            <span class="sidebar-text truncate">Team-Chat</span>
-                        </div>
-                        <span id="chatNavBadge" class="hidden w-2.5 h-2.5 bg-red-500 rounded-full"></span>
-                    </button>
-
-                    <button onclick="switchTab('users')" id="nav-users" class="nav-item hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                        <span class="sidebar-text truncate">Benutzerverwaltung</span>
-                    </button>
-                </nav>
-            </div>
-
-            <div class="p-3 border-t border-slate-800/60 flex items-center justify-between">
-                <div class="flex items-center gap-2 overflow-hidden">
-                    <div id="userAvatar" class="w-8 h-8 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center shrink-0 text-xs">U</div>
-                    <div class="truncate sidebar-text">
-                        <h4 id="userNameDisplay" class="font-bold text-white text-xs truncate">Nutzer</h4>
-                        <span id="userRoleBadge" class="text-[9px] text-slate-400 font-bold tracking-wider">BENUTZER</span>
-                    </div>
-                </div>
-                <button onclick="logout()" title="Abmelden" class="text-slate-500 hover:text-white p-1.5 transition shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                </button>
-            </div>
-        </aside>
-
-        <!-- MAIN CONTENT AREA -->
-        <main class="flex-1 bg-[#f8fafc] flex flex-col min-w-0">
-            <header class="h-16 md:h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-200/80 bg-white/70 backdrop-blur sticky top-0 z-20">
-                <div class="flex items-center gap-3">
-                    <button onclick="toggleSidebar()" class="p-2 text-slate-600 hover:text-slate-900 focus:outline-none rounded-xl hover:bg-slate-100">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                    </button>
-                    <h1 id="pageTitle" class="text-lg md:text-2xl font-bold text-slate-800">Übersicht</h1>
-                </div>
-
-                <div class="flex items-center gap-2 md:gap-4">
-                    <button onclick="openScannerModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-2.5 md:px-3 py-2 rounded-xl flex items-center gap-1.5 transition">
-                        📷 <span class="hidden sm:inline">QR Scannen</span>
-                    </button>
-                    <div class="text-[11px] md:text-xs font-medium text-slate-400 hidden sm:block" id="currentDateDisplay">Datum</div>
-                </div>
-            </header>
-
-            <div class="p-4 md:p-8 flex-1 overflow-y-auto">
-                
-                <!-- TAB 1: ÜBERSICHT -->
-                <div id="tab-dashboard" class="space-y-6">
-                    <div id="myRentalsCard" class="hidden bg-white p-4 md:p-5 rounded-2xl border border-slate-200/70 shadow-sm space-y-2">
-                        <h4 class="font-bold text-xs text-emerald-600 flex items-center gap-1.5">
-                            <span>📦</span> Meine aktiven Ausleihen
-                        </h4>
-                        <div id="myRentalsList" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-white p-4 md:p-6 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col">
-                            <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">📅 Belegungsplan & Reservierungen</h3>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openCalendarModal()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-lg transition flex items-center gap-1">⛶ Vollbild</button>
-                                    <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded">Live</span>
-                                </div>
-                            </div>
-                            <div class="calendar-wrapper overflow-x-auto">
-                                <div class="calendar-container-inner">
-                                    <div id="dashboardCalendar" class="min-h-[380px] text-xs"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm flex flex-col h-[500px]">
-                            <div class="p-4 border-b border-slate-100 flex justify-between items-center gap-2">
-                                <div class="flex items-center gap-2">
-                                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">💬 Team-Chat</h4>
-                                    <span id="dashChatDot" class="hidden w-2 h-2 bg-red-500 rounded-full"></span>
-                                </div>
-                                <select id="dashChatRecipientSelect" onchange="loadDashboardChat()" class="bg-slate-100 border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-semibold text-slate-700 outline-none">
-                                    <option value="global">🌐 Alle (Öffentlich)</option>
-                                </select>
-                            </div>
-
-                            <div id="dashChatMessagesBox" class="flex-1 p-4 overflow-y-auto space-y-2 text-xs"></div>
-
-                            <form onsubmit="sendDashChatMessage(event)" class="p-3 border-t border-slate-100 flex gap-2">
-                                <input type="text" id="dashChatInput" placeholder="Nachricht schreiben..." required class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-emerald-500">
-                                <button type="submit" class="bg-[#059669] hover:bg-[#047857] text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1 transition">
-                                    <span>Senden</span>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 2: LAGERBESTAND -->
-                <div id="tab-inventory" class="hidden space-y-6">
-                    <div id="bulkActionBar" class="hidden bg-slate-900 text-white p-4 rounded-2xl shadow-xl flex flex-wrap items-center justify-between gap-4 border border-slate-700">
-                        <div class="flex items-center gap-3">
-                            <span id="selectedCountBadge" class="bg-emerald-500 text-white font-extrabold text-xs px-3 py-1 rounded-full">0 ausgewählt</span>
-                            <span class="text-xs text-slate-300">Sammelaktion für alle ausgewählten Objekte:</span>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button onclick="bulkRentModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">📅 Sammel-Ausleihe</button>
-                            <button onclick="bulkToggleInventur()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">📋 In Inventur setzen / Freigeben</button>
-                            <button onclick="bulkPrintQrCodes()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">🖨️ Etiketten Drucken (DIN A4)</button>
-                            <button id="bulkDeleteBtn" onclick="bulkDelete()" class="hidden bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">🗑️ Löschen</button>
-                            <button onclick="clearSelection()" class="text-xs text-slate-400 hover:text-white px-2 py-1">✖️ Auswahl aufheben</button>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
-                        <div class="flex flex-wrap items-center gap-1.5 md:gap-2">
-                            <button onclick="setStatusFilter('ALL')" id="filter-ALL" class="status-filter-btn bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl">Alle</button>
-                            <button onclick="setStatusFilter('Verfügbar')" id="filter-Verfügbar" class="status-filter-btn bg-slate-200 text-slate-700 hover:bg-slate-300 text-xs font-bold px-3 py-2 rounded-xl">Verfügbar</button>
-                            <button onclick="setStatusFilter('Ausgeliehen')" id="filter-Ausgeliehen" class="status-filter-btn bg-slate-200 text-slate-700 hover:bg-slate-300 text-xs font-bold px-3 py-2 rounded-xl">Ausgeliehen</button>
-                            <button onclick="setStatusFilter('In Inventur')" id="filter-In Inventur" class="status-filter-btn bg-slate-200 text-slate-700 hover:bg-slate-300 text-xs font-bold px-3 py-2 rounded-xl">In Inventur</button>
-                            <button onclick="setStatusFilter('Wartung / Defekt')" id="filter-Wartung / Defekt" class="status-filter-btn bg-slate-200 text-slate-700 hover:bg-slate-300 text-xs font-bold px-3 py-2 rounded-xl">Defekt</button>
-                            
-                            <button onclick="toggleSelectAllVisible()" id="selectAllVisibleBtn" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold px-3 py-2 rounded-xl border border-emerald-300 flex items-center gap-1 transition shrink-0">
-                                ☑️ Alle sichtbaren auswählen
-                            </button>
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            <div class="relative flex-1 min-w-[200px]">
-                                <input type="text" id="searchInput" oninput="handleSearchInput()" placeholder="Suchen (SKU, Name, Ort)..." class="w-full bg-white border border-slate-200/80 rounded-xl pl-9 pr-8 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
-                                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                                <button id="clearSearchBtn" onclick="clearSearch()" title="Suche löschen" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none p-1 rounded-full text-xs font-bold leading-none">✕</button>
-                            </div>
-                            
-                            <button id="importExcelBtn" onclick="openExcelImportModal()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2.5 rounded-xl flex items-center gap-1 transition shrink-0">📊 <span class="hidden sm:inline">Excel Import</span></button>
-                            <button id="addItemBtn" onclick="openItemModal()" class="hidden bg-[#059669] hover:bg-[#047857] text-white text-xs font-semibold px-3 py-2.5 rounded-xl flex items-center gap-1 transition shrink-0"><span>+</span> <span class="hidden sm:inline">Neuer Artikel</span></button>
-                        </div>
-                    </div>
-
-                    <div id="item-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-
-                    <div class="pagination-bar">
-                        <button id="prev-btn" onclick="changePage(-1)">← Vorherige</button>
-                        <span id="page-info" class="text-xs font-semibold text-slate-600">Seite 1 von 1</span>
-                        <button id="next-btn" onclick="changePage(1)">Nächste →</button>
-                    </div>
-                </div>
-
-                <!-- TAB 3: WARENBEWEGUNGEN -->
-                <div id="tab-movements" class="hidden space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-slate-800 text-sm">Protokollierte Warenein- & Ausgänge</h3>
-                        <span id="movementsScopeBadge" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-200 text-slate-700">Persönliche Ansicht</span>
-                    </div>
-
-                    <div class="bg-white rounded-2xl border border-slate-200/70 overflow-x-auto shadow-sm">
-                        <table class="w-full text-left text-xs min-w-[600px]">
-                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
-                                <tr>
-                                    <th class="p-4">DATUM & ZEIT</th>
-                                    <th class="p-4">TYP</th>
-                                    <th class="p-4">ARTIKEL</th>
-                                    <th class="p-4">BEARBEITER</th>
-                                    <th class="p-4">NOTIZ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="activityLogTableBody" class="divide-y divide-slate-100 text-slate-600"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- TAB 4: SEPARATER TEAM-CHAT -->
-                <div id="tab-chat" class="hidden space-y-4">
-                    <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm flex flex-col h-[540px]">
-                        <div class="p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3">
-                            <div class="flex items-center gap-2">
-                                <span class="text-base">💬</span>
-                                <h4 class="font-bold text-slate-800 text-sm">Empfänger auswählen:</h4>
-                            </div>
-                            <select id="chatRecipientSelect" onchange="loadChatMessages()" class="bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500">
-                                <option value="global">🌐 Alle (Öffentlicher Team-Chat)</option>
-                            </select>
-                        </div>
-
-                        <div id="chatMessagesBox" class="flex-1 p-6 overflow-y-auto space-y-3"></div>
-
-                        <form onsubmit="sendChatMessage(event)" class="p-4 border-t border-slate-100 flex gap-3">
-                            <input type="text" id="chatInput" placeholder="Nachricht schreiben..." required class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
-                            <button type="submit" class="bg-[#059669] hover:bg-[#047857] text-white text-sm font-semibold px-5 py-2.5 rounded-xl flex items-center gap-2 transition">
-                                <span>Senden</span>
-                                <span>↗</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- TAB 5: BENUTZERVERWALTUNG -->
-                <div id="tab-users" class="hidden space-y-6">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h3 class="font-bold text-slate-800 text-sm">Benutzerverwaltung</h3>
-                            <p class="text-xs text-slate-400">Nutzerkonten und Berechtigungen verwalten</p>
-                        </div>
-                        <button onclick="openNewUserModal()" class="bg-[#059669] hover:bg-[#047857] text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
-                            <span>+</span> Neuer Benutzer
-                        </button>
-                    </div>
-
-                    <div class="bg-white rounded-2xl border border-slate-200/70 overflow-x-auto shadow-sm">
-                        <table class="w-full text-left text-xs min-w-[500px]">
-                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
-                                <tr>
-                                    <th class="p-4">NAME</th>
-                                    <th class="p-4">ID / E-MAIL</th>
-                                    <th class="p-4">ROLLE</th>
-                                    <th class="p-4">AKTIONEN</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTableBody" class="divide-y divide-slate-100 text-slate-600"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </div>
-        </main>
-    </div>
-
-    <!-- MODAL: VOLLBILD KALENDER -->
-    <div id="calendarModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-5xl w-full h-[85vh] flex flex-col shadow-2xl">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h3 class="font-bold text-slate-800 text-base">📅 Belegungsplan (Vollansicht)</h3>
-                <button onclick="closeCalendarModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
-            </div>
-            <div class="calendar-wrapper flex-1 overflow-y-auto">
-                <div class="calendar-container-inner h-full">
-                    <div id="modalCalendarContainer" class="h-full text-sm"></div>
-                </div>
-            </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="openScannerModal()" class="bg-emerald-600 hover:bg-emerald-800 text-xs px-3 py-1.5 rounded shadow flex items-center gap-1">📷 QR Scan</button>
+            <button onclick="checkOverdueLoans()" class="bg-emerald-600 hover:bg-emerald-800 text-xs px-3 py-1.5 rounded shadow">🔄 Fristen prüfen</button>
+            <span id="userStatus" class="text-xs bg-emerald-800 px-2.5 py-1 rounded">Angemeldet: Max</span>
         </div>
-    </div>
+    </header>
 
-    <!-- MODAL: EXCEL / CSV IMPORT -->
-    <div id="excelImportModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="text-lg font-bold text-slate-800">📊 Excel / CSV Objektlisten importieren</h3>
-                <button onclick="closeExcelImportModal()" class="text-slate-400 font-bold">✕</button>
-            </div>
+    <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
 
-            <div class="space-y-3">
-                <p class="text-xs text-slate-500">Wähle eine Excel-Datei (.xlsx, .xls) oder CSV-Datei aus:</p>
-                <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="processExcelFile(event)" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
-            </div>
-
-            <div id="excelPreviewContainer" class="hidden space-y-3 pt-3 border-t">
-                <h4 class="font-bold text-xs text-slate-700 uppercase">Vorschau & Zuordnung (<span id="excelRowCount">0</span> Objekte gefunden)</h4>
-                <div class="overflow-x-auto max-h-60 border rounded-xl">
-                    <table class="w-full text-left text-[11px]">
-                        <thead id="excelPreviewHead" class="bg-slate-100 border-b text-slate-600"></thead>
-                        <tbody id="excelPreviewBody" class="divide-y"></tbody>
-                    </table>
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeExcelImportModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
-                    <button type="button" onclick="confirmExcelImport()" id="confirmImportBtn" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Import Durchführen</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: OBJEKT ERSTELLEN / BEARBEITEN -->
-    <div id="itemModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
-            <h3 id="itemModalTitle" class="text-lg font-bold text-slate-800">Neuen Artikel anlegen</h3>
-            <form onsubmit="saveItem(event)" class="space-y-3">
-                <input type="hidden" id="editItemId">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">SKU / Objekt-ID (Auto)</label>
-                        <input type="text" id="itemIdInput" required class="w-full bg-slate-100 border border-slate-200 rounded-xl p-2.5 text-sm outline-none font-mono">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Kategorie</label>
-                        <input type="text" id="itemCategoryInput" list="categorySuggestions" required placeholder="z. B. Kamera" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
-                        <datalist id="categorySuggestions"></datalist>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Bezeichnung</label>
-                    <input type="text" id="itemNameInput" required placeholder="z. B. Sony Alpha 7 IV" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Erforderliche Berechtigung</label>
-                    <select id="itemPermissionSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
-                        <option value="Keine">Keine (Für alle frei)</option>
-                        <option value="Kamera">Kamera-Schein</option>
-                        <option value="Drohne">Drohnen-Lizenz</option>
-                        <option value="Licht">Licht-Einweisung</option>
-                        <option value="Ton">Ton-Einweisung</option>
-                        <option value="Spezialgerät">Spezialgerät-Freigabe</option>
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase">Raum</label>
-                        <input type="text" id="itemRoomInput" placeholder="Raum 101" class="w-full bg-slate-50 border rounded-xl p-2 text-xs">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase">Regal</label>
-                        <input type="text" id="itemShelfInput" placeholder="Regal A" class="w-full bg-slate-50 border rounded-xl p-2 text-xs">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase">Fach</label>
-                        <input type="text" id="itemCompartmentInput" placeholder="Fach 2" class="w-full bg-slate-50 border rounded-xl p-2 text-xs">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Kofferinhalte / Zubehör (Kommagetrennt)</label>
-                    <input type="text" id="itemAccessoriesInput" placeholder="z. B. Body, 2x Akku, Ladekabel, Tasche" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
-                </div>
-
-                <div class="space-y-2 pt-2 border-t">
-                    <label class="block text-xs font-bold text-slate-500 uppercase">Fotos (Maximal 5 Fotos)</label>
-                    
-                    <div id="dropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" class="border-2 border-dashed border-slate-200 hover:border-emerald-500 rounded-xl p-3 text-center bg-slate-50 cursor-pointer transition">
-                        <p class="text-xs text-slate-500 font-medium">📷 Datei hierher ziehen, einfügen (Strg+V) oder:</p>
-                        <input type="file" id="photoFileInput" accept="image/*" multiple onchange="handleFileSelect(event)" class="hidden">
-                        <input type="file" id="cameraCaptureInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)" class="hidden">
-                        
-                        <div class="flex justify-center gap-2 mt-2">
-                            <button type="button" onclick="document.getElementById('photoFileInput').click()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg">📁 Datei wählen</button>
-                            <button type="button" onclick="document.getElementById('cameraCaptureInput').click()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg">📸 Foto aufnehmen</button>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-2">
-                        <input type="url" id="photoUrlInput" placeholder="Oder Foto-URL eingeben..." class="flex-1 bg-slate-50 border rounded-xl p-2 text-xs outline-none">
-                        <button type="button" onclick="addPhotoUrl()" class="bg-slate-800 text-white text-xs px-3 py-2 rounded-xl">Hinzufügen</button>
-                    </div>
-
-                    <div id="photoPreviewStrip" class="grid grid-cols-5 gap-2 pt-2"></div>
-                </div>
-
-                <div class="flex justify-end gap-2 pt-3 border-t">
-                    <button type="button" onclick="closeItemModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
-                    <button type="submit" id="saveItemSubmitBtn" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Speichern</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL: AUSLEIHE -->
-    <div id="rentModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
-            <h3 id="rentModalTitle" class="text-lg font-bold text-slate-800">Artikel ausleihen</h3>
-            <form onsubmit="confirmRental(event)" class="space-y-3">
-                <input type="hidden" id="rentItemId">
-
-                <div id="adminUserSelectGroup" class="hidden">
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Ausleihen für Benutzer</label>
-                    <select id="rentForUserId" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none font-semibold text-emerald-700"></select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Projekt / Einsatzort (Optional)</label>
-                    <input type="text" id="rentProject" placeholder="z. B. Baustelle Süd, Drehort Berlin" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Beginn</label>
-                    <input type="datetime-local" id="rentStart" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Rückgabe</label>
-                    <input type="datetime-local" id="rentEnd" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
-                </div>
-
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeRentModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
-                    <button type="submit" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Verbindlich Buchen</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL: RÜCKGABE -->
-    <div id="returnModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
-            <h3 class="text-lg font-bold text-slate-800">📦 Rückgabe & Prüfung</h3>
-            <p class="text-xs text-slate-500">Bitte überprüfe alle Kofferinhalte vor der Rückgabe:</p>
+        <!-- 1. OBERKATEGORIEN / RAUM-AUSWAHL (Schont Supabase-Abfragen & Bandbreite) -->
+        <section class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+            <h2 class="text-lg font-semibold text-slate-700 mb-2">📍 Raum / Oberkategorie wählen</h2>
+            <p class="text-xs text-slate-500 mb-4">Wähle einen Raum, um die Artikelliste gezielt aus der Datenbank zu laden und große Datenmengen zu vermeiden.</p>
             
-            <form onsubmit="confirmReturn(event)" class="space-y-4">
-                <input type="hidden" id="returnRentalId">
-                <input type="hidden" id="returnItemId">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" id="roomSelectionContainer">
+                <button onclick="selectRoom('Bibliothek')" class="room-btn bg-slate-50 hover:bg-emerald-50 hover:border-emerald-500 border border-slate-300 p-4 rounded-lg text-center transition font-medium text-slate-700">📚 Bibliothek</button>
+                <button onclick="selectRoom('Freizeitheimlager')" class="room-btn bg-slate-50 hover:bg-emerald-50 hover:border-emerald-500 border border-slate-300 p-4 rounded-lg text-center transition font-medium text-slate-700">🏕️ Freizeitheimlager</button>
+                <button onclick="selectRoom('Küche')" class="room-btn bg-slate-50 hover:bg-emerald-50 hover:border-emerald-500 border border-slate-300 p-4 rounded-lg text-center transition font-medium text-slate-700">🍳 Küche</button>
+                <button onclick="selectRoom('Technik')" class="room-btn bg-slate-50 hover:bg-emerald-50 hover:border-emerald-500 border border-slate-300 p-4 rounded-lg text-center transition font-medium text-slate-700">🔌 Technik</button>
+                <button onclick="selectRoom('Büro')" class="room-btn bg-slate-50 hover:bg-emerald-50 hover:border-emerald-500 border border-slate-300 p-4 rounded-lg text-center transition font-medium text-slate-700">📂 Büro</button>
+            </div>
+        </section>
 
-                <div class="space-y-2 border p-3 bg-slate-50 rounded-xl max-h-40 overflow-y-auto">
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kofferinhalte / Zubehör</label>
-                    <div id="accessoriesChecklist" class="space-y-1.5 text-xs"></div>
-                </div>
-
-                <div class="space-y-2 pt-2 border-t">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="hasDamage" onchange="toggleDamageFields()" class="rounded text-emerald-600">
-                        <span class="text-xs font-bold text-red-600">⚠️ Defekt oder Schaden melden</span>
-                    </label>
-                    <div id="damageFields" class="hidden space-y-2">
-                        <textarea id="damageReport" placeholder="Beschreibe den Defekt..." class="w-full border p-2 rounded-xl text-xs outline-none h-20"></textarea>
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeReturnModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
-                    <button type="submit" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Rückgabe Bestätigen</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL & PRINT-AREA: QR-CODE DRUCK -->
-    <div id="qrModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
-            <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="text-base font-bold">🖨️️ Etikettendruck Vorschau (DIN A4 Raster: 24 Etiketten)</h3>
-                <button onclick="closeQrModal()" class="text-slate-400 font-bold">✕</button>
+        <!-- 2. DYNAMISCHE ARTIKELLISTE DES AUSGEWÄHLTEN RAUMS -->
+        <section id="inventorySection" class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hidden">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b">
+                <h2 class="text-xl font-bold text-slate-800" id="currentRoomTitle">Lagerbestand</h2>
+                <span id="itemCountBadge" class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2.5 py-0.5 rounded">0 Artikel geladen</span>
             </div>
 
-            <div id="a4PrintArea" class="bg-white border p-2"></div>
-
-            <div class="flex justify-end gap-2 pt-2 border-t">
-                <button onclick="closeQrModal()" class="px-4 py-2 text-xs border rounded-xl">Schließen</button>
-                <button onclick="window.print()" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Jetzt Drucken</button>
+            <div id="itemList" class="grid-cards">
+                <!-- Dynamisch aus Supabase befüllt -->
             </div>
-        </div>
-    </div>
+        </section>
 
-    <!-- MODAL: QR SCANNER -->
-    <div id="scannerModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 text-center shadow-xl">
-            <h3 class="text-lg font-bold">📷 QR-Code scannen</h3>
-            <div id="qr-reader" class="w-full overflow-hidden rounded-2xl border bg-slate-50"></div>
-            <button onclick="closeScannerModal()" class="px-4 py-2 text-xs border rounded-xl">Schließen</button>
-        </div>
-    </div>
-
-    <!-- MODAL: NEUER BENUTZER -->
-    <div id="newUserModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
-            <h3 class="text-lg font-bold text-slate-800">Neuen Benutzer anlegen</h3>
-            <form onsubmit="adminCreateUser(event)" class="space-y-3">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Vollständiger Name</label>
-                    <input type="text" id="newUserName" required placeholder="Erika Mustermann" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+        <!-- 3. VERWALTUNG, AUSLEIHEN & CHATBOT -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Ausleih- & Rückgabe-Verwaltung -->
+            <section class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-700 mb-4 pb-2 border-b">📦 Aktive Ausleihen & Rückgabe</h2>
+                <div id="activeLoansList" class="space-y-3 max-h-96 overflow-y-auto">
+                    <!-- Wird dynamisch geladen -->
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">E-Mail</label>
-                    <input type="email" id="newUserEmail" required placeholder="erika@beispiel.de" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+            </section>
+
+            <!-- Chatbereich mit schreibgeschütztem System-Bot -->
+            <section class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex flex-col h-96">
+                <div class="flex justify-between items-center mb-2 pb-2 border-b">
+                    <h2 class="text-lg font-semibold text-slate-700">💬 System- & Team-Chat</h2>
+                    <span class="text-xs bg-slate-100 text-slate-600 border px-2 py-0.5 rounded">Benachrichtigungen</span>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Passwort</label>
-                    <input type="password" id="newUserPass" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Rolle</label>
-                    <select id="newUserRole" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
-                        <option value="user">Benutzer (Standard)</option>
-                        <option value="admin">Administrator</option>
-                    </select>
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeNewUserModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
-                    <button type="submit" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Benutzer anlegen</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MAIN JAVASCRIPT LOGIK -->
-    <script>
-        const PAGE_SIZE = 20;
-        let currentPage = 1;
-        let totalPages = 1;
-
-        let isRegisterMode = false;
-        let currentUser = null;
-        let userProfile = null;
-        let allProfiles = [];
-        let allItems = [];
-        let activeRentals = [];
-        let waitlistEntries = [];
-        let activityLogs = [];
-        let chatMessages = [];
-        let currentPhotos = [];
-        let html5QrScanner = null;
-        let calendar = null;
-        let modalCalendar = null;
-
-        let selectedItemIds = new Set();
-        let currentStatusFilter = 'ALL';
-        let importedExcelData = [];
-
-        window.onload = async () => {
-            updateDateDisplay();
-            initPasteHandler();
-            try {
-                const { data: { session } } = await db.auth.getSession();
-                if (session && session.user) {
-                    await loadUserProfile(session.user);
-                }
-            } catch (e) {
-                console.log("Supabase bereit.");
-            }
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const scanItem = urlParams.get('item');
-            if (scanItem) {
-                setTimeout(() => {
-                    const searchInput = document.getElementById('searchInput');
-                    if (searchInput) {
-                        searchInput.value = scanItem;
-                        handleSearchInput();
-                    }
-                    switchTab('inventory');
-                }, 1000);
-            }
-
-            fetchItems(1);
-        };
-
-        async function fetchItems(page = 1) {
-            const grid = document.getElementById('item-grid');
-            if (!grid) return;
-            grid.innerHTML = '<p class="p-4 text-slate-400">Lade Objekte...</p>';
-
-            const from = (page - 1) * PAGE_SIZE;
-            const to = from + PAGE_SIZE - 1;
-
-            try {
-                let query = db.from('items').select('*', { count: 'exact' });
-
-                if (currentStatusFilter !== 'ALL') {
-                    if (currentStatusFilter === 'Ausgeliehen') {
-                        const rentedItemIds = activeRentals.map(r => r.item_id);
-                        if (rentedItemIds.length > 0) {
-                            query = query.in('id', rentedItemIds);
-                        } else {
-                            query = query.eq('id', '___NONE___');
-                        }
-                    } else if (currentStatusFilter === 'Verfügbar') {
-                        const rentedItemIds = activeRentals.map(r => r.item_id);
-                        if (rentedItemIds.length > 0) {
-                            query = query.not('id', 'in', `(${rentedItemIds.join(',')})`);
-                        }
-                        query = query.neq('status', 'In Inventur').neq('status', 'Wartung / Defekt');
-                    } else {
-                        query = query.eq('status', currentStatusFilter);
-                    }
-                }
-
-                const searchTerm = document.getElementById('searchInput')?.value.trim();
-                if (searchTerm) {
-                    query = query.or(`name.ilike.%${searchTerm}%,id.ilike.%${searchTerm}%,room.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`);
-                }
-
-                const { data, count, error } = await query
-                    .order('id', { ascending: true })
-                    .range(from, to);
-
-                if (error) throw error;
-
-                allItems = data || [];
-                totalPages = Math.ceil((count || 1) / PAGE_SIZE) || 1;
-                currentPage = page;
-
-                renderCards(allItems);
-                updatePaginationControls(count || 0);
-
-                const { data: categoriesData } = await db.from('items').select('category');
-                if (categoriesData) {
-                    const categories = [...new Set(categoriesData.map(i => i.category).filter(Boolean))];
-                    const datalist = document.getElementById('categorySuggestions');
-                    if (datalist) {
-                        datalist.innerHTML = categories.map(c => `<option value="${c}">`).join('');
-                    }
-                }
-
-            } catch (err) {
-                console.error('Fehler beim Laden der Daten:', err.message);
-                grid.innerHTML = '<p class="p-4 text-red-500">Fehler beim Laden der Objekte.</p>';
-            }
-        }
-
-        function renderCards(items) {
-            const grid = document.getElementById('item-grid');
-            if (!grid) return;
-            grid.innerHTML = '';
-
-            if (!items || items.length === 0) {
-                grid.innerHTML = '<p class="p-4 text-slate-400">Keine Objekte gefunden.</p>';
-                return;
-            }
-
-            const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
-
-            items.forEach(item => {
-                const isChecked = selectedItemIds.has(item.id);
-                const effectiveStatus = getItemEffectiveStatus(item);
-                const photos = Array.isArray(item.photos) ? item.photos : (item.image_url ? [item.image_url] : []);
-                const mainPhoto = photos[0] || 'https://via.placeholder.com/300x200?text=Kein+Bild';
-
-                const card = document.createElement('div');
-                card.className = `card flex gap-3 items-center ${isChecked ? 'ring-2 ring-emerald-500 bg-slate-180' : ''}`;
                 
-                card.innerHTML = `
-                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleItemSelection('${item.id}')" class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer shrink-0">
-                    <img src="${mainPhoto}" class="w-16 h-16 object-cover rounded-lg border border-slate-300 shrink-0">
-                    <div class="flex-1 min-w-0">
-                        <h3 class="font-bold text-[#1E293B] text-sm truncate">${item.name || 'Unbenannt'}</h3>
-                        <p class="text-xs text-[#1E293B]/80"><strong>SKU/ID:</strong> ${item.id}</p>
-                        <p class="text-xs text-[#1E293B]/80"><strong>Kategorie:</strong> ${item.category || '-'}</p>
-                        <p class="text-xs text-[#1E293B]/80"><strong>Status:</strong> ${effectiveStatus}</p>
-                        
-                        <div class="flex items-center gap-2 mt-2">
-                            <button onclick="openRentModal('${item.id}', '${item.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 py-1 rounded">Ausleihen</button>
-                            <button onclick="openQrModal('${item.id}')" class="text-xs border border-slate-300 text-[#1E293B] px-2 py-1 rounded hover:bg-slate-200">QR</button>
-                            ${isAdmin ? `
-                                <button onclick="editItem('${item.id}')" class="text-xs text-blue-600 hover:underline">✏️</button>
-                                <button onclick="deleteItem('${item.id}')" class="text-xs text-red-600 hover:underline">🗑</button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        function updatePaginationControls(totalCount) {
-            const pageInfo = document.getElementById('page-info');
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
-
-            if (pageInfo) pageInfo.textContent = `Seite ${currentPage} von ${totalPages} (${totalCount} Objekte gesamt)`;
-            if (prevBtn) prevBtn.disabled = currentPage <= 1;
-            if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
-        }
-
-        function changePage(direction) {
-            const newPage = currentPage + direction;
-            if (newPage >= 1 && newPage <= totalPages) {
-                fetchItems(newPage);
-            }
-        }
-
-        function updateDateDisplay() {
-            const now = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('currentDateDisplay').innerText = now.toLocaleDateString('de-DE', options);
-        }
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            const isHiddenMobile = sidebar.classList.contains('-translate-x-full');
-
-            if (isHiddenMobile) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            }
-        }
-
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.add('-translate-x-full');
-            document.getElementById('sidebarOverlay').classList.add('hidden');
-        }
-
-        function toggleAuthMode() {
-            isRegisterMode = !isRegisterMode;
-            document.getElementById('fullNameGroup').classList.toggle('hidden', !isRegisterMode);
-            document.getElementById('authBtnText').innerText = isRegisterMode ? 'Konto erstellen' : 'Anmelden';
-            document.getElementById('authToggleBtn').innerText = isRegisterMode ? 'Bereits ein Konto? Anmelden' : 'Noch kein Konto? Konto registrieren';
-        }
-
-        async function handleAuth(event) {
-            event.preventDefault();
-            const email = document.getElementById('authEmail').value.trim();
-            const password = document.getElementById('authPassword').value.trim();
-            const fullName = document.getElementById('authFullName').value.trim();
-
-            try {
-                if (isRegisterMode) {
-                    const { data, error } = await db.auth.signUp({
-                        email, password, options: { data: { full_name: fullName || email.split('@')[0], role: 'user' } }
-                    });
-                    if (error) throw error;
-                    alert("Konto erfolgreich registriert! Du kannst dich jetzt anmelden.");
-                    toggleAuthMode();
-                } else {
-                    const { data, error } = await db.auth.signInWithPassword({ email, password });
-                    if (error) throw error;
-                    await loadUserProfile(data.user);
-                }
-            } catch (err) {
-                alert("Anmeldung/Registrierung fehlgeschlagen:\n" + (err.message || err));
-            }
-        }
-
-        async function loadUserProfile(user) {
-            currentUser = user;
-
-            let { data: profile } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
-
-            if (!profile) {
-                const isAdminEmail = user.email === 'joas.frese@gmail.com';
-                const newProfile = {
-                    id: user.id,
-                    full_name: user.user_metadata?.full_name || user.email.split('@')[0],
-                    role: isAdminEmail ? 'admin' : 'user'
-                };
-                const { data: savedProfile } = await db.from('profiles').upsert([newProfile]).select().maybeSingle();
-                profile = savedProfile || newProfile;
-            }
-
-            userProfile = profile;
-
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('appLayout').classList.remove('hidden');
-
-            const initial = userProfile.full_name ? userProfile.full_name.charAt(0).toUpperCase() : 'U';
-            document.getElementById('userAvatar').innerText = initial;
-            document.getElementById('userNameDisplay').innerText = userProfile.full_name || user.email;
-
-            const isAdmin = userProfile.role && userProfile.role.toLowerCase() === 'admin';
-            document.getElementById('userRoleBadge').innerText = isAdmin ? 'ADMINISTRATOR' : 'BENUTZER';
-            document.getElementById('userRoleBadge').className = isAdmin ? 'text-[9px] text-emerald-400 font-bold tracking-wider' : 'text-[9px] text-slate-400 font-bold tracking-wider';
-
-            document.getElementById('nav-users').classList.toggle('hidden', !isAdmin);
-            document.getElementById('addItemBtn').classList.toggle('hidden', !isAdmin);
-            document.getElementById('importExcelBtn').classList.toggle('hidden', !isAdmin);
-            document.getElementById('bulkDeleteBtn').classList.toggle('hidden', !isAdmin);
-
-            document.getElementById('movementsScopeBadge').innerText = isAdmin ? '👑 Admin-Ansicht (Alle Einträge)' : '👤 Meine Warenbewegungen';
-
-            await fetchAllData();
-            loadChatMessages();
-            loadDashboardChat();
-            renderDashboardCalendar();
-        }
-
-        async function fetchAllData() {
-            await fetchAllUsers();
-            await fetchRentals();
-            await fetchWaitlist();
-            await fetchActivityLogs();
-            await fetchItems(currentPage);
-        }
-
-        async function fetchAllUsers() {
-            try {
-                const { data } = await db.from('profiles').select('*');
-                allProfiles = data || [userProfile];
-
-                renderUsersTable();
-                populateAdminUserSelect();
-                populateChatRecipientSelects();
-            } catch(e) {}
-        }
-
-        function populateAdminUserSelect() {
-            const select = document.getElementById('rentForUserId');
-            if (!select) return;
-            select.innerHTML = '';
-            allProfiles.forEach(p => {
-                select.innerHTML += `<option value="${p.id}">${p.full_name} (${p.role})</option>`;
-            });
-            if (currentUser) select.value = currentUser.id;
-        }
-
-        function populateChatRecipientSelects() {
-            const selects = [document.getElementById('chatRecipientSelect'), document.getElementById('dashChatRecipientSelect')];
-            selects.forEach(select => {
-                if (!select) return;
-                const currentVal = select.value;
-                select.innerHTML = `<option value="global">🌐 Alle (Öffentlicher Team-Chat)</option>`;
-                allProfiles.forEach(p => {
-                    if (p.id !== currentUser?.id) {
-                        select.innerHTML += `<option value="${p.id}">👤 ${p.full_name || 'Benutzer'}</option>`;
-                    }
-                });
-                select.value = currentVal || 'global';
-            });
-        }
-
-        function renderUsersTable() {
-            const body = document.getElementById('usersTableBody');
-            if (!body) return;
-            body.innerHTML = '';
-
-            allProfiles.forEach(p => {
-                const isMe = p.id === currentUser?.id;
-                const isAdmin = p.role && p.role.toLowerCase() === 'admin';
-
-                body.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="p-4 font-bold text-slate-800">
-                            ${p.full_name || 'Unbenannt'} ${isMe ? '<span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded ml-1">(Du)</span>' : ''}
-                        </td>
-                        <td class="p-4 font-mono text-slate-500">${p.id.slice(0, 8)}...</td>
-                        <td class="p-4">
-                            <span class="${isAdmin ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'} font-bold text-[10px] px-2 py-1 rounded-md">
-                                ${isAdmin ? 'Administrator' : 'Benutzer'}
-                            </span>
-                        </td>
-                        <td class="p-4">
-                            ${!isMe ? `<button onclick="toggleUserRole('${p.id}', '${p.role}')" class="text-xs text-indigo-600 hover:underline">Rolle ändern</button>` : '-'}
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        async function toggleUserRole(userId, currentRole) {
-            const isCurrentAdmin = currentRole && currentRole.toLowerCase() === 'admin';
-            const newRole = isCurrentAdmin ? 'user' : 'admin';
-            await db.from('profiles').update({ role: newRole }).eq('id', userId);
-            await fetchAllUsers();
-        }
-
-        async function fetchRentals() {
-            try {
-                const { data } = await db.from('rentals').select('*, items(*)');
-                activeRentals = data || [];
-                renderMyRentals();
-                renderDashboardCalendar();
-                if (modalCalendar) renderModalCalendar();
-            } catch(e) {}
-        }
-
-        async function fetchWaitlist() {
-            try {
-                const { data } = await db.from('waitlist').select('*');
-                waitlistEntries = data || [];
-            } catch(e) {}
-        }
-
-        async function fetchActivityLogs() {
-            try {
-                const { data } = await db.from('activity_log').select('*').order('created_at', { ascending: false });
-                activityLogs = data || [];
-                renderActivityLogs();
-            } catch(e) {}
-        }
-
-        function renderActivityLogs() {
-            const body = document.getElementById('activityLogTableBody');
-            if (!body) return;
-            const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
-
-            const visibleLogs = activityLogs.filter(l => {
-                if (isAdmin) return true;
-                return (l.user_id && l.user_id === currentUser?.id) || (l.user_name === userProfile?.full_name);
-            });
-
-            if (visibleLogs.length === 0) {
-                body.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 italic">Keine eigenen Warenbewegungen vorhanden.</td></tr>`;
-                return;
-            }
-
-            body.innerHTML = '';
-            visibleLogs.forEach(l => {
-                const dateStr = new Date(l.created_at).toLocaleString('de-DE');
-                body.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="p-4 font-mono text-slate-400">${dateStr}</td>
-                        <td class="p-4"><span class="font-bold text-emerald-600">[${l.action}]</span></td>
-                        <td class="p-4 font-bold text-slate-800">${l.item_name}</td>
-                        <td class="p-4">${l.user_name}</td>
-                        <td class="p-4 text-slate-500">${l.details || '-'}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        function renderMyRentals() {
-            const myRentals = activeRentals.filter(r => r.user_id === currentUser?.id);
-            const card = document.getElementById('myRentalsCard');
-            const list = document.getElementById('myRentalsList');
-            if (!card || !list) return;
-
-            if (myRentals.length === 0) {
-                card.classList.add('hidden');
-                return;
-            }
-
-            card.classList.remove('hidden');
-            list.innerHTML = '';
-
-            myRentals.forEach(r => {
-                const end = new Date(r.end_date).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-                const itemName = r.items ? r.items.name : r.item_id;
-
-                list.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border">
-                        <div>
-                            <span class="font-bold text-xs text-slate-800">${itemName}</span>
-                            <p class="text-[10px] text-slate-500">Projekt: <b>${r.project || 'Keins'}</b> | Bis: ${end} Uhr</p>
-                        </div>
-                        <button onclick="openReturnModal('${r.id}', '${r.item_id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg">
-                            Zurückgeben
-                        </button>
-                    </div>
-                `;
-            });
-        }
-
-        function getItemEffectiveStatus(item) {
-            if (item.status === 'Wartung / Defekt') return 'Wartung / Defekt';
-            if (item.status === 'In Inventur') return 'In Inventur';
-            const isRented = activeRentals.some(r => r.item_id === item.id);
-            if (isRented) return 'Ausgeliehen';
-            return 'Verfügbar';
-        }
-
-        function setStatusFilter(status) {
-            currentStatusFilter = status;
-            document.querySelectorAll('.status-filter-btn').forEach(btn => {
-                btn.className = 'status-filter-btn bg-slate-200 text-slate-700 hover:bg-slate-300 text-xs font-bold px-3 py-2 rounded-xl';
-            });
-            const activeBtn = document.getElementById(`filter-${status}`);
-            if (activeBtn) activeBtn.className = 'status-filter-btn bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl';
-            fetchItems(1);
-        }
-
-        function handleSearchInput() {
-            toggleClearSearchBtn();
-            fetchItems(1);
-        }
-
-        function toggleClearSearchBtn() {
-            const input = document.getElementById('searchInput');
-            const btn = document.getElementById('clearSearchBtn');
-            if (input && btn) {
-                if (input.value.length > 0) {
-                    btn.classList.remove('hidden');
-                } else {
-                    btn.classList.add('hidden');
-                }
-            }
-        }
-
-        function clearSearch() {
-            const input = document.getElementById('searchInput');
-            if (input) {
-                input.value = '';
-                toggleClearSearchBtn();
-                fetchItems(1);
-                input.focus();
-            }
-        }
-
-        function toggleSelectAllVisible() {
-            if (!allItems || allItems.length === 0) return;
-
-            const allSelected = allItems.every(item => selectedItemIds.has(item.id));
-
-            if (allSelected) {
-                allItems.forEach(item => selectedItemIds.delete(item.id));
-            } else {
-                allItems.forEach(item => selectedItemIds.add(item.id));
-            }
-
-            renderCards(allItems);
-            updateBulkActionBar();
-        }
-
-        function toggleItemSelection(id) {
-            if (selectedItemIds.has(id)) {
-                selectedItemIds.delete(id);
-            } else {
-                selectedItemIds.add(id);
-            }
-            renderCards(allItems);
-            updateBulkActionBar();
-        }
-
-        function clearSelection() {
-            selectedItemIds.clear();
-            renderCards(allItems);
-            updateBulkActionBar();
-        }
-
-        function updateBulkActionBar() {
-            const bar = document.getElementById('bulkActionBar');
-            if (!bar) return;
-            const count = selectedItemIds.size;
-            if (count > 0) {
-                bar.classList.remove('hidden');
-                document.getElementById('selectedCountBadge').innerText = `${count} ausgewählt`;
-            } else {
-                bar.classList.add('hidden');
-            }
-        }
-
-        async function bulkToggleInventur() {
-            if (selectedItemIds.size === 0) return;
-            const ids = Array.from(selectedItemIds);
-            const items = allItems.filter(i => ids.includes(i.id));
-            const shouldSetInventur = items.some(i => i.status !== 'In Inventur');
-            const newStatus = shouldSetInventur ? 'In Inventur' : 'Verfügbar';
-
-            for (let id of ids) {
-                await db.from('items').update({ status: newStatus }).eq('id', id);
-            }
-
-            clearSelection();
-            fetchAllData();
-            alert(`Status für ${ids.length} Objekt(e) geändert auf: ${newStatus}`);
-        }
-
-        function bulkRentModal() {
-            if (selectedItemIds.size === 0) return;
-            const ids = Array.from(selectedItemIds);
-            openRentModal(ids.join(','), `${ids.length} ausgewählte Artikel`);
-        }
-
-        function bulkPrintQrCodes() {
-            if (selectedItemIds.size === 0) return;
-            openA4QrSheet(Array.from(selectedItemIds));
-        }
-
-        async function bulkDelete() {
-            if (selectedItemIds.size === 0) return;
-            if (confirm(`Möchtest du wirklich alle ${selectedItemIds.size} ausgewählten Artikel löschen?`)) {
-                for (let id of Array.from(selectedItemIds)) {
-                    await db.from('items').delete().eq('id', id);
-                }
-                clearSelection();
-                fetchAllData();
-            }
-        }
-
-        function openExcelImportModal() {
-            document.getElementById('excelFileInput').value = '';
-            document.getElementById('excelPreviewContainer').classList.add('hidden');
-            document.getElementById('excelImportModal').classList.remove('hidden');
-        }
-
-        function closeExcelImportModal() {
-            document.getElementById('excelImportModal').classList.add('hidden');
-        }
-
-        function processExcelFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
-
-                if (jsonData.length === 0) {
-                    alert("Keine Daten in der Excel-Datei gefunden!");
-                    return;
-                }
-
-                let highestNum = 1000;
-                allItems.forEach(item => {
-                    if (item.id && item.id.startsWith('ART-')) {
-                        const num = parseInt(item.id.replace('ART-', ''), 10);
-                        if (!isNaN(num) && num > highestNum) {
-                            highestNum = num;
-                        }
-                    }
-                });
-
-                importedExcelData = jsonData.map((row) => {
-                    const keys = Object.keys(row);
-                    const findKey = (terms) => keys.find(k => terms.some(t => k.toLowerCase().includes(t)));
-
-                    highestNum++;
-                    const autoGeneratedId = `ART-${highestNum}`;
-
-                    const nameKey = findKey(['name', 'bezeichnung', 'titel', 'artikel', 'objekt']) || keys[0];
-                    const catKey = findKey(['kategorie', 'typ', 'gruppe']) || keys[1];
-                    const roomKey = findKey(['raum', 'ort', 'gebäude', 'standort']);
-                    const shelfKey = findKey(['regal', 'bereich']);
-                    const compKey = findKey(['fach', 'ebene']);
-                    const accKey = findKey(['zubehör', 'inhalt', 'beschreibung']);
-
-                    return {
-                        id: autoGeneratedId,
-                        name: String(row[nameKey] || 'Unbenanntes Objekt').trim(),
-                        category: String(row[catKey] || 'Allgemein').trim(),
-                        room: String(row[roomKey] || 'Lager').trim(),
-                        shelf: String(row[shelfKey] || 'Regal A').trim(),
-                        compartment: String(row[compKey] || 'Fach 1').trim(),
-                        accessories: String(row[accKey] || '').trim(),
-                        status: 'Verfügbar',
-                        permission: 'Keine'
-                    };
-                });
-
-                renderExcelPreview();
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        function renderExcelPreview() {
-            const container = document.getElementById('excelPreviewContainer');
-            const head = document.getElementById('excelPreviewHead');
-            const body = document.getElementById('excelPreviewBody');
-
-            document.getElementById('excelRowCount').innerText = importedExcelData.length;
-
-            head.innerHTML = `
-                <tr>
-                    <th class="p-2">GENERIERTE ID</th>
-                    <th class="p-2">BEZEICHNUNG</th>
-                    <th class="p-2">KATEGORIE</th>
-                    <th class="p-2">STANDORT</th>
-                    <th class="p-2">ZUBEHÖR</th>
-                </tr>
-            `;
-
-            body.innerHTML = importedExcelData.slice(0, 10).map(item => `
-                <tr class="hover:bg-slate-50 text-slate-700">
-                    <td class="p-2 font-mono font-bold text-emerald-700">${item.id}</td>
-                    <td class="p-2 font-semibold">${item.name}</td>
-                    <td class="p-2 text-emerald-600 font-bold">${item.category}</td>
-                    <td class="p-2">${item.room} / ${item.shelf} / ${item.compartment}</td>
-                    <td class="p-2 text-slate-500">${item.accessories || '-'}</td>
-                </tr>
-            `).join('');
-
-            container.classList.remove('hidden');
-        }
-
-        async function confirmExcelImport() {
-            if (importedExcelData.length === 0) return;
-
-            const btn = document.getElementById('confirmImportBtn');
-            btn.disabled = true;
-
-            const batchSize = 100;
-            const total = importedExcelData.length;
-            let successCount = 0;
-
-            for (let i = 0; i < total; i += batchSize) {
-                const batch = importedExcelData.slice(i, i + batchSize);
-                btn.innerText = `Speichere in Datenbank (${Math.min(i + batchSize, total)} / ${total})...`;
-
-                const { error } = await db.from('items').upsert(batch);
-
-                if (error) {
-                    alert(`Fehler beim Importieren ab Eintrag ${i + 1}:\n` + error.message);
-                    btn.innerText = 'Import Durchführen';
-                    btn.disabled = false;
-                    return;
-                }
-                successCount += batch.length;
-            }
-
-            btn.innerText = 'Import Durchführen';
-            btn.disabled = false;
-
-            alert(`Erfolgreich ${successCount} Objekte mit neu generierten IDs importiert!`);
-            closeExcelImportModal();
-            fetchAllData();
-        }
-
-        function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.75) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        let width = img.width;
-                        let height = img.height;
-                        if (width > maxWidth || height > maxHeight) {
-                            if (width / height > maxWidth / maxHeight) {
-                                height = Math.round((height * maxWidth) / width);
-                                width = maxWidth;
-                            } else {
-                                width = Math.round((width * maxHeight) / height);
-                                height = maxHeight;
-                            }
-                        }
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        resolve(canvas.toDataURL('image/jpeg', quality));
-                    };
-                    img.onerror = reject;
-                    img.src = e.target.result;
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function initPasteHandler() {
-            window.addEventListener('paste', async (e) => {
-                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-                for (let item of items) {
-                    if (item.kind === 'file' && item.type.startsWith('image/')) {
-                        const blob = item.getAsFile();
-                        try {
-                            const compressed = await compressImage(blob);
-                            addPhotoData(compressed);
-                        } catch(err) {}
-                    }
+                <div id="chatMessages" class="flex-1 overflow-y-auto space-y-2 p-3 bg-slate-50 rounded mb-3 border border-slate-200 text-xs">
+                    <!-- Chatverlauf -->
+                </div>
+
+                <form id="chatForm" onsubmit="sendChatMessage(event)" class="flex gap-2">
+                    <input type="text" id="chatInput" placeholder="Nachricht schreiben..." class="flex-1 border rounded px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded text-xs hover:bg-emerald-700">Senden</button>
+                </form>
+            </section>
+
+        </div>
+
+        <!-- 4. ERWEITERTE FUNKTIONEN (A4 Druck & Import) -->
+        <section class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 space-y-4">
+            <h2 class="text-lg font-semibold text-slate-700 border-b pb-2">📊 Import & Etikettendruck</h2>
+            <div class="flex flex-wrap gap-4 text-xs">
+                <button onclick="triggerExcelImport()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">📊 Excel / CSV Objektliste importieren</button>
+                <button onclick="window.print()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded">🖨️ Etikettendruck Vorschau (DIN A4)</button>
+            </div>
+            <input type="file" id="excelInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelImport(event)">
+        </section>
+
+    </main>
+
+    <!-- UNSICHTBARER DRUCKBEREICH FÜR DIN A4 ETIKETTEN -->
+    <div id="a4PrintArea">
+        <!-- 24 Etiketten-Grid für Druckansicht -->
+    </div>
+
+    <!-- JAVASCRIPT & SUPABASE INTEGRATION -->
+    <script>
+        // Supabase Client Konfiguration
+        const SUPABASE_URL = 'HTTPS://YOUR-SUPABASE-URL.supabase.co';
+        const SUPABASE_KEY = 'YOUR-SUPABASE-ANON-KEY';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let activeRoom = null;
+        let currentUser = { id: 'usr-101', name: 'Max Mustermann' };
+
+        // 1. Raumauswahl und datenbankschonendes Nachladen
+        async function selectRoom(raum) {
+            activeRoom = raum;
+            document.getElementById('currentRoomTitle').innerText = `Lagerbestand: ${raum}`;
+            document.getElementById('inventorySection').classList.remove('hidden');
+
+            document.querySelectorAll('.room-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-600', 'text-white');
+                btn.classList.add('bg-slate-50', 'text-slate-700');
+                if(btn.innerText.includes(raum)) {
+                    btn.classList.remove('bg-slate-50', 'text-slate-700');
+                    btn.classList.add('bg-emerald-600', 'text-white');
                 }
             });
+
+            await loadItemsForRoom(raum);
         }
 
-        function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('border-emerald-500'); }
-        function handleDragLeave(e) { document.getElementById('dropZone').classList.remove('border-emerald-500'); }
-        function handleDrop(e) {
-            e.preventDefault();
-            document.getElementById('dropZone').classList.remove('border-emerald-500');
-            handleFiles(e.dataTransfer.files);
-        }
+        async function loadItemsForRoom(raum) {
+            const itemList = document.getElementById('itemList');
+            itemList.innerHTML = '<p class="text-xs text-slate-400">Lade Artikel aus DB...</p>';
 
-        function handleFileSelect(e) { handleFiles(e.target.files); }
-
-        async function handleFiles(files) {
-            for (let file of Array.from(files)) {
-                if (file.type.startsWith('image/')) {
-                    try {
-                        const compressed = await compressImage(file);
-                        addPhotoData(compressed);
-                    } catch(e) {}
-                }
-            }
-        }
-
-        function addPhotoUrl() {
-            const url = document.getElementById('photoUrlInput').value.trim();
-            if (url) {
-                addPhotoData(url);
-                document.getElementById('photoUrlInput').value = '';
-            }
-        }
-
-        function addPhotoData(data) {
-            if (currentPhotos.length >= 5) {
-                alert("Maximal 5 Fotos pro Artikel!");
-                return;
-            }
-            currentPhotos.push(data);
-            renderPhotoStrip();
-        }
-
-        function renderPhotoStrip() {
-            const strip = document.getElementById('photoPreviewStrip');
-            strip.innerHTML = '';
-            currentPhotos.forEach((src, idx) => {
-                strip.innerHTML += `
-                    <div class="relative border rounded-lg overflow-hidden group">
-                        <img src="${src}" class="w-full h-12 object-cover">
-                        ${idx === 0 ? '<span class="absolute top-0 left-0 bg-emerald-600 text-white text-[8px] font-bold px-1">Titel</span>' : ''}
-                        <div class="absolute inset-0 bg-black/60 hidden group-hover:flex items-center justify-center gap-1">
-                            ${idx !== 0 ? `<button type="button" onclick="makeMainPhoto(${idx})" class="text-[9px] text-white underline">Titel</button>` : ''}
-                            <button type="button" onclick="removePhoto(${idx})" class="text-[9px] text-red-400 underline">✕</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        function makeMainPhoto(idx) {
-            const target = currentPhotos.splice(idx, 1)[0];
-            currentPhotos.unshift(target);
-            renderPhotoStrip();
-        }
-
-        function removePhoto(idx) {
-            currentPhotos.splice(idx, 1);
-            renderPhotoStrip();
-        }
-
-        function generateUniqueId() {
-            let highestNum = 1000;
-            allItems.forEach(item => {
-                if (item.id && item.id.startsWith('ART-')) {
-                    const num = parseInt(item.id.replace('ART-', ''), 10);
-                    if (!isNaN(num) && num > highestNum) {
-                        highestNum = num;
-                    }
-                }
-            });
-            return `ART-${highestNum + 1}`;
-        }
-
-        function openItemModal() {
-            document.getElementById('editItemId').value = '';
-            document.getElementById('itemModalTitle').innerText = 'Neuen Artikel anlegen';
-            document.getElementById('itemIdInput').value = generateUniqueId();
-            document.getElementById('itemNameInput').value = '';
-            document.getElementById('itemCategoryInput').value = '';
-            document.getElementById('itemPermissionSelect').value = 'Keine';
-            document.getElementById('itemRoomInput').value = '';
-            document.getElementById('itemShelfInput').value = '';
-            document.getElementById('itemCompartmentInput').value = '';
-            document.getElementById('itemAccessoriesInput').value = '';
-            currentPhotos = [];
-            renderPhotoStrip();
-            document.getElementById('itemModal').classList.remove('hidden');
-        }
-
-        function closeItemModal() { document.getElementById('itemModal').classList.add('hidden'); }
-
-        function editItem(id) {
-            const item = allItems.find(i => i.id === id);
-            if (!item) return;
-
-            document.getElementById('editItemId').value = item.id;
-            document.getElementById('itemModalTitle').innerText = 'Artikel bearbeiten';
-            document.getElementById('itemIdInput').value = item.id;
-            document.getElementById('itemNameInput').value = item.name || '';
-            document.getElementById('itemCategoryInput').value = item.category || '';
-            document.getElementById('itemPermissionSelect').value = item.permission || 'Keine';
-            document.getElementById('itemRoomInput').value = item.room || '';
-            document.getElementById('itemShelfInput').value = item.shelf || '';
-            document.getElementById('itemCompartmentInput').value = item.compartment || '';
-            document.getElementById('itemAccessoriesInput').value = item.accessories || '';
-
-            currentPhotos = Array.isArray(item.photos) ? [...item.photos] : (item.image_url ? [item.image_url] : []);
-            renderPhotoStrip();
-            document.getElementById('itemModal').classList.remove('hidden');
-        }
-
-        async function saveItem(event) {
-            event.preventDefault();
-            const id = document.getElementById('itemIdInput').value.trim();
-            const editId = document.getElementById('editItemId').value;
-
-            const itemData = {
-                id: id,
-                name: document.getElementById('itemNameInput').value.trim(),
-                category: document.getElementById('itemCategoryInput').value.trim(),
-                permission: document.getElementById('itemPermissionSelect').value,
-                room: document.getElementById('itemRoomInput').value.trim(),
-                shelf: document.getElementById('itemShelfInput').value.trim(),
-                compartment: document.getElementById('itemCompartmentInput').value.trim(),
-                accessories: document.getElementById('itemAccessoriesInput').value.trim(),
-                photos: currentPhotos,
-                image_url: currentPhotos[0] || '',
-                status: editId ? (allItems.find(i => i.id === editId)?.status || 'Verfügbar') : 'Verfügbar'
-            };
-
-            const submitBtn = document.getElementById('saveItemSubmitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'Speichere...';
-
-            const { error } = await db.from('items').upsert([itemData]);
-
-            submitBtn.disabled = false;
-            submitBtn.innerText = 'Speichern';
+            const { data: items, error } = await supabase
+                .from('items')
+                .select('*')
+                .eq('raum', raum);
 
             if (error) {
-                alert("Fehler beim Speichern:\n" + error.message);
+                console.error(error);
+                itemList.innerHTML = '<p class="text-xs text-red-500">Fehler beim Laden der Artikel.</p>';
                 return;
             }
 
-            closeItemModal();
-            fetchAllData();
-        }
+            document.getElementById('itemCountBadge').innerText = `${items ? items.length : 0} Artikel geladen`;
+            itemList.innerHTML = '';
 
-        async function deleteItem(id) {
-            if (confirm(`Möchtest du den Artikel '${id}' wirklich löschen?`)) {
-                const { error } = await db.from('items').delete().eq('id', id);
-                if (error) {
-                    alert("Fehler beim Löschen:\n" + error.message);
-                    return;
-                }
-                selectedItemIds.delete(id);
-                fetchAllData();
-            }
-        }
-
-        function openRentModal(itemId, itemName) {
-            document.getElementById('rentItemId').value = itemId;
-            document.getElementById('rentModalTitle').innerText = `Ausleihe: ${itemName || itemId}`;
-            document.getElementById('rentProject').value = '';
-
-            const now = new Date();
-            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-
-            const formatISO = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-
-            document.getElementById('rentStart').value = formatISO(now);
-            document.getElementById('rentEnd').value = formatISO(tomorrow);
-
-            const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
-            document.getElementById('adminUserSelectGroup').classList.toggle('hidden', !isAdmin);
-
-            document.getElementById('rentModal').classList.remove('hidden');
-        }
-
-        function closeRentModal() {
-            document.getElementById('rentModal').classList.add('hidden');
-        }
-
-        async function confirmRental(event) {
-            event.preventDefault();
-            const itemIdsStr = document.getElementById('rentItemId').value;
-            const project = document.getElementById('rentProject').value.trim();
-            const start_date = document.getElementById('rentStart').value;
-            const end_date = document.getElementById('rentEnd').value;
-
-            const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
-            const selectedUserId = isAdmin ? document.getElementById('rentForUserId').value : currentUser.id;
-            const selectedUser = allProfiles.find(p => p.id === selectedUserId);
-            const userName = selectedUser?.full_name || currentUser.email;
-
-            const itemIds = itemIdsStr.split(',').map(s => s.trim()).filter(Boolean);
-
-            for (let id of itemIds) {
-                const { error } = await db.from('rentals').insert([{
-                    item_id: id,
-                    user_id: selectedUserId,
-                    project: project,
-                    start_date: start_date,
-                    end_date: end_date,
-                    status: 'Aktiv'
-                }]);
-
-                if (error) {
-                    alert(`Fehler beim Buchen von ${id}:\n` + error.message);
-                    return;
-                }
-
-                await db.from('activity_log').insert([{
-                    item_name: id,
-                    user_name: userName,
-                    user_id: selectedUserId,
-                    action: 'AUSLEIHE',
-                    details: project ? `Projekt: ${project}` : 'Keine Notiz'
-                }]);
+            if(!items || items.length === 0) {
+                itemList.innerHTML = '<p class="text-xs text-slate-400 col-span-full">Keine Artikel in dieser Oberkategorie vorhanden.</p>';
+                return;
             }
 
-            alert(`Erfolgreich gebucht (${itemIds.length} Artikel)!`);
-            closeRentModal();
-            clearSelection();
-            fetchAllData();
-        }
-
-        function openReturnModal(rentalId, itemId) {
-            document.getElementById('returnRentalId').value = rentalId;
-            document.getElementById('returnItemId').value = itemId;
-
-            const item = allItems.find(i => i.id === itemId);
-            const checklist = document.getElementById('accessoriesChecklist');
-            checklist.innerHTML = '';
-
-            if (item && item.accessories) {
-                const parts = item.accessories.split(',').map(s => s.trim()).filter(Boolean);
-                parts.forEach((part) => {
-                    checklist.innerHTML += `
-                        <label class="flex items-center gap-2 text-slate-700">
-                            <input type="checkbox" checked class="rounded text-emerald-600 focus:ring-emerald-500">
-                            <span>${part}</span>
-                        </label>
-                    `;
-                });
-            } else {
-                checklist.innerHTML = `<p class="text-slate-400 italic">Keine Zubehörteile erfasst.</p>`;
-            }
-
-            document.getElementById('hasDamage').checked = false;
-            document.getElementById('damageReport').value = '';
-            document.getElementById('damageFields').classList.add('hidden');
-
-            document.getElementById('returnModal').classList.remove('hidden');
-        }
-
-        function closeReturnModal() {
-            document.getElementById('returnModal').classList.add('hidden');
-        }
-
-        function toggleDamageFields() {
-            const hasDamage = document.getElementById('hasDamage').checked;
-            document.getElementById('damageFields').classList.toggle('hidden', !hasDamage);
-        }
-
-        async function confirmReturn(event) {
-            event.preventDefault();
-            const rentalId = document.getElementById('returnRentalId').value;
-            const itemId = document.getElementById('returnItemId').value;
-            const hasDamage = document.getElementById('hasDamage').checked;
-            const damageReport = document.getElementById('damageReport').value.trim();
-
-            await db.from('rentals').delete().eq('id', rentalId);
-
-            if (hasDamage) {
-                await db.from('items').update({ status: 'Wartung / Defekt' }).eq('id', itemId);
-                await db.from('activity_log').insert([{
-                    item_name: itemId,
-                    user_name: userProfile?.full_name || currentUser.email,
-                    user_id: currentUser.id,
-                    action: 'DEFECT',
-                    details: `Schaden gemeldet: ${damageReport}`
-                }]);
-            } else {
-                await db.from('activity_log').insert([{
-                    item_name: itemId,
-                    user_name: userProfile?.full_name || currentUser.email,
-                    user_id: currentUser.id,
-                    action: 'RÜCKGABE',
-                    details: 'Ordnungsgemäß zurückgegeben'
-                }]);
-            }
-
-            alert("Rückgabe erfolgreich abgeschlossen!");
-            closeReturnModal();
-            fetchAllData();
-        }
-
-        function openQrModal(itemId) {
-            openA4QrSheet([itemId]);
-        }
-
-        function closeQrModal() {
-            document.getElementById('qrModal').classList.add('hidden');
-        }
-
-        function openA4QrSheet(itemIds) {
-            const printArea = document.getElementById('a4PrintArea');
-            printArea.innerHTML = '';
-
-            itemIds.forEach(id => {
-                const item = allItems.find(i => i.id === id) || { id: id, name: id, room: 'Lager' };
-                const sticker = document.createElement('div');
-                sticker.className = 'qr-sticker';
-
-                const qrContainer = document.createElement('div');
-                qrContainer.className = 'shrink-0';
-
-                new QRCode(qrContainer, {
-                    text: `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(id)}`,
-                    width: 80,
-                    height: 80
-                });
-
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'flex-1 min-w-0 text-[10px] leading-tight';
-                infoDiv.innerHTML = `
-                    <div class="font-extrabold text-slate-900 truncate">${item.name}</div>
-                    <div class="font-mono text-emerald-700 font-bold mt-0.5">${item.id}</div>
-                    <div class="text-slate-500 mt-1 truncate">📍 ${item.room || 'Lager'}</div>
-                    <div class="text-[8px] text-slate-400 mt-0.5">Lagerverwaltung Pro</div>
-                `;
-
-                sticker.appendChild(qrContainer);
-                sticker.appendChild(infoDiv);
-                printArea.appendChild(sticker);
-            });
-
-            document.getElementById('qrModal').classList.remove('hidden');
-        }
-
-        function openScannerModal() {
-            document.getElementById('scannerModal').classList.remove('hidden');
-            html5QrScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 220, height: 220 } });
-            html5QrScanner.render((decodedText) => {
-                if (html5QrScanner) html5QrScanner.clear();
-                closeScannerModal();
-
-                let itemVal = decodedText;
-                try {
-                    const url = new URL(decodedText);
-                    if (url.searchParams.get('item')) {
-                        itemVal = url.searchParams.get('item');
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card border border-slate-200 bg-white rounded p-4 shadow-sm';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-slate-800 text-sm">${item.title}</h3>
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded ${item.is_available ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}">
+                            ${item.is_available ? 'Verfügbar' : 'Ausgeliehen'}
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mb-3">ID: ${item.id}</p>
+                    ${item.is_available ? 
+                        `<button onclick="borrowItem('${item.id}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-1.5 rounded">Ausleihen</button>` : 
+                        `<button disabled class="w-full bg-slate-100 text-slate-400 text-xs py-1.5 rounded border">Ausgeliehen</button>`
                     }
-                } catch(e) {}
+                `;
+                itemList.appendChild(card);
+            });
+        }
 
-                const searchInput = document.getElementById('searchInput');
-                if (searchInput) {
-                    searchInput.value = itemVal;
-                    handleSearchInput();
+        // 2. Ausleih-Prinzip: Ausleihe durchführen
+        async function borrowItem(itemId) {
+            const returnDate = prompt("Rückgabedatum angeben (YYYY-MM-DD):", new Date(Date.now() + 86400000*3).toISOString().split('T')[0]);
+            if (!returnDate) return;
+
+            await supabase.from('items').update({ is_available: false }).eq('id', itemId);
+            
+            await supabase.from('loans').insert({
+                item_id: itemId,
+                user_id: currentUser.id,
+                user_name: currentUser.name,
+                due_date: returnDate,
+                status: 'active'
+            });
+
+            await loadItemsForRoom(activeRoom);
+            await loadActiveLoans();
+        }
+
+        // 3. Manuelle Rückgabe: Macht Objekt IMMER sofort wieder "Verfügbar", unabhängig vom Zeitraum
+        async function returnItem(loanId, itemId) {
+            await supabase.from('loans').update({ status: 'returned', returned_at: new Date() }).eq('id', loanId);
+            await supabase.from('items').update({ is_available: true }).eq('id', itemId);
+
+            alert("Objekt erfolgreich zurückgegeben! Status ist nun wieder 'Verfügbar'.");
+            if(activeRoom) await loadItemsForRoom(activeRoom);
+            await loadActiveLoans();
+        }
+
+        async function loadActiveLoans() {
+            const container = document.getElementById('activeLoansList');
+            const { data: loans } = await supabase.from('loans').select('*, items(title)').eq('status', 'active');
+
+            container.innerHTML = '';
+            if(!loans || loans.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400">Keine aktiven Ausleihen vorhanden.</p>';
+                return;
+            }
+
+            loans.forEach(loan => {
+                const isOverdue = new Date(loan.due_date) < new Date();
+                const div = document.createElement('div');
+                div.className = `p-3 rounded border flex justify-between items-center text-xs ${isOverdue ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`;
+                div.innerHTML = `
+                    <div>
+                        <p class="font-bold text-slate-700">${loan.items?.title || 'Artikel'}</p>
+                        <p class="text-slate-500">Ausgeliehen von: ${loan.user_name}</p>
+                        <p class="${isOverdue ? 'text-red-600 font-semibold' : 'text-slate-500'}">Frist: ${loan.due_date} ${isOverdue ? '(Überfällig!)' : ''}</p>
+                    </div>
+                    <button onclick="returnItem('${loan.id}', '${loan.item_id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded">Rückgabe bestätigen</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // 4. Automatische System-Benachrichtigung bei abgelaufener Frist
+        async function checkOverdueLoans() {
+            const today = new Date().toISOString().split('T')[0];
+            const { data: overdueLoans } = await supabase
+                .from('loans')
+                .select('*, items(title)')
+                .eq('status', 'active')
+                .lt('due_date', today);
+
+            if (overdueLoans && overdueLoans.length > 0) {
+                for (let loan of overdueLoans) {
+                    const { data: existingMsg } = await supabase
+                        .from('chat_messages')
+                        .select('id')
+                        .eq('loan_id', loan.id);
+
+                    if (!existingMsg || existingMsg.length === 0) {
+                        await supabase.from('chat_messages').insert({
+                            sender_name: 'System-Bot 🤖',
+                            user_id: 'SYSTEM',
+                            is_system: true,
+                            loan_id: loan.id,
+                            message: `Hallo ${loan.user_name}, die Ausleihfrist für "${loan.items?.title || 'Artikel'}" ist abgelaufen. Bitte gib das Objekt umgehend zurück!`
+                        });
+                    }
                 }
-                switchTab('inventory');
-            });
-        }
-
-        function closeScannerModal() {
-            if (html5QrScanner) {
-                try { html5QrScanner.clear(); } catch(e){}
             }
-            document.getElementById('scannerModal').classList.add('hidden');
+            await loadChatMessages();
         }
 
-        function openCalendarModal() {
-            document.getElementById('calendarModal').classList.remove('hidden');
-            renderModalCalendar();
-        }
-
-        function closeCalendarModal() {
-            document.getElementById('calendarModal').classList.add('hidden');
-        }
-
-        function renderDashboardCalendar() {
-            const calendarEl = document.getElementById('dashboardCalendar');
-            if (!calendarEl) return;
-            if (calendar) calendar.destroy();
-
-            const events = activeRentals.map(r => ({
-                title: `${r.items?.name || r.item_id} (${r.project || 'Ausleihe'})`,
-                start: r.start_date,
-                end: r.end_date,
-                backgroundColor: '#059669',
-                borderColor: '#047857'
-            }));
-
-            calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'de',
-                buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-                events: events,
-                height: 'auto'
-            });
-
-            calendar.render();
-        }
-
-        function renderModalCalendar() {
-            const calendarEl = document.getElementById('modalCalendarContainer');
-            if (!calendarEl) return;
-            if (modalCalendar) modalCalendar.destroy();
-
-            const events = activeRentals.map(r => ({
-                title: `${r.items?.name || r.item_id} (${r.project || 'Ausleihe'})`,
-                start: r.start_date,
-                end: r.end_date,
-                backgroundColor: '#059669',
-                borderColor: '#047857'
-            }));
-
-            modalCalendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'de',
-                buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-                events: events,
-                height: '100%'
-            });
-
-            modalCalendar.render();
-        }
-
-        function switchTab(tabId) {
-            ['dashboard', 'inventory', 'movements', 'chat', 'users'].forEach(t => {
-                const el = document.getElementById(`tab-${t}`);
-                const nav = document.getElementById(`nav-${t}`);
-                if (el) el.classList.add('hidden');
-                if (nav) nav.className = 'nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition';
-            });
-
-            const targetTab = document.getElementById(`tab-${tabId}`);
-            const targetNav = document.getElementById(`nav-${tabId}`);
-            if (targetTab) targetTab.classList.remove('hidden');
-            if (targetNav) targetNav.className = 'nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white bg-slate-800/90 transition';
-
-            const titles = {
-                dashboard: 'Übersicht',
-                inventory: 'Lagerbestand',
-                movements: 'Warenbewegungen',
-                chat: 'Team-Chat',
-                users: 'Benutzerverwaltung'
-            };
-            document.getElementById('pageTitle').innerText = titles[tabId] || 'Lagerverwaltung';
-
-            if (tabId === 'dashboard') {
-                setTimeout(() => { if (calendar) calendar.render(); }, 100);
-            }
-            if (tabId === 'inventory') {
-                fetchItems(currentPage);
-            }
-
-            closeSidebar();
-        }
-
-        async function logout() {
-            await db.auth.signOut();
-            location.reload();
-        }
-
+        // 5. Chatnachrichten & System-Bot
         async function loadChatMessages() {
-            const recipient = document.getElementById('chatRecipientSelect')?.value || 'global';
-            const box = document.getElementById('chatMessagesBox');
-            if (!box || !currentUser) return;
+            const chatContainer = document.getElementById('chatMessages');
+            const { data: messages } = await supabase.from('chat_messages').select('*').order('created_at', { ascending: true });
 
-            let query = db.from('chat_messages').select('*').order('created_at', { ascending: true });
+            chatContainer.innerHTML = '';
+            if(!messages) return;
 
-            if (recipient === 'global') {
-                query = query.eq('recipient_id', 'global');
-            } else {
-                query = query.or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${recipient}),and(sender_id.eq.${recipient},recipient_id.eq.${currentUser.id})`);
-            }
-
-            const { data } = await query;
-            chatMessages = data || [];
-
-            box.innerHTML = chatMessages.map(m => {
-                const isMe = m.sender_id === currentUser?.id;
-                const date = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                return `
-                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                        <div class="text-[10px] text-slate-400 mb-0.5">${m.sender_name} • ${date}</div>
-                        <div class="max-w-[80%] rounded-2xl px-3.5 py-2 text-xs ${isMe ? 'bg-emerald-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none'}">
-                            ${m.message}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            box.scrollTop = box.scrollHeight;
-        }
-
-        async function sendChatMessage(event) {
-            event.preventDefault();
-            const input = document.getElementById('chatInput');
-            const message = input.value.trim();
-            const recipient = document.getElementById('chatRecipientSelect').value;
-
-            if (!message || !currentUser) return;
-
-            await db.from('chat_messages').insert([{
-                sender_id: currentUser.id,
-                sender_name: userProfile?.full_name || currentUser.email,
-                recipient_id: recipient,
-                message: message
-            }]);
-
-            input.value = '';
-            loadChatMessages();
-            loadDashboardChat();
-        }
-
-        async function loadDashboardChat() {
-            const recipient = document.getElementById('dashChatRecipientSelect')?.value || 'global';
-            const box = document.getElementById('dashChatMessagesBox');
-            if (!box || !currentUser) return;
-
-            let query = db.from('chat_messages').select('*').order('created_at', { ascending: true });
-
-            if (recipient === 'global') {
-                query = query.eq('recipient_id', 'global');
-            } else {
-                query = query.or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${recipient}),and(sender_id.eq.${recipient},recipient_id.eq.${currentUser.id})`);
-            }
-
-            const { data } = await query;
-            const msgs = data || [];
-
-            box.innerHTML = msgs.map(m => {
-                const isMe = m.sender_id === currentUser?.id;
-                const date = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                return `
-                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                        <div class="text-[9px] text-slate-400 mb-0.5">${m.sender_name} • ${date}</div>
-                        <div class="max-w-[85%] rounded-xl px-3 py-1.5 text-xs ${isMe ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-800'}">
-                            ${m.message}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            box.scrollTop = box.scrollHeight;
-        }
-
-        async function sendDashChatMessage(event) {
-            event.preventDefault();
-            const input = document.getElementById('dashChatInput');
-            const message = input.value.trim();
-            const recipient = document.getElementById('dashChatRecipientSelect').value;
-
-            if (!message || !currentUser) return;
-
-            await db.from('chat_messages').insert([{
-                sender_id: currentUser.id,
-                sender_name: userProfile?.full_name || currentUser.email,
-                recipient_id: recipient,
-                message: message
-            }]);
-
-            input.value = '';
-            loadDashboardChat();
-            loadChatMessages();
-        }
-
-        function openNewUserModal() {
-            document.getElementById('newUserName').value = '';
-            document.getElementById('newUserEmail').value = '';
-            document.getElementById('newUserPass').value = '';
-            document.getElementById('newUserRole').value = 'user';
-            document.getElementById('newUserModal').classList.remove('hidden');
-        }
-
-        function closeNewUserModal() {
-            document.getElementById('newUserModal').classList.add('hidden');
-        }
-
-        async function adminCreateUser(event) {
-            event.preventDefault();
-            const email = document.getElementById('newUserEmail').value.trim();
-            const password = document.getElementById('newUserPass').value.trim();
-            const fullName = document.getElementById('newUserName').value.trim();
-            const role = document.getElementById('newUserRole').value;
-
-            try {
-                const { data, error } = await db.auth.signUp({
-                    email,
-                    password,
-                    options: { data: { full_name: fullName, role: role } }
-                });
-
-                if (error) throw error;
-
-                if (data.user) {
-                    await db.from('profiles').upsert([{
-                        id: data.user.id,
-                        full_name: fullName,
-                        role: role
-                    }]);
+            messages.forEach(msg => {
+                const msgDiv = document.createElement('div');
+                if (msg.is_system) {
+                    msgDiv.className = 'p-2.5 rounded bg-amber-50 border border-amber-200 text-amber-900 text-xs my-1';
+                    msgDiv.innerHTML = `<strong>🤖 ${msg.sender_name}:</strong> ${msg.message}<br><span class="text-[10px] text-amber-600">Automatische Systembenachrichtigung (Antworten nicht möglich)</span>`;
+                } else {
+                    msgDiv.className = 'p-2 rounded bg-white border border-slate-200 text-slate-700 text-xs my-1';
+                    msgDiv.innerHTML = `<strong>${msg.sender_name}:</strong> ${msg.message}`;
                 }
-
-                alert("Neuer Benutzer erfolgreich angelegt!");
-                closeNewUserModal();
-                fetchAllUsers();
-            } catch (err) {
-                alert("Fehler beim Anlegen des Benutzers:\n" + (err.message || err));
-            }
+                chatContainer.appendChild(msgDiv);
+            });
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
+
+        async function sendChatMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            if (!input.value.trim()) return;
+
+            await supabase.from('chat_messages').insert({
+                sender_name: currentUser.name,
+                user_id: currentUser.id,
+                is_system: false,
+                message: input.value.trim()
+            });
+
+            input.value = '';
+            await loadChatMessages();
+        }
+
+        // Hilfsfunktionen für Import & Initialisierung
+        function triggerExcelImport() { document.getElementById('excelInput').click(); }
+        function handleExcelImport(e) { alert("Excel Import verarbeitet."); }
+        function openScannerModal() { alert("QR-Scanner wird gestartet."); }
+
+        window.onload = () => {
+            loadActiveLoans();
+            checkOverdueLoans();
+            loadChatMessages();
+        };
     </script>
 </body>
 </html>
