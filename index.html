@@ -1,5 +1,4 @@
 <!-- PWA & Mobile Meta Tags -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#10b981">
 
@@ -17,20 +16,7 @@
     body { font-family: 'Inter', sans-serif; }
 
     /* Eingefügte Styles */
-    /* Mobile Touch & Layout Optimierungen */
-    body { 
-        font-family: 'Inter', sans-serif; 
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
-    }
-
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
-    @media (max-width: 640px) {
-        .grid { grid-template-columns: 1fr; gap: 12px; }
-        .fc-toolbar { flex-direction: column; align-items: stretch; gap: 6px; }
-        .fc-toolbar-title { font-size: 1.1rem !important; text-align: center; }
-        .fc-button { padding: 0.35em 0.6em !important; font-size: 0.82rem !important; }
-    }
     .card { background: #f8fafc; border-radius: 8px; padding: 16px; border: 1px solid #e2e8f0; color: #1E293B; }
     .pagination-bar { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 20px; }
     .pagination-bar button { background: #2563eb; color: #ffffff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
@@ -179,13 +165,13 @@
 </div>
 
 <!-- MOBILE SIDEBAR OVERLAY BACKDROP -->
-<div id="sidebarOverlay" onclick="closeSidebar()" class="hidden fixed inset-0 bg-slate-900/70 z-40 md:hidden backdrop-blur-sm transition-opacity"></div>
+<div id="sidebarOverlay" onclick="closeSidebar()" class="hidden fixed inset-0 bg-slate-900/60 z-30 md:hidden backdrop-blur-sm transition-opacity"></div>
 
 <!-- 2. HAUPTANWENDUNG -->
 <div id="appLayout" class="hidden flex-1 flex min-h-screen relative">
     
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 md:w-64 bg-[#0f172a] text-slate-300 flex flex-col justify-between border-r border-slate-800 shrink-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-64 bg-[#0f172a] text-slate-300 flex flex-col justify-between border-r border-slate-800 shrink-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
         <div>
             <div class="p-5 flex items-center justify-between border-b border-slate-800/60">
                 <div class="flex items-center gap-3 overflow-hidden">
@@ -230,10 +216,6 @@
                     <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     <span class="sidebar-text truncate">Benutzerverwaltung</span>
                 </button>
-                            <button onclick="switchTab('help')" id="nav-help" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                    <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    <span class="sidebar-text truncate">Hilfe & KI-Diagnose</span>
-                </button>
             </nav>
         </div>
 
@@ -253,7 +235,7 @@
 
     <!-- MAIN CONTENT AREA -->
     <main class="flex-1 bg-[#f8fafc] flex flex-col min-w-0">
-        <header class="h-14 sm:h-16 md:h-20 px-3 sm:px-6 flex items-center justify-between border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-30">
+        <header class="h-16 md:h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-200/80 bg-white/70 backdrop-blur sticky top-0 z-20">
             <div class="flex items-center gap-3">
                 <button onclick="toggleSidebar()" class="p-2 text-slate-600 hover:text-slate-900 focus:outline-none rounded-xl hover:bg-slate-100">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -549,65 +531,7 @@
             </div>
 
         </div>
-            <!-- TAB 6: HILFE & KI-DIAGNOSE -->
-        <div id="tab-help" class="hidden space-y-6">
-            <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white shadow-xl border border-slate-700">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-12 h-12 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-emerald-400 text-2xl">
-                        🆘
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-bold">Hilfe-Center & KI-Diagnose-Bot</h2>
-                        <p class="text-xs text-slate-300">Automatisierte Systemprüfung & direkter Support</p>
-                    </div>
-                </div>
-                <p class="text-xs text-slate-300 leading-relaxed mb-6">
-                    Wenn etwas schief läuft oder Ausleih-Status unklar erscheinen, führt der KI-Diagnose-Bot einen automatischen System-Scan aller Datenbank-Werte durch und behebt Abweichungen.
-                </p>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <button onclick="runAiDiagnosticScan()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-4 rounded-xl flex items-center justify-center gap-3 transition shadow-lg shadow-emerald-600/30">
-                        <span>🔍 1-Klick KI-Diagnose starten</span>
-                    </button>
-                    <button onclick="sendHelpTicketToAiBot()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold p-4 rounded-xl flex items-center justify-center gap-3 transition border border-slate-600">
-                        <span>📩 Support-Ticket an KI-Bot</span>
-                    </button>
-                </div>
-            </div>
-
-            <div id="aiDiagnosticOutput" class="hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                    <span>📊 Diagnose-Ergebnis:</span>
-                </h3>
-                <div id="aiDiagnosticStatusText" class="text-xs text-slate-600 space-y-2 bg-slate-50 p-4 rounded-xl font-mono"></div>
-            </div>
-        </div>
-</main>
-    <!-- MOBILE BOTTOM NAVIGATION BAR FOR SMARTPHONES -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-[#0f172a]/95 backdrop-blur-md text-slate-400 border-t border-slate-800 flex items-center justify-around py-2 px-1 z-30 safe-bottom shadow-lg">
-        <button onclick="switchTab('dashboard')" id="bottom-nav-dashboard" class="flex flex-col items-center justify-center w-full py-1 text-xs text-white">
-            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-            <span class="text-[9px] font-medium">Übersicht</span>
-        </button>
-        <button onclick="switchTab('inventory')" id="bottom-nav-inventory" class="flex flex-col items-center justify-center w-full py-1 text-xs text-slate-400 hover:text-white">
-            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-            <span class="text-[9px] font-medium">Lager</span>
-        </button>
-        <button onclick="openScannerModal()" class="flex flex-col items-center justify-center w-full py-1 text-xs text-slate-400 hover:text-white">
-            <div class="w-9 h-9 bg-emerald-500 text-white rounded-full flex items-center justify-center -mt-4 shadow-md shadow-emerald-500/30 border-2 border-[#0f172a]">
-                📷
-            </div>
-            <span class="text-[9px] font-medium mt-0.5">Scan</span>
-        </button>
-        <button onclick="switchTab('chat')" id="bottom-nav-chat" class="flex flex-col items-center justify-center w-full py-1 text-xs text-slate-400 hover:text-white">
-            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-            <span class="text-[9px] font-medium">Chat</span>
-        </button>
-        <button onclick="switchTab('help')" id="bottom-nav-help" class="flex flex-col items-center justify-center w-full py-1 text-xs text-slate-400 hover:text-white">
-            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-            <span class="text-[9px] font-medium">Hilfe</span>
-        </button>
-    </nav>
+    </main>
 </div>
 
 <!-- MODAL: VOLLBILD KALENDER -->
@@ -1171,6 +1095,34 @@
         }
     }
 
+    
+    function setupRealtimeSubscriptions() {
+        if (!db) return;
+        try {
+            db.channel('public:rentals')
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, () => {
+                  if (typeof fetchRentals === 'function') fetchRentals();
+              })
+              .subscribe();
+
+            db.channel('public:chat_messages')
+              .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, () => {
+                  if (typeof loadChatMessages === 'function') loadChatMessages();
+                  if (typeof loadDashboardChat === 'function') loadDashboardChat();
+              })
+              .subscribe();
+
+            db.channel('public:items')
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, () => {
+                  if (typeof selectedRoom !== 'undefined' && selectedRoom) fetchItems(currentPage);
+                  if (typeof loadRoomCounts === 'function') loadRoomCounts();
+              })
+              .subscribe();
+        } catch(e) {
+            console.log("Realtime Subscription Error:", e);
+        }
+    }
+
     async function loadUserProfile(user) {
         currentUser = user;
 
@@ -1214,6 +1166,7 @@
 
         // ÜBERPRÜFUNG AUF ABGELAUFENE AUSLEIHEN & AUTOMATISCHE SYSTEM-NACHRICHT
         checkAndSendOverdueNotifications();
+        setupRealtimeSubscriptions();
     }
 
     async function fetchAllData() {
@@ -1719,7 +1672,7 @@
         });
     }
 
-    function initPasteHandler() {
+    async function initPasteHandler() {
         window.addEventListener('paste', async (e) => {
             const items = (e.clipboardData || e.originalEvent.clipboardData).items;
             for (let item of items) {
@@ -1935,6 +1888,16 @@
         const start_date = document.getElementById('rentStart').value;
         const end_date = document.getElementById('rentEnd').value;
 
+        if (!start_date || !end_date) {
+            alert("Bitte gib ein gültiges Start- und Enddatum für die Ausleihe ein!");
+            return;
+        }
+
+        if (new Date(end_date) < new Date(start_date)) {
+            alert("Fehler: Das Enddatum darf nicht vor dem Startdatum liegen!");
+            return;
+        }
+
         const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
         const selectedUserId = isAdmin ? document.getElementById('rentForUserId').value : currentUser.id;
         const selectedUser = allProfiles.find(p => p.id === selectedUserId);
@@ -2018,8 +1981,17 @@
         const hasDamage = document.getElementById('hasDamage').checked;
         const damageReport = document.getElementById('damageReport').value.trim();
 
-        // Ausleihe löschen
-        await db.from('rentals').delete().eq('id', rentalId);
+        // Ausleihstatus auf 'Zurückgegeben' setzen für Historie & RLS-Kompatibilität
+        const { error: updateErr } = await db.from('rentals').update({ 
+            status: 'Zurückgegeben',
+            returned_at: new Date().toISOString()
+        }).eq('id', rentalId);
+
+        // Fallback: Falls Update fehlschlägt (z.B. Spalte fehlt), Eintrag löschen
+        if (updateErr) {
+            console.warn("Update fehlgeschlagen, versuche Löschen:", updateErr);
+            await db.from('rentals').delete().eq('id', rentalId);
+        }
 
         // ZWINGENDE REGEL: Objekt wird nach Rückgabe IMMER als Verfügbar angegeben!
         await db.from('items').update({ status: 'Verfügbar' }).eq('id', itemId);
@@ -2115,11 +2087,17 @@
         });
     }
 
-    function closeScannerModal() {
+    async function closeScannerModal() {
         if (html5QrScanner) {
-            try { html5QrScanner.clear(); } catch(e){}
+            try { 
+                await html5QrScanner.stop(); 
+                html5QrScanner.clear(); 
+            } catch(e){
+                console.log("Scanner Stopp Hinweis:", e);
+            }
         }
-        document.getElementById('scannerModal').classList.add('hidden');
+        const modal = document.getElementById('scannerModal');
+        if (modal) modal.classList.add('hidden');
     }
 
     function openCalendarModal() {
@@ -2131,18 +2109,51 @@
         document.getElementById('calendarModal').classList.add('hidden');
     }
 
+    function buildCalendarEvents() {
+        const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
+        const now = new Date();
+
+        return (activeRentals || []).map(r => {
+            const itemName = r.items?.name || r.item_id;
+            const project = r.project ? ` (${r.project})` : '';
+            let userNameInfo = '';
+
+            if (isAdmin) {
+                const borrower = (allProfiles || []).find(p => p.id === r.user_id);
+                const borrowerName = borrower?.full_name || borrower?.email || r.user_id || 'Unbekannt';
+                userNameInfo = ` - 👤 ${borrowerName}`;
+            }
+
+            const isReturned = r.status === 'Zurückgegeben';
+            const isOverdue = !isReturned && new Date(r.end_date) < now;
+
+            let color = '#059669'; // Grün = Aktiv
+            let statusPrefix = '';
+
+            if (isReturned) {
+                color = '#64748b'; // Grau = Zurückgegeben
+                statusPrefix = '✅ ';
+            } else if (isOverdue) {
+                color = '#dc2626'; // Rot = Überfällig
+                statusPrefix = '⚠️ ';
+            }
+
+            return {
+                title: `${statusPrefix}${itemName}${userNameInfo}${project}`,
+                start: r.start_date,
+                end: r.end_date,
+                backgroundColor: color,
+                borderColor: color
+            };
+        });
+    }
+
     function renderDashboardCalendar() {
         const calendarEl = document.getElementById('dashboardCalendar');
         if (!calendarEl) return;
         if (calendar) calendar.destroy();
 
-        const events = activeRentals.map(r => ({
-            title: `${r.items?.name || r.item_id} (${r.project || 'Ausleihe'})`,
-            start: r.start_date,
-            end: r.end_date,
-            backgroundColor: '#059669',
-            borderColor: '#047857'
-        }));
+        const events = buildCalendarEvents();
 
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
@@ -2161,13 +2172,7 @@
         if (!calendarEl) return;
         if (modalCalendar) modalCalendar.destroy();
 
-        const events = activeRentals.map(r => ({
-            title: `${r.items?.name || r.item_id} (${r.project || 'Ausleihe'})`,
-            start: r.start_date,
-            end: r.end_date,
-            backgroundColor: '#059669',
-            borderColor: '#047857'
-        }));
+        const events = buildCalendarEvents();
 
         modalCalendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
@@ -2182,36 +2187,26 @@
     }
 
     function switchTab(tabId) {
-        const tabs = ['dashboard', 'inventory', 'movements', 'chat', 'help', 'users'];
-        
-        tabs.forEach(t => {
+        ['dashboard', 'inventory', 'movements', 'chat', 'users'].forEach(t => {
             const el = document.getElementById(`tab-${t}`);
             const nav = document.getElementById(`nav-${t}`);
-            const bnav = document.getElementById(`bottom-nav-${t}`);
-            
             if (el) el.classList.add('hidden');
             if (nav) nav.className = 'nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition';
-            if (bnav) bnav.className = 'flex flex-col items-center justify-center w-full py-1 text-xs text-slate-400 hover:text-white';
         });
 
         const targetTab = document.getElementById(`tab-${tabId}`);
         const targetNav = document.getElementById(`nav-${tabId}`);
-        const targetBnav = document.getElementById(`bottom-nav-${tabId}`);
-
         if (targetTab) targetTab.classList.remove('hidden');
         if (targetNav) targetNav.className = 'nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white bg-slate-800/90 transition';
-        if (targetBnav) targetBnav.className = 'flex flex-col items-center justify-center w-full py-1 text-xs text-emerald-400 font-bold';
 
         const titles = {
             dashboard: 'Übersicht',
             inventory: 'Lagerbestand',
             movements: 'Warenbewegungen',
             chat: 'Team-Chat',
-            help: '🆘 Hilfe & KI-Diagnose',
             users: 'Benutzerverwaltung'
         };
-        const pageTitleEl = document.getElementById('pageTitle');
-        if (pageTitleEl) pageTitleEl.innerText = titles[tabId] || 'Lagerverwaltung';
+        document.getElementById('pageTitle').innerText = titles[tabId] || 'Lagerverwaltung';
 
         if (tabId === 'dashboard') {
             setTimeout(() => { if (calendar) calendar.render(); }, 100);
