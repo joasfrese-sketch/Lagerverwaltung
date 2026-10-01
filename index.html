@@ -1233,7 +1233,7 @@
         await fetchAllUsers();
     }
 
-    async async function fetchRentals() {
+    async function fetchRentals() {
         try {
             const { data, error } = await db.from('rentals').select('*, items(*)');
             if (error) console.error("Fehler beim Laden der Ausleihen:", error);
