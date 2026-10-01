@@ -216,6 +216,11 @@
                     <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     <span class="sidebar-text truncate">Benutzerverwaltung</span>
                 </button>
+
+                <button onclick="switchTab('help')" id="nav-help" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                    <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="sidebar-text truncate">Hilfe & App-Standpunkt (M4)</span>
+                </button>
             </nav>
         </div>
 
@@ -232,6 +237,30 @@
             </button>
         </div>
     </aside>
+
+<!-- MOBILE BOTTOM NAVIGATION BAR -->
+<div id="mobileBottomNav" class="md:hidden fixed bottom-0 left-0 right-0 bg-[#0f172a] border-t border-slate-800 z-30 flex items-center justify-around py-2 px-1 text-slate-400 text-[10px] font-medium shadow-2xl">
+    <button onclick="switchTab('dashboard')" class="flex flex-col items-center gap-1 hover:text-emerald-400 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span>Übersicht</span>
+    </button>
+    <button onclick="switchTab('inventory')" class="flex flex-col items-center gap-1 hover:text-emerald-400 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+        <span>Lager</span>
+    </button>
+    <button onclick="openScannerModal()" class="flex flex-col items-center gap-1 text-white bg-emerald-600 p-2 rounded-full -mt-5 border-2 border-[#0f172a] shadow-lg hover:bg-emerald-500 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+    </button>
+    <button onclick="switchTab('chat')" class="flex flex-col items-center gap-1 hover:text-emerald-400 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+        <span>Chat</span>
+    </button>
+    <button onclick="switchTab('help')" class="flex flex-col items-center gap-1 hover:text-emerald-400 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>Hilfe</span>
+    </button>
+</div>
+
 
     <!-- MAIN CONTENT AREA -->
     <main class="flex-1 bg-[#f8fafc] flex flex-col min-w-0">
@@ -504,7 +533,83 @@
             </div>
 
             <!-- TAB 5: BENUTZERVERWALTUNG -->
-            <div id="tab-users" class="hidden space-y-6">
+            
+        <!-- TAB 6: HILFE, SYSTEM-DIAGNOSE & APP-STANDPUNKT (M4) -->
+        <div id="tab-help" class="hidden space-y-6 pb-20">
+            <!-- HEADER CARD -->
+            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+                <div class="absolute right-0 top-0 translate-x-4 -translate-y-4 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="w-12 h-12 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-emerald-400 text-2xl font-bold">
+                        🚀
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight">App-Standpunkt & Architektur (Meilenstein M4)</h2>
+                        <p class="text-xs text-slate-300">Lagerverwaltung Pro • Enterprise Mobile Edition v2.4.0</p>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed max-w-2xl">
+                    Die Anwendung basiert auf einer hochperformanten Single-Page PWA-Architektur mit Supabase Realtime Backend, PostgreSQL Row-Level Security (RLS) und clientseitiger GPU-Canvas-Bildkomprimierung.
+                </p>
+            </div>
+
+            <!-- GRID FEATURES & STATUS -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- SYSTEM STATUS CARD -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b pb-3">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <span>🔍 System-Gesundheitscheck</span>
+                        </h3>
+                        <button onclick="runAiDiagnosticScan()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
+                            <span>⚡ KI-Diagnose starten</span>
+                        </button>
+                    </div>
+
+                    <div id="diagnosticResults" class="text-xs space-y-2 text-slate-600">
+                        <p class="italic text-slate-400">Klicke auf "KI-Diagnose starten", um den Live-Code und die Datenbankwerte zu analysieren...</p>
+                    </div>
+                </div>
+
+                <!-- HELP TICKET CARD -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
+                    <div class="border-b pb-3">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <span>🆘 Problem melden / KI-Bot anfragen</span>
+                        </h3>
+                        <p class="text-[11px] text-slate-500">Beschreibe eine Komplikation. Der KI-Bot liest die aktuellen Systemwerte und antwortet im Chat.</p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <textarea id="helpTicketText" placeholder="z. B. Der Artikel X lässt sich nicht buchen oder Kalender zeigt falsches Datum..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:ring-2 focus:ring-emerald-500 h-24"></textarea>
+                        <button onclick="sendHelpTicketToAiBot()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                            <span>🤖 Support-Ticket an KI-Bot senden</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ARCHITECTURE OVERVIEW TABLE -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
+                <h3 class="font-bold text-slate-800 text-sm">📐 System-Spezifikation & Funktionen</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <div class="font-bold text-slate-800 mb-1">🏢 Oberkategorien</div>
+                        <div class="text-slate-500">Bibliothek, Freizeitheimlager, Küche, Technik, Büro (Lazy Loading Filter)</div>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <div class="font-bold text-slate-800 mb-1">🛡️ Rollenkonzept</div>
+                        <div class="text-slate-500">Administrator, Raum-Manager & Benutzer mit granularen Berechtigungen</div>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <div class="font-bold text-slate-800 mb-1">📅 Kalender & Sync</div>
+                        <div class="text-slate-500">FullCalendar Integration mit Google Calendar & .ics Import/Export</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-users" class="hidden space-y-6">
                 <div class="flex justify-between items-center">
                     <div>
                         <h3 class="font-bold text-slate-800 text-sm">Benutzerverwaltung</h3>
@@ -535,6 +640,46 @@
 </div>
 
 <!-- MODAL: VOLLBILD KALENDER -->
+
+<!-- MODAL: KALENDER-EINTRAG DETAILS & GOOGLE CALENDAR SYNC -->
+<div id="calendarEventDetailModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl border border-slate-100">
+        <div class="flex justify-between items-start border-b pb-3">
+            <div>
+                <span id="calDetailStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider bg-emerald-100 text-emerald-800">Aktiv</span>
+                <h3 id="calDetailTitle" class="text-lg font-bold text-slate-800 mt-1">Ausleih-Details</h3>
+            </div>
+            <button onclick="closeCalendarEventDetailModal()" class="text-slate-400 hover:text-slate-600 text-lg p-1">✕</button>
+        </div>
+
+        <div class="space-y-3 text-xs">
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1.5">
+                <div class="flex justify-between"><span class="text-slate-400">Ausleiher:</span> <span id="calDetailBorrower" class="font-semibold text-slate-700">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Projekt:</span> <span id="calDetailProject" class="font-semibold text-slate-700">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Zeitraum:</span> <span id="calDetailDates" class="font-semibold text-slate-700">-</span></div>
+                <div id="calDetailReturnNoteRow" class="hidden pt-1 border-t"><span class="text-slate-400">Rückgabe-Notiz:</span> <p id="calDetailReturnNote" class="text-slate-700 italic mt-0.5"></p></div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="space-y-2 pt-2">
+                <button id="googleCalExportBtn" onclick="exportToGoogleCalendar()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                    <span>📅 In Google Calendar eintragen</span>
+                </button>
+                <button id="icsExportBtn" onclick="downloadIcsFile()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                    <span>📥 .ics Kalender-Datei herunterladen</span>
+                </button>
+                <button id="openItemFromCalBtn" onclick="openItemFromCalModal()" class="w-full border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold py-2 rounded-xl transition">
+                    📦 Artikel im Lager ansehen
+                </button>
+            </div>
+        </div>
+
+        <div class="flex justify-end pt-2 border-t">
+            <button onclick="closeCalendarEventDetailModal()" class="px-4 py-2 text-xs bg-slate-200 text-slate-700 rounded-xl font-semibold">Schließen</button>
+        </div>
+    </div>
+</div>
+
 <div id="calendarModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl p-6 max-w-5xl w-full h-[85vh] flex flex-col shadow-2xl">
         <div class="flex justify-between items-center border-b pb-3 mb-4">
@@ -643,6 +788,12 @@
             <div>
                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Kofferinhalte / Zubehör (Kommagetrennt)</label>
                 <input type="text" id="itemAccessoriesInput" placeholder="z. B. Body, 2x Akku, Ladekabel, Tasche" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+            </div>
+
+            
+            <div class="space-y-1.5 pt-2 border-t">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">💬 Neutrale / Informative Bemerkung (optional)</label>
+                <textarea id="returnNote" placeholder="z. B. Vollständig übergeben, Kabel nachgereicht, Zubehör geprüft..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500 h-16"></textarea>
             </div>
 
             <div class="space-y-2 pt-2 border-t">
@@ -1095,35 +1246,37 @@
         }
     }
 
-    
+    async 
     function setupRealtimeSubscriptions() {
         if (!db) return;
         try {
-            db.channel('public:rentals')
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, () => {
-                  if (typeof fetchRentals === 'function') fetchRentals();
-              })
-              .subscribe();
-
-            db.channel('public:chat_messages')
-              .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, () => {
-                  if (typeof loadChatMessages === 'function') loadChatMessages();
-                  if (typeof loadDashboardChat === 'function') loadDashboardChat();
-              })
-              .subscribe();
-
-            db.channel('public:items')
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, () => {
-                  if (typeof selectedRoom !== 'undefined' && selectedRoom) fetchItems(currentPage);
-                  if (typeof loadRoomCounts === 'function') loadRoomCounts();
-              })
-              .subscribe();
-        } catch(e) {
-            console.log("Realtime Subscription Error:", e);
-        }
+            db.channel('public:realtime_changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, () => {
+                    fetchRentals();
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, () => {
+                    if (selectedRoom) fetchItems(currentPage);
+                })
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, () => {
+                    loadChatMessages();
+                    loadDashboardChat();
+                })
+                .subscribe();
+        } catch(e) {}
     }
 
-    async function loadUserProfile(user) {
+    async function repairStatusInconsistencies() {
+        for (let item of allItems) {
+            const isRented = activeRentals.some(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
+            if (isRented && item.status === 'Verfügbar') {
+                await db.from('items').update({ status: 'Ausgeliehen' }).eq('id', item.id);
+            }
+        }
+        alert("Status-Inkonsistenzen wurden erfolgreich korrigiert!");
+        fetchAllData();
+    }
+
+async function loadUserProfile(user) {
         currentUser = user;
 
         let { data: profile } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
@@ -1166,7 +1319,6 @@
 
         // ÜBERPRÜFUNG AUF ABGELAUFENE AUSLEIHEN & AUTOMATISCHE SYSTEM-NACHRICHT
         checkAndSendOverdueNotifications();
-        setupRealtimeSubscriptions();
     }
 
     async function fetchAllData() {
@@ -1189,12 +1341,33 @@
         } catch(e) {}
     }
 
-    function populateAdminUserSelect() {
+    
+    function isManagerOrAdmin() {
+        if (!userProfile || !userProfile.role) return false;
+        const r = userProfile.role.toLowerCase();
+        return r === 'admin' || r === 'raum_manager' || r === 'raummanager';
+    }
+
+    async function toggleUserRole(userId, currentRole) {
+        const roles = ['user', 'raum_manager', 'admin'];
+        const currIdx = roles.indexOf((currentRole || 'user').toLowerCase());
+        const newRole = roles[(currIdx + 1) % roles.length];
+        await db.from('profiles').update({ role: newRole }).eq('id', userId);
+        alert(`Rolle erfolgreich geändert auf: ${newRole.toUpperCase()}`);
+        fetchAllUsers();
+    }
+
+function populateAdminUserSelect() {
         const select = document.getElementById('rentForUserId');
+        const container = document.getElementById('rentForUserGroup');
         if (!select) return;
+        
+        const canAssign = isManagerOrAdmin();
+        if (container) container.classList.toggle('hidden', !canAssign);
+
         select.innerHTML = '';
         allProfiles.forEach(p => {
-            select.innerHTML += `<option value="${p.id}">${p.full_name} (${p.role})</option>`;
+            select.innerHTML += `<option value="${p.id}">${p.full_name || 'Benutzer'} (${(p.role || 'user').toUpperCase()})</option>`;
         });
         if (currentUser) select.value = currentUser.id;
     }
@@ -1672,7 +1845,7 @@
         });
     }
 
-    async function initPasteHandler() {
+    function initPasteHandler() {
         window.addEventListener('paste', async (e) => {
             const items = (e.clipboardData || e.originalEvent.clipboardData).items;
             for (let item of items) {
@@ -1888,13 +2061,13 @@
         const start_date = document.getElementById('rentStart').value;
         const end_date = document.getElementById('rentEnd').value;
 
+        // DATUMS-VALIDIERUNG
         if (!start_date || !end_date) {
-            alert("Bitte gib ein gültiges Start- und Enddatum für die Ausleihe ein!");
+            alert("⚠️ Bitte wähle sowohl ein Start- als auch ein Enddatum für die Ausleihe aus!");
             return;
         }
-
         if (new Date(end_date) < new Date(start_date)) {
-            alert("Fehler: Das Enddatum darf nicht vor dem Startdatum liegen!");
+            alert("⚠️ Ungültiger Zeitraum: Das Enddatum darf nicht vor dem Startdatum liegen!");
             return;
         }
 
@@ -1980,40 +2153,34 @@
         const itemId = document.getElementById('returnItemId').value;
         const hasDamage = document.getElementById('hasDamage').checked;
         const damageReport = document.getElementById('damageReport').value.trim();
+        const returnNote = document.getElementById('returnNote')?.value.trim() || '';
 
-        // Ausleihstatus auf 'Zurückgegeben' setzen für Historie & RLS-Kompatibilität
+        // Status-Archivierung in 'rentals' Tabelle (RLS-freundlich)
         const { error: updateErr } = await db.from('rentals').update({ 
-            status: 'Zurückgegeben',
-            returned_at: new Date().toISOString()
+            status: 'Zurückgegeben', 
+            returned_at: new Date().toISOString(),
+            return_note: returnNote 
         }).eq('id', rentalId);
 
-        // Fallback: Falls Update fehlschlägt (z.B. Spalte fehlt), Eintrag löschen
+        // Falls Update fehlschlägt (z.B. Schema ohne status), Fallback-Löschen versuchen
         if (updateErr) {
-            console.warn("Update fehlgeschlagen, versuche Löschen:", updateErr);
             await db.from('rentals').delete().eq('id', rentalId);
         }
 
         // ZWINGENDE REGEL: Objekt wird nach Rückgabe IMMER als Verfügbar angegeben!
         await db.from('items').update({ status: 'Verfügbar' }).eq('id', itemId);
 
-        if (hasDamage) {
-            await db.from('activity_log').insert([{
-                item_name: itemId,
-                user_name: userProfile?.full_name || currentUser.email,
-                user_id: currentUser.id,
-                action: 'DEFECT_REPORTED',
-                details: `Rückgabe mit Schaden gemeldet (Status als verfügbar wiederhergestellt): ${damageReport}`
-            }]);
-        } else {
-            await db.from('activity_log').insert([{
-                item_name: itemId,
-                user_name: userProfile?.full_name || currentUser.email,
-                user_id: currentUser.id,
-                action: 'RÜCKGABE',
-                details: 'Ordnungsgemäß zurückgegeben (Status: Verfügbar)'
-            }]);
-        }
+        let logDetails = [];
+        if (returnNote) logDetails.push(`Notiz: ${returnNote}`);
+        if (hasDamage) logDetails.push(`DEFECT: ${damageReport}`);
 
+        await db.from('activity_log').insert([{
+            item_name: itemId,
+            user_name: userProfile?.full_name || currentUser.email,
+            user_id: currentUser.id,
+            action: hasDamage ? 'DEFECT_REPORTED' : 'RÜCKGABE',
+            details: logDetails.length > 0 ? logDetails.join(' | ') : 'Ordnungsgemäß zurückgegeben (Status: Verfügbar)'
+        }]);
         alert("Rückgabe erfolgreich! Artikel steht wieder als 'Verfügbar' bereit.");
         closeReturnModal();
         fetchAllData();
@@ -2090,14 +2257,11 @@
     async function closeScannerModal() {
         if (html5QrScanner) {
             try { 
-                await html5QrScanner.stop(); 
+                await html5QrScanner.stop();
                 html5QrScanner.clear(); 
-            } catch(e){
-                console.log("Scanner Stopp Hinweis:", e);
-            }
+            } catch(e){}
         }
-        const modal = document.getElementById('scannerModal');
-        if (modal) modal.classList.add('hidden');
+        document.getElementById('scannerModal').classList.add('hidden');
     }
 
     function openCalendarModal() {
@@ -2109,46 +2273,136 @@
         document.getElementById('calendarModal').classList.add('hidden');
     }
 
+    
+    let selectedCalEventData = null;
+
     function buildCalendarEvents() {
-        const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
-        const now = new Date();
+        const canSeeDetails = isManagerOrAdmin();
+        
+        return activeRentals.map(r => {
+            const borrower = allProfiles.find(p => p.id === r.user_id);
+            const borrowerName = (canSeeDetails || r.user_id === currentUser?.id) 
+                ? (borrower?.full_name || 'Benutzer') 
+                : '[Ausgeliehen]';
 
-        return (activeRentals || []).map(r => {
             const itemName = r.items?.name || r.item_id;
-            const project = r.project ? ` (${r.project})` : '';
-            let userNameInfo = '';
-
-            if (isAdmin) {
-                const borrower = (allProfiles || []).find(p => p.id === r.user_id);
-                const borrowerName = borrower?.full_name || borrower?.email || r.user_id || 'Unbekannt';
-                userNameInfo = ` - 👤 ${borrowerName}`;
-            }
-
+            const isOverdue = new Date(r.end_date) < new Date() && r.status !== 'Zurückgegeben';
             const isReturned = r.status === 'Zurückgegeben';
-            const isOverdue = !isReturned && new Date(r.end_date) < now;
 
-            let color = '#059669'; // Grün = Aktiv
-            let statusPrefix = '';
-
-            if (isReturned) {
-                color = '#64748b'; // Grau = Zurückgegeben
-                statusPrefix = '✅ ';
-            } else if (isOverdue) {
-                color = '#dc2626'; // Rot = Überfällig
-                statusPrefix = '⚠️ ';
-            }
+            let bgColor = '#059669'; // Green
+            if (isOverdue) bgColor = '#dc2626'; // Red
+            if (isReturned) bgColor = '#64748b'; // Gray
 
             return {
-                title: `${statusPrefix}${itemName}${userNameInfo}${project}`,
+                id: r.id,
+                title: `${itemName} - ${borrowerName} (${r.project || 'Ausleihe'})`,
                 start: r.start_date,
                 end: r.end_date,
-                backgroundColor: color,
-                borderColor: color
+                backgroundColor: bgColor,
+                borderColor: bgColor,
+                extendedProps: {
+                    rentalId: r.id,
+                    itemId: r.item_id,
+                    itemName: itemName,
+                    borrowerName: borrowerName,
+                    project: r.project || 'Keine Angabe',
+                    startDate: r.start_date,
+                    endDate: r.end_date,
+                    status: isReturned ? 'Zurückgegeben' : (isOverdue ? 'Überfällig' : 'Aktiv'),
+                    returnNote: r.return_note || ''
+                }
             };
         });
     }
 
-    function renderDashboardCalendar() {
+    function openCalendarEventDetailModal(props) {
+        selectedCalEventData = props;
+
+        document.getElementById('calDetailTitle').innerText = props.itemName;
+        document.getElementById('calDetailBorrower').innerText = props.borrowerName;
+        document.getElementById('calDetailProject').innerText = props.project;
+        
+        const startStr = new Date(props.startDate).toLocaleDateString('de-DE');
+        const endStr = new Date(props.endDate).toLocaleDateString('de-DE');
+        document.getElementById('calDetailDates').innerText = `${startStr} bis ${endStr}`;
+
+        const badge = document.getElementById('calDetailStatusBadge');
+        badge.innerText = props.status;
+        if (props.status === 'Aktiv') badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider bg-emerald-100 text-emerald-800';
+        else if (props.status === 'Überfällig') badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider bg-red-100 text-red-800';
+        else badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider bg-slate-200 text-slate-700';
+
+        const returnRow = document.getElementById('calDetailReturnNoteRow');
+        if (props.returnNote) {
+            document.getElementById('calDetailReturnNote').innerText = props.returnNote;
+            returnRow.classList.remove('hidden');
+        } else {
+            returnRow.classList.add('hidden');
+        }
+
+        document.getElementById('calendarEventDetailModal').classList.remove('hidden');
+    }
+
+    function closeCalendarEventDetailModal() {
+        document.getElementById('calendarEventDetailModal').classList.add('hidden');
+    }
+
+    function exportToGoogleCalendar() {
+        if (!selectedCalEventData) return;
+        const { itemName, project, startDate, endDate } = selectedCalEventData;
+
+        const formatGCalDate = (dStr) => {
+            const d = new Date(dStr);
+            return d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+        };
+
+        const gStart = formatGCalDate(startDate);
+        const gEnd = formatGCalDate(endDate);
+        const details = encodeURIComponent(`Lagerverwaltung Ausleihe: ${itemName}
+Projekt: ${project}`);
+        const text = encodeURIComponent(`Lager-Ausleihe: ${itemName}`);
+
+        const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${gStart}/${gEnd}&details=${details}`;
+        window.open(url, '_blank');
+    }
+
+    function downloadIcsFile() {
+        if (!selectedCalEventData) return;
+        const { itemName, project, startDate, endDate } = selectedCalEventData;
+
+        const formatIcsDate = (dStr) => {
+            const d = new Date(dStr);
+            return d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+        };
+
+        const icsContent = 
+`BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Lagerverwaltung Pro//NONSGML v1.0//EN
+BEGIN:VEVENT
+SUMMARY:Ausleihe: ${itemName}
+DESCRIPTION:Lager-Ausleihe für Projekt: ${project}
+DTSTART:${formatIcsDate(startDate)}
+DTEND:${formatIcsDate(endDate)}
+END:VEVENT
+END:VCALENDAR`;
+
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', `ausleihe_${itemName.replace(/\s+/g, '_')}.ics`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function openItemFromCalModal() {
+        if (!selectedCalEventData) return;
+        closeCalendarEventDetailModal();
+        openItemModal(selectedCalEventData.itemId);
+    }
+
+function renderDashboardCalendar() {
         const calendarEl = document.getElementById('dashboardCalendar');
         if (!calendarEl) return;
         if (calendar) calendar.destroy();
@@ -2161,6 +2415,11 @@
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             events: events,
+            eventClick: function(info) {
+                if (info.event.extendedProps) {
+                    openCalendarEventDetailModal(info.event.extendedProps);
+                }
+            },
             height: 'auto'
         });
 
@@ -2180,6 +2439,11 @@
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             events: events,
+            eventClick: function(info) {
+                if (info.event.extendedProps) {
+                    openCalendarEventDetailModal(info.event.extendedProps);
+                }
+            },
             height: '100%'
         });
 
@@ -2187,7 +2451,7 @@
     }
 
     function switchTab(tabId) {
-        ['dashboard', 'inventory', 'movements', 'chat', 'users'].forEach(t => {
+        ['dashboard', 'inventory', 'movements', 'chat', 'users', 'help'].forEach(t => {
             const el = document.getElementById(`tab-${t}`);
             const nav = document.getElementById(`nav-${t}`);
             if (el) el.classList.add('hidden');
@@ -2204,7 +2468,8 @@
             inventory: 'Lagerbestand',
             movements: 'Warenbewegungen',
             chat: 'Team-Chat',
-            users: 'Benutzerverwaltung'
+            users: 'Benutzerverwaltung',
+            help: 'Hilfe & App-Standpunkt (M4)'
         };
         document.getElementById('pageTitle').innerText = titles[tabId] || 'Lagerverwaltung';
 
