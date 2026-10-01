@@ -24,7 +24,7 @@
 
         /* Eingefügte Styles */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
-        .card { background: #E2E8F0; border-radius: 8px; padding: 16px; border: 1px solid #E2E8F0; color: #31346d; }
+        .card { background: #f8fafc; border-radius: 8px; padding: 16px; border: 1px solid #e2e8f0; color: #1E293B; }
         .pagination-bar { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 20px; }
         .pagination-bar button { background: #2563eb; color: #1e293b; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
         .pagination-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -630,7 +630,7 @@
     <div id="qrModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
             <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="text-base font-bold">🖨️ Etikettendruck Vorschau (DIN A4 Raster: 24 Etiketten)</h3>
+                <h3 class="text-base font-bold">🖨️️ Etikettendruck Vorschau (DIN A4 Raster: 24 Etiketten)</h3>
                 <button onclick="closeQrModal()" class="text-slate-400 font-bold">✕</button>
             </div>
 
@@ -822,19 +822,19 @@
                 
                 card.innerHTML = `
                     <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleItemSelection('${item.id}')" class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer shrink-0">
-                    <img src="${mainPhoto}" class="w-16 h-16 object-cover rounded-lg border border-slate-700 shrink-0">
+                    <img src="${mainPhoto}" class="w-16 h-16 object-cover rounded-lg border border-slate-300 shrink-0">
                     <div class="flex-1 min-w-0">
-                        <h3 class="font-bold text-white text-sm truncate">${item.name || 'Unbenannt'}</h3>
-                        <p class="text-xs text-slate-400"><strong>SKU/ID:</strong> ${item.id}</p>
-                        <p class="text-xs text-slate-400"><strong>Kategorie:</strong> ${item.category || '-'}</p>
-                        <p class="text-xs text-slate-400"><strong>Status:</strong> ${effectiveStatus}</p>
+                        <h3 class="font-bold text-[#1E293B] text-sm truncate">${item.name || 'Unbenannt'}</h3>
+                        <p class="text-xs text-[#1E293B]/80"><strong>SKU/ID:</strong> ${item.id}</p>
+                        <p class="text-xs text-[#1E293B]/80"><strong>Kategorie:</strong> ${item.category || '-'}</p>
+                        <p class="text-xs text-[#1E293B]/80"><strong>Status:</strong> ${effectiveStatus}</p>
                         
                         <div class="flex items-center gap-2 mt-2">
                             <button onclick="openRentModal('${item.id}', '${item.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 py-1 rounded">Ausleihen</button>
-                            <button onclick="openQrModal('${item.id}')" class="text-xs border border-slate-600 px-2 py-1 rounded hover:bg-slate-700">QR</button>
+                            <button onclick="openQrModal('${item.id}')" class="text-xs border border-slate-300 text-[#1E293B] px-2 py-1 rounded hover:bg-slate-200">QR</button>
                             ${isAdmin ? `
-                                <button onclick="editItem('${item.id}')" class="text-xs text-blue-400 hover:underline">✏️</button>
-                                <button onclick="deleteItem('${item.id}')" class="text-xs text-red-400 hover:underline">🗑</button>
+                                <button onclick="editItem('${item.id}')" class="text-xs text-blue-600 hover:underline">✏️</button>
+                                <button onclick="deleteItem('${item.id}')" class="text-xs text-red-600 hover:underline">🗑</button>
                             ` : ''}
                         </div>
                     </div>
@@ -1975,7 +1975,7 @@
                 const date = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
                 return `
                     <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                        <div class="text-[10px] text-slate-400 mb-0.5">${m.sender_name} • ${date}</div>
+                        <div class="text-[9px] text-slate-400 mb-0.5">${m.sender_name} • ${date}</div>
                         <div class="max-w-[85%] rounded-xl px-3 py-1.5 text-xs ${isMe ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-800'}">
                             ${m.message}
                         </div>
@@ -2020,16 +2020,16 @@
 
         async function adminCreateUser(event) {
             event.preventDefault();
-            const name = document.getElementById('newUserName').value.trim();
             const email = document.getElementById('newUserEmail').value.trim();
             const password = document.getElementById('newUserPass').value.trim();
+            const fullName = document.getElementById('newUserName').value.trim();
             const role = document.getElementById('newUserRole').value;
 
             try {
                 const { data, error } = await db.auth.signUp({
                     email,
                     password,
-                    options: { data: { full_name: name, role: role } }
+                    options: { data: { full_name: fullName, role: role } }
                 });
 
                 if (error) throw error;
@@ -2037,16 +2037,16 @@
                 if (data.user) {
                     await db.from('profiles').upsert([{
                         id: data.user.id,
-                        full_name: name,
+                        full_name: fullName,
                         role: role
                     }]);
                 }
 
-                alert(`Benutzer ${name} (${email}) wurde erfolgreich angelegt!`);
+                alert("Neuer Benutzer erfolgreich angelegt!");
                 closeNewUserModal();
                 fetchAllUsers();
             } catch (err) {
-                alert("Fehler beim Erstellen des Benutzers:\n" + (err.message || err));
+                alert("Fehler beim Anlegen des Benutzers:\n" + (err.message || err));
             }
         }
     </script>
