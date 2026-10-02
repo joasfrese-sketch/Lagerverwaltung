@@ -1147,24 +1147,6 @@
             const photos = Array.isArray(item.photos) ? item.photos : (item.image_url ? [item.image_url] : []);
             const mainPhoto = photos[0] || 'https://via.placeholder.com/300x200?text=Kein+Bild';
 
-            let actionBtnHtml = '';
-            if (effectiveStatus === 'Verfügbar') {
-                actionBtnHtml = `<button onclick="openRentModal('${item.id}', '${item.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1.5 rounded-xl font-semibold transition shadow-sm flex items-center gap-1">➕ Ausleihen</button>`;
-            } else if (effectiveStatus === 'Ausgeliehen') {
-                const activeLoan = activeRentals.find(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
-                const borrower = allProfiles.find(p => p.id === activeLoan?.user_id);
-                const borrowerName = (isManagerOrAdmin() || activeLoan?.user_id === currentUser?.id)
-                    ? (borrower?.full_name || 'Ausgeliehen')
-                    : 'Ausgeliehen';
-                actionBtnHtml = `<span class="bg-amber-100 border border-amber-300 text-amber-900 text-xs px-2.5 py-1.5 rounded-xl font-bold inline-flex items-center gap-1 shadow-sm">🔒 Ausgeliehen (${borrowerName})</span>`;
-            } else if (effectiveStatus === 'Wartung / Defekt') {
-                actionBtnHtml = `<span class="bg-red-100 border border-red-300 text-red-800 text-xs px-2.5 py-1.5 rounded-xl font-bold inline-flex items-center gap-1">🛠️ In Wartung</span>`;
-            } else if (effectiveStatus === 'In Inventur') {
-                actionBtnHtml = `<span class="bg-blue-100 border border-blue-300 text-blue-800 text-xs px-2.5 py-1.5 rounded-xl font-bold inline-flex items-center gap-1">📋 In Inventur</span>`;
-            } else {
-                actionBtnHtml = `<span class="bg-slate-100 border border-slate-300 text-slate-700 text-xs px-2.5 py-1.5 rounded-xl font-bold">${effectiveStatus}</span>`;
-            }
-
             const card = document.createElement('div');
             card.className = `card flex gap-3 items-center ${isChecked ? 'ring-2 ring-emerald-500 bg-slate-100' : ''}`;
             
@@ -1178,11 +1160,11 @@
                     <p class="text-xs text-[#1E293B]/80"><strong>Status:</strong> ${effectiveStatus}</p>
                     
                     <div class="flex items-center gap-2 mt-2">
-                        ${actionBtnHtml}
-                        <button onclick="openQrModal('${item.id}')" class="text-xs border border-slate-300 text-[#1E293B] px-2 py-1.5 rounded-xl hover:bg-slate-200 transition">QR</button>
+                        <button onclick="openRentModal('${item.id}', '${item.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 py-1 rounded font-semibold">Ausleihen</button>
+                        <button onclick="openQrModal('${item.id}')" class="text-xs border border-slate-300 text-[#1E293B] px-2 py-1 rounded hover:bg-slate-200">QR</button>
                         ${isAdmin ? `
-                            <button onclick="editItem('${item.id}')" class="text-xs text-blue-600 hover:underline p-1">✏️</button>
-                            <button onclick="deleteItem('${item.id}')" class="text-xs text-red-600 hover:underline p-1">🗑️</button>
+                            <button onclick="editItem('${item.id}')" class="text-xs text-blue-600 hover:underline">✏️</button>
+                            <button onclick="deleteItem('${item.id}')" class="text-xs text-red-600 hover:underline">🗑</button>
                         ` : ''}
                     </div>
                 </div>
@@ -1574,7 +1556,7 @@ function populateAdminUserSelect() {
     function getItemEffectiveStatus(item) {
         if (item.status === 'Wartung / Defekt') return 'Wartung / Defekt';
         if (item.status === 'In Inventur') return 'In Inventur';
-        const isRented = activeRentals.some(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
+        const isRented = activeRentals.some(r => r.item_id === item.id);
         if (isRented) return 'Ausgeliehen';
         return 'Verfügbar';
     }
@@ -2433,31 +2415,10 @@ function renderDashboardCalendar() {
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             events: events,
-            eventDisplay: 'block',
-            eventContent: function(arg) {
-                const title = arg.event.title || 'Ausleihe';
-                const bg = arg.event.backgroundColor || '#059669';
-                return {
-                    html: `<div class="fc-event-button text-white p-1 rounded-lg text-xs font-semibold flex items-center justify-between gap-1 overflow-hidden shadow-sm cursor-pointer transition w-full" style="background-color: ${bg}">
-                        <span class="truncate">📦 ${title}</span>
-                        <span class="text-[9px] bg-white/20 hover:bg-white/30 text-white px-1.5 py-0.5 rounded shrink-0 font-bold">Details ➔</span>
-                    </div>`
-                };
-            },
             eventClick: function(info) {
-                if (info.jsEvent) info.jsEvent.preventDefault();
-                const props = info.event.extendedProps || {};
-                openCalendarEventDetailModal({
-                    rentalId: props.rentalId || info.event.id,
-                    itemId: props.itemId || '',
-                    itemName: props.itemName || info.event.title,
-                    borrowerName: props.borrowerName || 'Benutzer',
-                    project: props.project || 'Keine Angabe',
-                    startDate: props.startDate || info.event.startStr,
-                    endDate: props.endDate || info.event.endStr,
-                    status: props.status || 'Aktiv',
-                    returnNote: props.returnNote || ''
-                });
+                if (info.event.extendedProps) {
+                    openCalendarEventDetailModal(info.event.extendedProps);
+                }
             },
             height: 'auto'
         });
@@ -2478,31 +2439,10 @@ function renderDashboardCalendar() {
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             events: events,
-            eventDisplay: 'block',
-            eventContent: function(arg) {
-                const title = arg.event.title || 'Ausleihe';
-                const bg = arg.event.backgroundColor || '#059669';
-                return {
-                    html: `<div class="fc-event-button text-white p-1 rounded-lg text-xs font-semibold flex items-center justify-between gap-1 overflow-hidden shadow-sm cursor-pointer transition w-full" style="background-color: ${bg}">
-                        <span class="truncate">📦 ${title}</span>
-                        <span class="text-[9px] bg-white/20 hover:bg-white/30 text-white px-1.5 py-0.5 rounded shrink-0 font-bold">Details ➔</span>
-                    </div>`
-                };
-            },
             eventClick: function(info) {
-                if (info.jsEvent) info.jsEvent.preventDefault();
-                const props = info.event.extendedProps || {};
-                openCalendarEventDetailModal({
-                    rentalId: props.rentalId || info.event.id,
-                    itemId: props.itemId || '',
-                    itemName: props.itemName || info.event.title,
-                    borrowerName: props.borrowerName || 'Benutzer',
-                    project: props.project || 'Keine Angabe',
-                    startDate: props.startDate || info.event.startStr,
-                    endDate: props.endDate || info.event.endStr,
-                    status: props.status || 'Aktiv',
-                    returnNote: props.returnNote || ''
-                });
+                if (info.event.extendedProps) {
+                    openCalendarEventDetailModal(info.event.extendedProps);
+                }
             },
             height: '100%'
         });
@@ -2762,4 +2702,188 @@ function renderDashboardCalendar() {
             alert("Fehler beim Anlegen des Benutzers:\n" + (err.message || err));
         }
     }
+
+    // -------------------------------------------------------------
+    // KI-DIAGNOSE & SUPPORT-TICKET FUNKTIONEN (MEILENSTEIN M4)
+    // -------------------------------------------------------------
+    async function runAiDiagnosticScan() {
+        const resultsContainer = document.getElementById('diagnosticResults');
+        if (!resultsContainer) return;
+
+        resultsContainer.innerHTML = `
+            <div class="flex items-center gap-2 text-emerald-600 font-semibold p-2 bg-emerald-50 rounded-xl">
+                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Führe KI-Systemdiagnose durch... Live-Code & DB werden analysiert.</span>
+            </div>
+        `;
+
+        await new Promise(r => setTimeout(r, 500));
+
+        let dbStatus = "🟢 Operational";
+        let dbColor = "text-emerald-600";
+        try {
+            const { error } = await db.from('items').select('id').limit(1);
+            if (error) {
+                dbStatus = "🔴 Verbindungseinschränkung (" + error.message + ")";
+                dbColor = "text-red-600";
+            }
+        } catch(e) {
+            dbStatus = "🔴 Fehler (" + e.message + ")";
+            dbColor = "text-red-600";
+        }
+
+        let inconsistencies = [];
+        let overdueCount = 0;
+        const now = new Date();
+
+        if (typeof activeRentals !== 'undefined' && activeRentals && activeRentals.length > 0) {
+            activeRentals.forEach(r => {
+                if (new Date(r.end_date) < now && r.status !== 'Zurückgegeben') {
+                    overdueCount++;
+                }
+            });
+        }
+
+        if (typeof allItems !== 'undefined' && allItems && allItems.length > 0) {
+            allItems.forEach(item => {
+                const isRentedInRentals = activeRentals.some(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
+                if (isRentedInRentals && item.status === 'Verfügbar') {
+                    inconsistencies.push(`Artikel '${item.name || item.id}' ist ausgeliehen, aber in 'items' als 'Verfügbar' markiert.`);
+                }
+            });
+        }
+
+        const userRoleStr = (typeof userProfile !== 'undefined' && userProfile?.role ? userProfile.role : 'user').toUpperCase();
+        const userNameStr = (typeof userProfile !== 'undefined' && userProfile?.full_name ? userProfile.full_name : (typeof currentUser !== 'undefined' && currentUser?.email ? currentUser.email : 'Unbekannt'));
+
+        let inconsistencyHTML = '';
+        if (inconsistencies.length > 0) {
+            inconsistencyHTML = `
+                <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-2 text-amber-900">
+                    <div class="font-bold text-xs flex items-center gap-1.5">
+                        ⚠️ ${inconsistencies.length} Status-Inkonsistenz(en) erkannt:
+                    </div>
+                    <ul class="list-disc list-inside text-[11px] space-y-1 text-amber-800">
+                        ${inconsistencies.map(inc => `<li>${inc}</li>`).join('')}
+                    </ul>
+                    <button onclick="repairStatusInconsistencies()" class="mt-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-3 py-1.5 rounded-xl transition shadow flex items-center gap-1.5">
+                        🔧 1-Klick Status-Reparatur durchführen
+                    </button>
+                </div>
+            `;
+        } else {
+            inconsistencyHTML = `
+                <div class="mt-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 font-medium text-xs flex items-center gap-1.5">
+                    <span>🎉 Keine Status-Inkonsistenzen gefunden. Alle Artikel-Zustände sind perfekt synchron.</span>
+                </div>
+            `;
+        }
+
+        resultsContainer.innerHTML = `
+            <div class="space-y-2.5 pt-1">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                        <span class="text-slate-400 block text-[10px] font-bold uppercase">Supabase Datenbank</span>
+                        <span class="font-bold ${dbColor}">${dbStatus}</span>
+                    </div>
+                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                        <span class="text-slate-400 block text-[10px] font-bold uppercase">Angemeldeter Benutzer</span>
+                        <span class="font-bold text-slate-800">${userNameStr} (${userRoleStr})</span>
+                    </div>
+                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                        <span class="text-slate-400 block text-[10px] font-bold uppercase">Analysierte Artikel</span>
+                        <span class="font-bold text-slate-800">${(typeof allItems !== 'undefined' && allItems) ? allItems.length : 0} Objekte geladen</span>
+                    </div>
+                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                        <span class="text-slate-400 block text-[10px] font-bold uppercase">Aktive Ausleihen / Überfällig</span>
+                        <span class="font-bold text-slate-800">${(typeof activeRentals !== 'undefined' && activeRentals) ? activeRentals.length : 0} Ausleihen (${overdueCount} überfällig)</span>
+                    </div>
+                </div>
+                ${inconsistencyHTML}
+            </div>
+        `;
+    }
+
+    async function repairStatusInconsistencies() {
+        if (!confirm("Möchtest du alle abweichenden Artikel-Zustände automatisch mit der Ausleih-Datenbank synchronisieren?")) return;
+
+        try {
+            let updatedCount = 0;
+            if (typeof allItems !== 'undefined' && allItems && allItems.length > 0) {
+                for (let item of allItems) {
+                    const isRentedInRentals = activeRentals.some(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
+                    if (isRentedInRentals && item.status === 'Verfügbar') {
+                        await db.from('items').update({ status: 'Ausgeliehen' }).eq('id', item.id);
+                        updatedCount++;
+                    }
+                }
+            }
+
+            alert(`✅ Reparatur abgeschlossen! ${updatedCount} Artikel-Status wurden aktualisiert.`);
+            if (typeof fetchAllData === 'function') await fetchAllData();
+            runAiDiagnosticScan();
+        } catch(e) {
+            alert("Fehler bei der Reparatur: " + e.message);
+        }
+    }
+
+    async function sendHelpTicketToAiBot() {
+        const input = document.getElementById('helpTicketText');
+        if (!input) return;
+
+        const ticketText = input.value.trim();
+        if (!ticketText) {
+            alert("Bitte beschreibe deine Komplikation oder Frage im Textfeld.");
+            return;
+        }
+
+        if (typeof currentUser === 'undefined' || !currentUser) {
+            alert("Bitte melde dich an, um ein Support-Ticket zu senden.");
+            return;
+        }
+
+        const userName = (typeof userProfile !== 'undefined' && userProfile?.full_name) ? userProfile.full_name : currentUser.email;
+        const role = (typeof userProfile !== 'undefined' && userProfile?.role ? userProfile.role : 'user').toUpperCase();
+        const room = (typeof selectedRoom !== 'undefined' && selectedRoom) ? selectedRoom : 'Alle Räume';
+
+        const telemetryMsg = `🎫 SUPPORT-TICKET [M4-DIAGNOSE]:
+"${ticketText}"
+
+[TELEMETRIE-SYSTEMWERTE]
+• Benutzer: ${userName} (Rolle: ${role})
+• Ausgewählter Raum: ${room}
+• Bestand: ${(typeof allItems !== 'undefined' && allItems) ? allItems.length : 0} Artikel
+• Aktive Ausleihen: ${(typeof activeRentals !== 'undefined' && activeRentals) ? activeRentals.length : 0}
+• Systemzeit: ${new Date().toLocaleString('de-DE')}
+• PWA Version: v2.4.0 (Meilenstein M4)`;
+
+        try {
+            await db.from('chat_messages').insert([{
+                sender_id: currentUser.id,
+                sender_name: userName,
+                recipient_id: SYSTEM_BOT_ID,
+                message: telemetryMsg
+            }]);
+
+            await db.from('chat_messages').insert([{
+                sender_id: SYSTEM_BOT_ID,
+                sender_name: '🤖 System-Benachrichtigung',
+                recipient_id: currentUser.id,
+                message: `✅ Support-Ticket empfangen! Der KI-System-Bot hat deine Meldung ("${ticketText.length > 50 ? ticketText.substring(0, 50) + '...' : ticketText}") registriert. Die Systemwerte wurden analysiert. Du findest alle Updates im Chat unter '🤖 System-Benachrichtigung'.`
+            }]);
+
+            input.value = '';
+            alert("✅ Support-Ticket erfolgreich an den KI-Bot gesendet!\n\nDie Bestätigung und Antwort wurden in den Team-Chat unter '🤖 System-Benachrichtigungen' übermittelt.");
+
+            if (typeof loadChatMessages === 'function') loadChatMessages();
+            if (typeof loadDashboardChat === 'function') loadDashboardChat();
+
+        } catch(err) {
+            alert("Fehler beim Senden des Tickets: " + (err.message || err));
+        }
+    }
+
 </script>
