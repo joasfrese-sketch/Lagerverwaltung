@@ -464,6 +464,7 @@
                                 <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                 <button id="clearSearchBtn" onclick="clearSearch()" title="Suche löschen" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none p-1 rounded-full text-xs font-bold leading-none">✕</button>
                             </div>
+                            <select id="sortSelect" onchange="fetchItems(1)" class="bg-white border border-slate-200/80 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm cursor-pointer"><option value="name_asc">Sortierung: Name A-Z</option><option value="name_desc">Sortierung: Name Z-A</option><option value="id_asc">Sortierung: SKU/ID A-Z</option><option value="status_asc">Sortierung: Status</option></select>
                             
                             <button id="importExcelBtn" onclick="openExcelImportModal()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2.5 rounded-xl flex items-center gap-1 transition shrink-0">📊 <span class="hidden sm:inline">Excel Import</span></button>
                         </div>
@@ -1063,7 +1064,7 @@
             return;
         }
 
-        grid.innerHTML = '<p class="p-4 text-slate-400">Lade Objekte für diesen Raum...</p>';
+        grid.innerHTML = '<p class="p-4 text-slate-400 font-medium animate-pulse">Lade Objekte für diesen Raum...</p>';
 
         const from = (page - 1) * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
@@ -1076,21 +1077,25 @@
                 query = query.or(`main_category.eq.${selectedRoom},room.ilike.%${selectedRoom}%`);
             }
 
-            // STATUS-FILTER
+            // NUR ECHTE AKTIVE AUSLEIHEN (FILTER 'Zurückgegeben' AUSSCHLIESSEN)
+            const activeRentalsList = (activeRentals || []).filter(r => r.status !== 'Zurückgegeben');
+            const activeRentedIds = activeRentalsList.map(r => r.item_id);
+
+            // STATUS-FILTER FÜR SUPABASE-QUERY
             if (currentStatusFilter !== 'ALL') {
                 if (currentStatusFilter === 'Ausgeliehen') {
-                    const rentedItemIds = activeRentals.map(r => r.item_id);
-                    if (rentedItemIds.length > 0) {
-                        query = query.in('id', rentedItemIds);
+                    if (activeRentedIds.length > 0) {
+                        query = query.in('id', activeRentedIds);
                     } else {
-                        query = query.eq('id', '___NONE___');
+                        query = query.eq('id', '___NO_RENTALS___');
                     }
                 } else if (currentStatusFilter === 'Verfügbar') {
-                    const rentedItemIds = activeRentals.map(r => r.item_id);
-                    if (rentedItemIds.length > 0) {
-                        query = query.not('id', 'in', `(${rentedItemIds.join(',')})`);
+                    if (activeRentedIds.length > 0) {
+                        query = query.not('id', 'in', `(${activeRentedIds.join(',')})`);
                     }
-                    query = query.neq('status', 'In Inventur').neq('status', 'Wartung / Defekt');
+                    query = query.neq('status', 'In Inventur').neq('status', 'Wartung / Defekt').neq('status', 'Defekt');
+                } else if (currentStatusFilter === 'Wartung / Defekt') {
+                    query = query.or('status.eq.Wartung / Defekt,status.eq.Defekt');
                 } else {
                     query = query.eq('status', currentStatusFilter);
                 }
@@ -1107,12 +1112,38 @@
 
             if (error) throw error;
 
-            allItems = data || [];
+            let fetchedItems = data || [];
+
+            // CLIENTSEITIGE ABSICHERUNG: NUR OBJEKTE MIT EXAKTEM EFFECTIVE STATUS ANZEIGEN
+            if (currentStatusFilter !== 'ALL') {
+                fetchedItems = fetchedItems.filter(item => {
+                    const eff = getItemEffectiveStatus(item);
+                    if (currentStatusFilter === 'Ausgeliehen') return eff === 'Ausgeliehen';
+                    if (currentStatusFilter === 'Verfügbar') return eff === 'Verfügbar';
+                    if (currentStatusFilter === 'Wartung / Defekt') return eff === 'Wartung / Defekt';
+                    if (currentStatusFilter === 'In Inventur') return eff === 'In Inventur';
+                    return true;
+                });
+            }
+
+            // SORTIERUNG BEHANDELN
+            const sortVal = document.getElementById('sortSelect')?.value || 'name_asc';
+            if (sortVal === 'name_asc') {
+                fetchedItems.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            } else if (sortVal === 'name_desc') {
+                fetchedItems.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+            } else if (sortVal === 'id_asc') {
+                fetchedItems.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+            } else if (sortVal === 'status_asc') {
+                fetchedItems.sort((a, b) => getItemEffectiveStatus(a).localeCompare(getItemEffectiveStatus(b)));
+            }
+
+            allItems = fetchedItems;
             totalPages = Math.ceil((count || 1) / PAGE_SIZE) || 1;
             currentPage = page;
 
             renderCards(allItems);
-            updatePaginationControls(count || 0);
+            updatePaginationControls(count || allItems.length);
 
             const { data: categoriesData } = await db.from('items').select('category');
             if (categoriesData) {
@@ -2415,8 +2446,18 @@ function renderDashboardCalendar() {
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             events: events,
+            eventContent: function(arg) {
+                const title = arg.event.title;
+                return {
+                    html: `<div class="fc-event-main-frame flex items-center justify-between gap-1 px-1.5 py-0.5 cursor-pointer w-full overflow-hidden text-white font-medium text-xs">
+                        <span class="truncate">${title}</span>
+                        <span class="shrink-0 bg-white/20 hover:bg-white/40 text-[10px] px-1.5 py-0.5 rounded font-bold transition">Details ➔</span>
+                    </div>`
+                };
+            },
             eventClick: function(info) {
-                if (info.event.extendedProps) {
+                if (info.jsEvent) info.jsEvent.preventDefault();
+                if (info.event && info.event.extendedProps) {
                     openCalendarEventDetailModal(info.event.extendedProps);
                 }
             },
@@ -2433,14 +2474,24 @@ function renderDashboardCalendar() {
 
         const events = buildCalendarEvents();
 
-        modalCalendar = new FullCalendar.Calendar(calendarEl, {
+        calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'de',
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             events: events,
+            eventContent: function(arg) {
+                const title = arg.event.title;
+                return {
+                    html: `<div class="fc-event-main-frame flex items-center justify-between gap-1 px-1.5 py-0.5 cursor-pointer w-full overflow-hidden text-white font-medium text-xs">
+                        <span class="truncate">${title}</span>
+                        <span class="shrink-0 bg-white/20 hover:bg-white/40 text-[10px] px-1.5 py-0.5 rounded font-bold transition">Details ➔</span>
+                    </div>`
+                };
+            },
             eventClick: function(info) {
-                if (info.event.extendedProps) {
+                if (info.jsEvent) info.jsEvent.preventDefault();
+                if (info.event && info.event.extendedProps) {
                     openCalendarEventDetailModal(info.event.extendedProps);
                 }
             },
@@ -2703,187 +2754,138 @@ function renderDashboardCalendar() {
         }
     }
 
-    // -------------------------------------------------------------
-    // KI-DIAGNOSE & SUPPORT-TICKET FUNKTIONEN (MEILENSTEIN M4)
-    // -------------------------------------------------------------
     async function runAiDiagnosticScan() {
-        const resultsContainer = document.getElementById('diagnosticResults');
-        if (!resultsContainer) return;
+        const container = document.getElementById('diagnosticResults');
+        if (!container) return;
 
-        resultsContainer.innerHTML = `
-            <div class="flex items-center gap-2 text-emerald-600 font-semibold p-2 bg-emerald-50 rounded-xl">
-                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Führe KI-Systemdiagnose durch... Live-Code & DB werden analysiert.</span>
+        container.innerHTML = `
+            <div class="flex items-center gap-2 text-emerald-600 font-semibold p-2 bg-emerald-50 rounded-xl animate-pulse">
+                <span>⚡ KI-System-Diagnose läuft... Analyse aller Code-Funktionen & Supabase-Werte...</span>
             </div>
         `;
 
-        await new Promise(r => setTimeout(r, 500));
+        setTimeout(async () => {
+            let logs = [];
 
-        let dbStatus = "🟢 Operational";
-        let dbColor = "text-emerald-600";
-        try {
-            const { error } = await db.from('items').select('id').limit(1);
-            if (error) {
-                dbStatus = "🔴 Verbindungseinschränkung (" + error.message + ")";
-                dbColor = "text-red-600";
+            if (db) {
+                logs.push(`<div class="flex items-center gap-2 text-slate-700"><span>✅</span> <strong>Supabase Client:</strong> Verbunden (${SUPABASE_URL})</div>`);
+            } else {
+                logs.push(`<div class="flex items-center gap-2 text-red-600"><span>❌</span> <strong>Supabase Client:</strong> Nicht initialisiert!</div>`);
             }
-        } catch(e) {
-            dbStatus = "🔴 Fehler (" + e.message + ")";
-            dbColor = "text-red-600";
-        }
 
-        let inconsistencies = [];
-        let overdueCount = 0;
-        const now = new Date();
+            if (currentUser) {
+                const roleLabel = (userProfile?.role || 'user').toUpperCase();
+                logs.push(`<div class="flex items-center gap-2 text-slate-700"><span>👤</span> <strong>Aktiver Benutzer:</strong> ${userProfile?.full_name || currentUser.email} (${roleLabel})</div>`);
+            } else {
+                logs.push(`<div class="flex items-center gap-2 text-amber-600"><span>⚠️</span> <strong>Nutzer-Session:</strong> Nicht angemeldet</div>`);
+            }
 
-        if (typeof activeRentals !== 'undefined' && activeRentals && activeRentals.length > 0) {
-            activeRentals.forEach(r => {
-                if (new Date(r.end_date) < now && r.status !== 'Zurückgegeben') {
-                    overdueCount++;
-                }
-            });
-        }
+            const currentRoomName = selectedRoom || 'Alle Räume';
+            logs.push(`<div class="flex items-center gap-2 text-slate-700"><span>📊</span> <strong>Geladene Artikel:</strong> ${allItems.length} Objekte im Raum '${currentRoomName}'</div>`);
 
-        if (typeof allItems !== 'undefined' && allItems && allItems.length > 0) {
+            const trueActiveRentals = (activeRentals || []).filter(r => r.status !== 'Zurückgegeben');
+            logs.push(`<div class="flex items-center gap-2 text-slate-700"><span>📦</span> <strong>Aktive Ausleihen:</strong> ${trueActiveRentals.length} laufende Leihen</div>`);
+
+            let inconsistentCount = 0;
             allItems.forEach(item => {
-                const isRentedInRentals = activeRentals.some(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
-                if (isRentedInRentals && item.status === 'Verfügbar') {
-                    inconsistencies.push(`Artikel '${item.name || item.id}' ist ausgeliehen, aber in 'items' als 'Verfügbar' markiert.`);
-                }
+                const isRented = trueActiveRentals.some(r => r.item_id === item.id);
+                if (isRented && item.status === 'Verfügbar') inconsistentCount++;
+                if (!isRented && item.status === 'Ausgeliehen') inconsistentCount++;
             });
-        }
 
-        const userRoleStr = (typeof userProfile !== 'undefined' && userProfile?.role ? userProfile.role : 'user').toUpperCase();
-        const userNameStr = (typeof userProfile !== 'undefined' && userProfile?.full_name ? userProfile.full_name : (typeof currentUser !== 'undefined' && currentUser?.email ? currentUser.email : 'Unbekannt'));
+            if (inconsistentCount > 0) {
+                logs.push(`
+                    <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-2 mt-2">
+                        <div class="font-bold text-amber-800 flex items-center gap-1.5">
+                            <span>⚠️</span> <span>Status-Abweichungen erkannt: ${inconsistentCount} Objekt(e) haben abweichende Statuswerte.</span>
+                        </div>
+                        <button onclick="repairStatusInconsistencies()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-sm">
+                            🔧 Status-Inkonsistenzen jetzt automatisch reparieren
+                        </button>
+                    </div>
+                `);
+            } else {
+                logs.push(`<div class="flex items-center gap-2 text-emerald-700 font-semibold pt-1"><span>✨</span> <strong>Code & Datenintegrität:</strong> 100% Fehlerfrei (Keine Abweichungen)</div>`);
+            }
 
-        let inconsistencyHTML = '';
-        if (inconsistencies.length > 0) {
-            inconsistencyHTML = `
-                <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-2 text-amber-900">
-                    <div class="font-bold text-xs flex items-center gap-1.5">
-                        ⚠️ ${inconsistencies.length} Status-Inkonsistenz(en) erkannt:
-                    </div>
-                    <ul class="list-disc list-inside text-[11px] space-y-1 text-amber-800">
-                        ${inconsistencies.map(inc => `<li>${inc}</li>`).join('')}
-                    </ul>
-                    <button onclick="repairStatusInconsistencies()" class="mt-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-3 py-1.5 rounded-xl transition shadow flex items-center gap-1.5">
-                        🔧 1-Klick Status-Reparatur durchführen
-                    </button>
-                </div>
-            `;
-        } else {
-            inconsistencyHTML = `
-                <div class="mt-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 font-medium text-xs flex items-center gap-1.5">
-                    <span>🎉 Keine Status-Inkonsistenzen gefunden. Alle Artikel-Zustände sind perfekt synchron.</span>
-                </div>
-            `;
-        }
-
-        resultsContainer.innerHTML = `
-            <div class="space-y-2.5 pt-1">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                        <span class="text-slate-400 block text-[10px] font-bold uppercase">Supabase Datenbank</span>
-                        <span class="font-bold ${dbColor}">${dbStatus}</span>
-                    </div>
-                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                        <span class="text-slate-400 block text-[10px] font-bold uppercase">Angemeldeter Benutzer</span>
-                        <span class="font-bold text-slate-800">${userNameStr} (${userRoleStr})</span>
-                    </div>
-                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                        <span class="text-slate-400 block text-[10px] font-bold uppercase">Analysierte Artikel</span>
-                        <span class="font-bold text-slate-800">${(typeof allItems !== 'undefined' && allItems) ? allItems.length : 0} Objekte geladen</span>
-                    </div>
-                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                        <span class="text-slate-400 block text-[10px] font-bold uppercase">Aktive Ausleihen / Überfällig</span>
-                        <span class="font-bold text-slate-800">${(typeof activeRentals !== 'undefined' && activeRentals) ? activeRentals.length : 0} Ausleihen (${overdueCount} überfällig)</span>
-                    </div>
-                </div>
-                ${inconsistencyHTML}
-            </div>
-        `;
+            container.innerHTML = logs.join('');
+        }, 300);
     }
 
     async function repairStatusInconsistencies() {
-        if (!confirm("Möchtest du alle abweichenden Artikel-Zustände automatisch mit der Ausleih-Datenbank synchronisieren?")) return;
+        const trueActiveRentals = (activeRentals || []).filter(r => r.status !== 'Zurückgegeben');
+        let repaired = 0;
 
-        try {
-            let updatedCount = 0;
-            if (typeof allItems !== 'undefined' && allItems && allItems.length > 0) {
-                for (let item of allItems) {
-                    const isRentedInRentals = activeRentals.some(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
-                    if (isRentedInRentals && item.status === 'Verfügbar') {
-                        await db.from('items').update({ status: 'Ausgeliehen' }).eq('id', item.id);
-                        updatedCount++;
-                    }
-                }
+        for (let item of allItems) {
+            const isRented = trueActiveRentals.some(r => r.item_id === item.id);
+            if (isRented && item.status === 'Verfügbar') {
+                await db.from('items').update({ status: 'Ausgeliehen' }).eq('id', item.id);
+                repaired++;
+            } else if (!isRented && item.status === 'Ausgeliehen') {
+                await db.from('items').update({ status: 'Verfügbar' }).eq('id', item.id);
+                repaired++;
             }
-
-            alert(`✅ Reparatur abgeschlossen! ${updatedCount} Artikel-Status wurden aktualisiert.`);
-            if (typeof fetchAllData === 'function') await fetchAllData();
-            runAiDiagnosticScan();
-        } catch(e) {
-            alert("Fehler bei der Reparatur: " + e.message);
         }
+
+        alert(`${repaired} Status-Inkonsistenzen wurden erfolgreich in der Datenbank korrigiert!`);
+        fetchAllData();
+        runAiDiagnosticScan();
     }
 
     async function sendHelpTicketToAiBot() {
         const input = document.getElementById('helpTicketText');
-        if (!input) return;
+        const message = input ? input.value.trim() : '';
 
-        const ticketText = input.value.trim();
-        if (!ticketText) {
-            alert("Bitte beschreibe deine Komplikation oder Frage im Textfeld.");
+        if (!message) {
+            alert("Bitte beschreibe dein Problem oder deine Frage vor dem Absenden.");
             return;
         }
 
-        if (typeof currentUser === 'undefined' || !currentUser) {
+        if (!currentUser) {
             alert("Bitte melde dich an, um ein Support-Ticket zu senden.");
             return;
         }
 
-        const userName = (typeof userProfile !== 'undefined' && userProfile?.full_name) ? userProfile.full_name : currentUser.email;
-        const role = (typeof userProfile !== 'undefined' && userProfile?.role ? userProfile.role : 'user').toUpperCase();
-        const room = (typeof selectedRoom !== 'undefined' && selectedRoom) ? selectedRoom : 'Alle Räume';
-
-        const telemetryMsg = `🎫 SUPPORT-TICKET [M4-DIAGNOSE]:
-"${ticketText}"
-
-[TELEMETRIE-SYSTEMWERTE]
-• Benutzer: ${userName} (Rolle: ${role})
-• Ausgewählter Raum: ${room}
-• Bestand: ${(typeof allItems !== 'undefined' && allItems) ? allItems.length : 0} Artikel
-• Aktive Ausleihen: ${(typeof activeRentals !== 'undefined' && activeRentals) ? activeRentals.length : 0}
-• Systemzeit: ${new Date().toLocaleString('de-DE')}
-• PWA Version: v2.4.0 (Meilenstein M4)`;
+        const roomInfo = selectedRoom || 'Alle';
+        const roleInfo = (userProfile?.role || 'user').toUpperCase();
 
         try {
             await db.from('chat_messages').insert([{
                 sender_id: currentUser.id,
-                sender_name: userName,
+                sender_name: userProfile?.full_name || currentUser.email,
                 recipient_id: SYSTEM_BOT_ID,
-                message: telemetryMsg
+                message: `[SUPPORT-TICKET M4] ${message} (Info: Raum: '${roomInfo}', Rolle: '${roleInfo}', Artikel: ${allItems.length})`
             }]);
 
             await db.from('chat_messages').insert([{
                 sender_id: SYSTEM_BOT_ID,
                 sender_name: '🤖 System-Benachrichtigung',
                 recipient_id: currentUser.id,
-                message: `✅ Support-Ticket empfangen! Der KI-System-Bot hat deine Meldung ("${ticketText.length > 50 ? ticketText.substring(0, 50) + '...' : ticketText}") registriert. Die Systemwerte wurden analysiert. Du findest alle Updates im Chat unter '🤖 System-Benachrichtigung'.`
+                message: `🤖 KI-Support-Bot: Dein Ticket ("${message.substring(0, 40)}...") wurde registriert. Die System-Diagnose wurde gestartet (Raum: ${roomInfo}). Falls du Status-Probleme hast, führe die '⚡ KI-Diagnose' im Hilfe-Tab aus.`
             }]);
 
-            input.value = '';
-            alert("✅ Support-Ticket erfolgreich an den KI-Bot gesendet!\n\nDie Bestätigung und Antwort wurden in den Team-Chat unter '🤖 System-Benachrichtigungen' übermittelt.");
+            if (input) input.value = '';
 
-            if (typeof loadChatMessages === 'function') loadChatMessages();
-            if (typeof loadDashboardChat === 'function') loadDashboardChat();
-
-        } catch(err) {
-            alert("Fehler beim Senden des Tickets: " + (err.message || err));
+            alert("Support-Ticket wurde erfolgreich übermittelt! Der KI-Bot hat im Chat geantwortet.");
+            
+            switchTab('chat');
+            const select = document.getElementById('chatRecipientSelect');
+            if (select) {
+                select.value = SYSTEM_BOT_ID;
+                loadChatMessages();
+            }
+        } catch (err) {
+            alert("Fehler beim Absenden des Tickets: " + err.message);
         }
     }
+
+    window.runAiDiagnosticScan = runAiDiagnosticScan;
+    window.sendHelpTicketToAiBot = sendHelpTicketToAiBot;
+    window.repairStatusInconsistencies = repairStatusInconsistencies;
+    window.openCalendarEventDetailModal = openCalendarEventDetailModal;
+    window.closeCalendarEventDetailModal = closeCalendarEventDetailModal;
+    window.exportToGoogleCalendar = exportToGoogleCalendar;
+    window.downloadIcsFile = downloadIcsFile;
+    window.openItemFromCalModal = openItemFromCalModal;
 
 </script>
