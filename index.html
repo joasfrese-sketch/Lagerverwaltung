@@ -218,8 +218,8 @@
                 </button>
 
                 <button onclick="switchTab('help')" id="nav-help" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                    <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="sidebar-text truncate">Hilfe & App-Standpunkt (M4)</span>
+                    <span class="text-base">🚀</span>
+                    <span class="sidebar-text truncate">Hilfe & KI-Diagnose</span>
                 </button>
             </nav>
         </div>
@@ -237,30 +237,6 @@
             </button>
         </div>
     </aside>
-
-<!-- MOBILE BOTTOM NAVIGATION BAR -->
-<div id="mobileBottomNav" class="md:hidden fixed bottom-0 left-0 right-0 bg-[#0f172a] border-t border-slate-800 z-30 flex items-center justify-around py-2 px-1 text-slate-400 text-[10px] font-medium shadow-2xl">
-    <button onclick="switchTab('dashboard')" class="flex flex-col items-center gap-1 hover:text-emerald-400 transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-        <span>Übersicht</span>
-    </button>
-    <button onclick="switchTab('inventory')" class="flex flex-col items-center gap-1 hover:text-emerald-400 transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-        <span>Lager</span>
-    </button>
-    <button onclick="openScannerModal()" class="flex flex-col items-center gap-1 text-white bg-emerald-600 p-2 rounded-full -mt-5 border-2 border-[#0f172a] shadow-lg hover:bg-emerald-500 transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
-    </button>
-    <button onclick="switchTab('chat')" class="flex flex-col items-center gap-1 hover:text-emerald-400 transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-        <span>Chat</span>
-    </button>
-    <button onclick="switchTab('help')" class="flex flex-col items-center gap-1 hover:text-emerald-400 transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        <span>Hilfe</span>
-    </button>
-</div>
-
 
     <!-- MAIN CONTENT AREA -->
     <main class="flex-1 bg-[#f8fafc] flex flex-col min-w-0">
@@ -533,83 +509,7 @@
             </div>
 
             <!-- TAB 5: BENUTZERVERWALTUNG -->
-            
-        <!-- TAB 6: HILFE, SYSTEM-DIAGNOSE & APP-STANDPUNKT (M4) -->
-        <div id="tab-help" class="hidden space-y-6 pb-20">
-            <!-- HEADER CARD -->
-            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
-                <div class="absolute right-0 top-0 translate-x-4 -translate-y-4 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
-                <div class="flex items-center gap-4 mb-3">
-                    <div class="w-12 h-12 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-emerald-400 text-2xl font-bold">
-                        🚀
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-bold tracking-tight">App-Standpunkt & Architektur (Meilenstein M4)</h2>
-                        <p class="text-xs text-slate-300">Lagerverwaltung Pro • Enterprise Mobile Edition v2.4.0</p>
-                    </div>
-                </div>
-                <p class="text-xs text-slate-300 leading-relaxed max-w-2xl">
-                    Die Anwendung basiert auf einer hochperformanten Single-Page PWA-Architektur mit Supabase Realtime Backend, PostgreSQL Row-Level Security (RLS) und clientseitiger GPU-Canvas-Bildkomprimierung.
-                </p>
-            </div>
-
-            <!-- GRID FEATURES & STATUS -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- SYSTEM STATUS CARD -->
-                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between border-b pb-3">
-                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                            <span>🔍 System-Gesundheitscheck</span>
-                        </h3>
-                        <button onclick="runAiDiagnosticScan()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
-                            <span>⚡ KI-Diagnose starten</span>
-                        </button>
-                    </div>
-
-                    <div id="diagnosticResults" class="text-xs space-y-2 text-slate-600">
-                        <p class="italic text-slate-400">Klicke auf "KI-Diagnose starten", um den Live-Code und die Datenbankwerte zu analysieren...</p>
-                    </div>
-                </div>
-
-                <!-- HELP TICKET CARD -->
-                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
-                    <div class="border-b pb-3">
-                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                            <span>🆘 Problem melden / KI-Bot anfragen</span>
-                        </h3>
-                        <p class="text-[11px] text-slate-500">Beschreibe eine Komplikation. Der KI-Bot liest die aktuellen Systemwerte und antwortet im Chat.</p>
-                    </div>
-
-                    <div class="space-y-3">
-                        <textarea id="helpTicketText" placeholder="z. B. Der Artikel X lässt sich nicht buchen oder Kalender zeigt falsches Datum..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:ring-2 focus:ring-emerald-500 h-24"></textarea>
-                        <button onclick="sendHelpTicketToAiBot()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-md flex items-center justify-center gap-2">
-                            <span>🤖 Support-Ticket an KI-Bot senden</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ARCHITECTURE OVERVIEW TABLE -->
-            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
-                <h3 class="font-bold text-slate-800 text-sm">📐 System-Spezifikation & Funktionen</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                        <div class="font-bold text-slate-800 mb-1">🏢 Oberkategorien</div>
-                        <div class="text-slate-500">Bibliothek, Freizeitheimlager, Küche, Technik, Büro (Lazy Loading Filter)</div>
-                    </div>
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                        <div class="font-bold text-slate-800 mb-1">🛡️ Rollenkonzept</div>
-                        <div class="text-slate-500">Administrator, Raum-Manager & Benutzer mit granularen Berechtigungen</div>
-                    </div>
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                        <div class="font-bold text-slate-800 mb-1">📅 Kalender & Sync</div>
-                        <div class="text-slate-500">FullCalendar Integration mit Google Calendar & .ics Import/Export</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-users" class="hidden space-y-6">
+            <div id="tab-users" class="hidden space-y-6">
                 <div class="flex justify-between items-center">
                     <div>
                         <h3 class="font-bold text-slate-800 text-sm">Benutzerverwaltung</h3>
@@ -636,50 +536,54 @@
             </div>
 
         </div>
-    </main>
+    
+        <!-- TAB 6: HILFE, STANDPUNKT & KI-DIAGNOSE -->
+        <div id="tab-help" class="hidden space-y-6 pb-20">
+            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="w-12 h-12 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-emerald-400 text-2xl font-bold">🚀</div>
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight">App-Standpunkt & Architektur</h2>
+                        <p class="text-xs text-slate-300">Lagerverwaltung Pro • Enterprise Edition v2.4.0</p>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed max-w-2xl">
+                    Die Anwendung basiert auf einer hochperformanten Single-Page PWA-Architektur mit Supabase Realtime Backend, Row-Level Security (RLS) und automatischer Kalender-Synchronisation.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b pb-3">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">🔍 System-Gesundheitscheck</h3>
+                        <button onclick="runAiDiagnosticScan()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                            <span>⚡ KI-Diagnose starten</span>
+                        </button>
+                    </div>
+                    <div id="diagnosticResults" class="text-xs space-y-2 text-slate-600">
+                        <p class="italic text-slate-400">Klicke auf "KI-Diagnose starten", um den Live-Code und die Datenbankwerte zu analysieren...</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
+                    <div class="border-b pb-3">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">🆘 Problem melden / KI-Bot anfragen</h3>
+                        <p class="text-[11px] text-slate-500">Beschreibe eine Komplikation. Der KI-Bot liest die aktuellen Systemwerte und antwortet im Chat.</p>
+                    </div>
+                    <div class="space-y-3">
+                        <textarea id="helpTicketText" placeholder="z. B. Der Artikel X lässt sich nicht buchen oder Kalender zeigt falsches Datum..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:ring-2 focus:ring-emerald-500 h-24"></textarea>
+                        <button onclick="sendHelpTicketToAiBot()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                            <span>🤖 Support-Ticket an KI-Bot senden</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+</main>
 </div>
 
 <!-- MODAL: VOLLBILD KALENDER -->
-
-<!-- MODAL: KALENDER-EINTRAG DETAILS & GOOGLE CALENDAR SYNC -->
-<div id="calendarEventDetailModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl border border-slate-100">
-        <div class="flex justify-between items-start border-b pb-3">
-            <div>
-                <span id="calDetailStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider bg-emerald-100 text-emerald-800">Aktiv</span>
-                <h3 id="calDetailTitle" class="text-lg font-bold text-slate-800 mt-1">Ausleih-Details</h3>
-            </div>
-            <button onclick="closeCalendarEventDetailModal()" class="text-slate-400 hover:text-slate-600 text-lg p-1">✕</button>
-        </div>
-
-        <div class="space-y-3 text-xs">
-            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1.5">
-                <div class="flex justify-between"><span class="text-slate-400">Ausleiher:</span> <span id="calDetailBorrower" class="font-semibold text-slate-700">-</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Projekt:</span> <span id="calDetailProject" class="font-semibold text-slate-700">-</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Zeitraum:</span> <span id="calDetailDates" class="font-semibold text-slate-700">-</span></div>
-                <div id="calDetailReturnNoteRow" class="hidden pt-1 border-t"><span class="text-slate-400">Rückgabe-Notiz:</span> <p id="calDetailReturnNote" class="text-slate-700 italic mt-0.5"></p></div>
-            </div>
-
-            <!-- ACTION BUTTONS -->
-            <div class="space-y-2 pt-2">
-                <button id="googleCalExportBtn" onclick="exportToGoogleCalendar()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
-                    <span>📅 In Google Calendar eintragen</span>
-                </button>
-                <button id="icsExportBtn" onclick="downloadIcsFile()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
-                    <span>📥 .ics Kalender-Datei herunterladen</span>
-                </button>
-                <button id="openItemFromCalBtn" onclick="openItemFromCalModal()" class="w-full border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold py-2 rounded-xl transition">
-                    📦 Artikel im Lager ansehen
-                </button>
-            </div>
-        </div>
-
-        <div class="flex justify-end pt-2 border-t">
-            <button onclick="closeCalendarEventDetailModal()" class="px-4 py-2 text-xs bg-slate-200 text-slate-700 rounded-xl font-semibold">Schließen</button>
-        </div>
-    </div>
-</div>
-
 <div id="calendarModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl p-6 max-w-5xl w-full h-[85vh] flex flex-col shadow-2xl">
         <div class="flex justify-between items-center border-b pb-3 mb-4">
@@ -790,12 +694,6 @@
                 <input type="text" id="itemAccessoriesInput" placeholder="z. B. Body, 2x Akku, Ladekabel, Tasche" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
             </div>
 
-            
-            <div class="space-y-1.5 pt-2 border-t">
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">💬 Neutrale / Informative Bemerkung (optional)</label>
-                <textarea id="returnNote" placeholder="z. B. Vollständig übergeben, Kabel nachgereicht, Zubehör geprüft..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500 h-16"></textarea>
-            </div>
-
             <div class="space-y-2 pt-2 border-t">
                 <label class="block text-xs font-bold text-slate-500 uppercase">Fotos (Maximal 5 Fotos)</label>
                 
@@ -826,59 +724,165 @@
     </div>
 </div>
 
-<!-- MODAL: AUSLEIHE -->
+
+<!-- MODAL: IN-APP ALERT (REPLACES BROWSER POPUPS) -->
+<div id="appAlertModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl border border-slate-100 text-center transform transition-all">
+        <div id="appAlertIcon" class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-2xl font-bold">
+            ℹ️
+        </div>
+        <h3 id="appAlertTitle" class="text-base font-bold text-slate-800">Hinweis</h3>
+        <p id="appAlertMessage" class="text-xs text-slate-600 leading-relaxed whitespace-pre-line"></p>
+        <button onclick="closeAppAlert()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-md">
+            Verstanden
+        </button>
+    </div>
+</div>
+
+<!-- MODAL: KALENDER-EINTRAG DETAILS -->
+<div id="calendarEventDetailModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl border border-slate-100">
+        <div class="flex justify-between items-start border-b pb-3">
+            <div>
+                <span id="calDetailStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider bg-emerald-100 text-emerald-800">Aktiv</span>
+                <h3 id="calDetailTitle" class="text-lg font-bold text-slate-800 mt-1">Ausleih-Details</h3>
+            </div>
+            <button onclick="closeCalendarEventDetailModal()" class="text-slate-400 hover:text-slate-600 text-lg p-1">✕</button>
+        </div>
+
+        <div class="space-y-3 text-xs">
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2">
+                <div class="flex justify-between items-center"><span class="text-slate-400">Ausleiher:</span> <span id="calDetailBorrower" class="font-bold text-slate-800">-</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Projekt / Zweck:</span> <span id="calDetailProject" class="font-bold text-slate-800">-</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Zeitraum:</span> <span id="calDetailDates" class="font-bold text-slate-800">-</span></div>
+                <div id="calDetailReturnNoteRow" class="hidden pt-1.5 border-t border-slate-200"><span class="text-slate-400">Rückgabe-Notiz:</span> <p id="calDetailReturnNote" class="text-slate-700 italic mt-0.5"></p></div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="space-y-2 pt-2">
+                <button id="googleCalExportBtn" onclick="exportToGoogleCalendar()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-xs shadow-sm">
+                    <span>📅 In Google Calendar eintragen</span>
+                </button>
+                <button id="icsExportBtn" onclick="downloadIcsFile()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-xs shadow-sm">
+                    <span>📥 .ics Kalender-Datei herunterladen</span>
+                </button>
+                <button id="openItemFromCalBtn" onclick="openItemFromCalModal()" class="w-full border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold py-2 rounded-xl transition text-xs">
+                    📦 Artikel im Lager ansehen
+                </button>
+                <button id="returnItemFromCalBtn" onclick="openReturnFromCalModal()" class="hidden w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 rounded-xl transition text-xs shadow-sm">
+                    📦 Rückgabe durchführen
+                </button>
+            </div>
+        </div>
+
+        <div class="flex justify-end pt-2 border-t">
+            <button onclick="closeCalendarEventDetailModal()" class="px-4 py-2 text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-semibold">Schließen</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: AUSLEIHE (2-SPALTIG MIT INTERAKTIVEM BELEGUNGSPLAN) -->
 <div id="rentModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl">
+    <div class="bg-white rounded-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl border border-slate-100">
         <div class="flex justify-between items-center border-b pb-3">
             <h3 id="rentModalTitle" class="text-lg font-bold text-slate-800">Artikel ausleihen</h3>
-            <button onclick="closeRentModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+            <button onclick="closeRentModal()" class="text-slate-400 hover:text-slate-600 text-lg p-1">✕</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- LEFT COLUMN: FORM -->
+            <!-- LINKE SPALTE: FORMULAR -->
             <form onsubmit="confirmRental(event)" class="space-y-3">
                 <input type="hidden" id="rentItemId">
 
                 <div id="adminUserSelectGroup" class="hidden">
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Ausleihen für Benutzer</label>
-                    <select id="rentForUserId" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none font-semibold text-emerald-700"></select>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Ausleihen für Benutzer (Admin/Manager)</label>
+                    <select id="rentForUserId" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none font-semibold text-emerald-700"></select>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Projekt / Einsatzort (Optional)</label>
-                    <input type="text" id="rentProject" placeholder="z. B. Baustelle Süd, Drehort Berlin" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+                    <input type="text" id="rentProject" placeholder="z. B. Baustelle Süd, Drehort Berlin" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Beginn (Volle Stunde)</label>
-                    <input type="datetime-local" id="rentStart" step="3600" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Beginn (Volle Stunden)</label>
+                    <input type="datetime-local" id="rentStart" step="3600" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Rückgabe (Volle Stunde)</label>
-                    <input type="datetime-local" id="rentEnd" step="3600" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Rückgabe geplant (Volle Stunden)</label>
+                    <input type="datetime-local" id="rentEnd" step="3600" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
 
-                <div class="flex justify-end gap-2 pt-3 border-t">
-                    <button type="button" onclick="closeRentModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
-                    <button type="submit" class="px-4 py-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition">Verbindlich Buchen</button>
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="closeRentModal()" class="w-1/2 py-2.5 text-xs border border-slate-300 hover:bg-slate-100 rounded-xl font-semibold">Abbrechen</button>
+                    <button type="submit" class="w-1/2 py-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition shadow-md">Verbindlich Buchen</button>
                 </div>
             </form>
 
-            <!-- RIGHT COLUMN: ITEM-SPECIFIC CALENDAR -->
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col min-h-[320px]">
-                <div class="mb-2">
-                    <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                        <span>📅</span> Belegungsplan für dieses Objekt
-                    </h4>
-                    <p class="text-[10px] text-slate-500">Zeigt gebuchte Zeiträume für dieses Objekt, um Überschneidungen zu vermeiden:</p>
+            <!-- RECHTE SPALTE: INTERAKTIVER ARTIKEL-KALENDER -->
+            <div class="space-y-2 flex flex-col">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold text-slate-500 uppercase">📅 Belegungsplan für dieses Objekt</label>
+                    <span class="text-[10px] text-slate-400">Rot = Gebucht</span>
                 </div>
-                <div class="calendar-wrapper flex-1 overflow-x-auto">
-                    <div class="calendar-container-inner h-full">
-                        <div id="rentModalCalendarContainer" class="min-h-[260px] text-xs"></div>
-                    </div>
+                <div id="rentModalCalendarContainer" class="w-full h-64 md:h-72 bg-slate-50 rounded-xl border border-slate-200 p-2 overflow-hidden shrink-0"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: RÜCKGABE -->
+<div id="returnModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
+        <h3 class="text-lg font-bold text-slate-800">📦 Rückgabe & Prüfung</h3>
+        <p class="text-xs text-slate-500">Überprüfe alle Kofferinhalte vor der Rückgabe. Bei Rückgabe wird das Objekt direkt wieder als "Verfügbar" deklariert.</p>
+        
+        <form onsubmit="confirmReturn(event)" class="space-y-4">
+            <input type="hidden" id="returnRentalId">
+            <input type="hidden" id="returnItemId">
+
+            <div class="space-y-2 border p-3 bg-slate-50 rounded-xl max-h-40 overflow-y-auto">
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kofferinhalte / Zubehör</label>
+                <div id="accessoriesChecklist" class="space-y-1.5 text-xs"></div>
+            </div>
+
+            <div class="space-y-3 pt-2 border-t">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">💬 Neutrale / Informative Bemerkung (optional)</label>
+                    <textarea id="returnNote" placeholder="z. B. Vollständig übergeben, Kabel nachgereicht, Zubehör geprüft..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500 h-16"></textarea>
+                </div>
+
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="hasDamage" onchange="toggleDamageFields()" class="rounded text-emerald-600">
+                    <span class="text-xs font-bold text-red-600">⚠️ Defekt oder Schaden melden</span>
+                </label>
+                <div id="damageFields" class="hidden space-y-2">
+                    <textarea id="damageReport" placeholder="Beschreibe den Defekt..." class="w-full border p-2 rounded-xl text-xs outline-none h-16"></textarea>
                 </div>
             </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeReturnModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
+                <button type="submit" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Rückgabe Bestätigen (Als Verfügbar markieren)</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL & PRINT-AREA: QR-CODE DRUCK -->
+<div id="qrModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
+        <div class="flex justify-between items-center border-b pb-2">
+            <h3 class="text-base font-bold">🖨️️ Etikettendruck Vorschau (DIN A4 Raster: 24 Etiketten)</h3>
+            <button onclick="closeQrModal()" class="text-slate-400 font-bold">✕</button>
+        </div>
+
+        <div id="a4PrintArea" class="bg-white border p-2"></div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t">
+            <button onclick="closeQrModal()" class="px-4 py-2 text-xs border rounded-xl">Schließen</button>
+            <button onclick="window.print()" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Jetzt Drucken</button>
         </div>
     </div>
 </div>
@@ -924,73 +928,77 @@
     </div>
 </div>
 
-
-<!-- MODAL: APP ALERT / NOTIFICATION -->
-<div id="appAlertModal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-    <div class="bg-[#1e293b] text-white rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl border border-slate-700">
-        <h4 id="appAlertTitle" class="font-bold text-base text-slate-100">Hinweis</h4>
-        <p id="appAlertMessage" class="text-xs text-slate-300 leading-relaxed whitespace-pre-line"></p>
-        <div class="flex justify-end pt-2">
-            <button onclick="closeAppAlert()" class="px-5 py-2 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition shadow-lg">Schließen</button>
-        </div>
-    </div>
-</div>
-
 <!-- MAIN JAVASCRIPT LOGIK -->
 <script>
     const PAGE_SIZE = 20;
     let currentPage = 1;
     let totalPages = 1;
     let selectedRoom = null; // Aktuell ausgewählter Raum (Oberkategorie)
+    let currentStatusFilter = 'ALL';
 
     let isRegisterMode = false;
     let currentUser = null;
     let userProfile = null;
     let allProfiles = [];
+
     let allItems = [];
+    let selectedItemIds = new Set();
     let activeRentals = [];
     let waitlistEntries = [];
-    let activityLogs = [];
-    let chatMessages = [];
-    let currentPhotos = [];
-    let html5QrScanner = null;
+
     let calendar = null;
     let modalCalendar = null;
     let rentModalCalendar = null;
-    let onAlertCloseCallback = null;
+    let selectedCalEventData = null;
 
-    let selectedItemIds = new Set();
-    let currentStatusFilter = 'ALL';
-    let importedExcelData = [];
+    let html5QrScanner = null;
+    let currentPhotos = [];
+    let excelImportData = [];
+    let chatMessages = [];
 
-    window.onload = async () => {
-        updateDateDisplay();
-        initPasteHandler();
-        try {
-            const { data: { session } } = await db.auth.getSession();
-            if (session && session.user) {
-                await loadUserProfile(session.user);
-            }
-        } catch (e) {
-            console.log("Supabase bereit.");
+    const SUPABASE_URL = 'https://qqjtlcdqhyglhbcixvbr.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_Q7rXTPgk9oZVj86Cpow8Dw_0mK2K3Aa';
+    const SYSTEM_BOT_ID = '00000000-0000-0000-0000-000000000000';
+
+    const db = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+    // --- IN-APP ALERT MODAL LOGIK ---
+    function showAppAlert(message, type = 'info', title = null) {
+        const modal = document.getElementById('appAlertModal');
+        const icon = document.getElementById('appAlertIcon');
+        const titleEl = document.getElementById('appAlertTitle');
+        const msgEl = document.getElementById('appAlertMessage');
+
+        if (!modal) {
+            alert(message);
+            return;
         }
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const scanItem = urlParams.get('item');
-        if (scanItem) {
-            setTimeout(() => {
-                selectRoom('ALL');
-                const searchInput = document.getElementById('searchInput');
-                if (searchInput) {
-                    searchInput.value = scanItem;
-                    handleSearchInput();
-                }
-                switchTab('inventory');
-            }, 1000);
-        }
-    };
+        msgEl.innerText = message;
 
-    // 1. RAUMAUSWAHL / OPTIMIERTE DATENMENGENTRENNUNG
+        if (type === 'error') {
+            icon.innerText = '⚠️';
+            icon.className = 'w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto text-2xl font-bold';
+            titleEl.innerText = title || 'Fehler / Hinweis';
+        } else if (type === 'success') {
+            icon.innerText = '✅';
+            icon.className = 'w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-2xl font-bold';
+            titleEl.innerText = title || 'Erfolgreich';
+        } else {
+            icon.innerText = 'ℹ️';
+            icon.className = 'w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center mx-auto text-2xl font-bold';
+            titleEl.innerText = title || 'Information';
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeAppAlert() {
+        const modal = document.getElementById('appAlertModal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    // --- RAUMAUSWAHL / LAZY LOADING ---
     async function loadRoomCounts() {
         const rooms = ['Bibliothek', 'Freizeitheimlager', 'Küche', 'Technik', 'Büro'];
         try {
@@ -1010,56 +1018,39 @@
 
             rooms.forEach(r => {
                 const badge = document.getElementById(`count-${r}`);
-                if (badge) badge.innerText = `${counts[r]} Objekte`;
+                if (badge) badge.innerText = counts[r] || 0;
             });
-
             const allBadge = document.getElementById('count-ALL');
-            if (allBadge) allBadge.innerText = `${counts.ALL} Objekte gesamt`;
+            if (allBadge) allBadge.innerText = counts['ALL'] || 0;
 
-        } catch (err) {
-            console.error("Fehler beim Laden der Zählerstände:", err);
+        } catch (e) {
+            console.error('Fehler beim Laden der Raum-Zähler:', e);
         }
     }
 
     function selectRoom(roomName) {
         selectedRoom = roomName;
         document.getElementById('roomSelectionView').classList.add('hidden');
-        document.getElementById('itemListView').classList.remove('hidden');
+        document.getElementById('inventoryContentView').classList.remove('hidden');
 
-        const headerTitle = roomName === 'ALL' ? 'Gesamtes Lager (Alle Räume)' : `Raum: ${roomName}`;
-        document.getElementById('currentRoomHeader').innerText = headerTitle;
-
+        const titleMap = {
+            'Bibliothek': '📚 Bibliothek',
+            'Freizeitheimlager': '🏠 Freizeitheimlager',
+            'Küche': '🍳 Küche',
+            'Technik': '🔌 Technik',
+            'Büro': '🏢 Büro',
+            'ALL': '📦 Gesamtes Lager (Alle Räume)'
+        };
+        document.getElementById('selectedRoomTitle').innerText = titleMap[roomName] || roomName;
+        currentPage = 1;
         fetchItems(1);
     }
 
     function backToRoomSelection() {
         selectedRoom = null;
-        document.getElementById('itemListView').classList.add('hidden');
+        document.getElementById('inventoryContentView').classList.add('hidden');
         document.getElementById('roomSelectionView').classList.remove('hidden');
         loadRoomCounts();
-    }
-
-    // 2. GEFILTERTE ARTIKEL-ABFRAGE (GEZIELTES LAZY LOADING JE NACH RAUM)
-    
-    function showAppAlert(message, title = 'Hinweis', callback = null) {
-        onAlertCloseCallback = callback;
-        const modal = document.getElementById('appAlertModal');
-        const titleEl = document.getElementById('appAlertTitle');
-        const msgEl = document.getElementById('appAlertMessage');
-
-        if (titleEl) titleEl.innerText = title;
-        if (msgEl) msgEl.innerText = message;
-        if (modal) modal.classList.remove('hidden');
-    }
-
-    function closeAppAlert() {
-        const modal = document.getElementById('appAlertModal');
-        if (modal) modal.classList.add('hidden');
-        if (typeof onAlertCloseCallback === 'function') {
-            const cb = onAlertCloseCallback;
-            onAlertCloseCallback = null;
-            cb();
-        }
     }
 
     async function fetchItems(page = 1) {
@@ -1071,7 +1062,7 @@
             return;
         }
 
-        grid.innerHTML = '<p class="p-4 text-slate-400">Lade Objekte für diesen Raum...</p>';
+        grid.innerHTML = '<p class="p-4 text-slate-400 font-semibold animate-pulse">Lade Objekte für diesen Raum...</p>';
 
         const from = (page - 1) * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
@@ -1087,14 +1078,14 @@
             // STATUS-FILTER
             if (currentStatusFilter !== 'ALL') {
                 if (currentStatusFilter === 'Ausgeliehen') {
-                    const rentedItemIds = activeRentals.map(r => r.item_id);
+                    const rentedItemIds = activeRentals.filter(r => r.status !== 'Zurückgegeben').map(r => r.item_id);
                     if (rentedItemIds.length > 0) {
                         query = query.in('id', rentedItemIds);
                     } else {
                         query = query.eq('id', '___NONE___');
                     }
                 } else if (currentStatusFilter === 'Verfügbar') {
-                    const rentedItemIds = activeRentals.map(r => r.item_id);
+                    const rentedItemIds = activeRentals.filter(r => r.status !== 'Zurückgegeben').map(r => r.item_id);
                     if (rentedItemIds.length > 0) {
                         query = query.not('id', 'in', `(${rentedItemIds.join(',')})`);
                     }
@@ -1122,15 +1113,6 @@
             renderCards(allItems);
             updatePaginationControls(count || 0);
 
-            const { data: categoriesData } = await db.from('items').select('category');
-            if (categoriesData) {
-                const categories = [...new Set(categoriesData.map(i => i.category).filter(Boolean))];
-                const datalist = document.getElementById('categorySuggestions');
-                if (datalist) {
-                    datalist.innerHTML = categories.map(c => `<option value="${c}">`).join('');
-                }
-            }
-
         } catch (err) {
             console.error('Fehler beim Laden der Daten:', err.message);
             grid.innerHTML = '<p class="p-4 text-red-500">Fehler beim Laden der Objekte.</p>';
@@ -1151,34 +1133,46 @@
 
         items.forEach(item => {
             const isChecked = selectedItemIds.has(item.id);
-            const effectiveStatus = getItemEffectiveStatus(item);
             const photos = Array.isArray(item.photos) ? item.photos : (item.image_url ? [item.image_url] : []);
             const mainPhoto = photos[0] || 'https://via.placeholder.com/300x200?text=Kein+Bild';
+
+            // ACTIVE RENTAL CHECK
+            const activeRental = activeRentals.find(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
+            const isCurrentlyRented = !!activeRental;
+            
+            let borrowerName = '';
+            if (isCurrentlyRented) {
+                const borrower = allProfiles.find(p => p.id === activeRental.user_id);
+                borrowerName = borrower ? (borrower.full_name || 'Benutzer') : 'Unbekannt';
+            }
 
             const card = document.createElement('div');
             card.className = `card flex gap-3 items-center ${isChecked ? 'ring-2 ring-emerald-500 bg-slate-100' : ''}`;
             
-            let statusButtonHtml = '';
-            if (effectiveStatus === 'Verfügbar') {
-                statusButtonHtml = `<button onclick="openRentModal('${item.id}', '${item.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1 rounded font-semibold transition">Ausleihen</button>`;
-            } else if (effectiveStatus === 'Ausgeliehen') {
-                const activeRental = activeRentals.find(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
-                const borrower = activeRental ? allProfiles.find(p => p.id === activeRental.user_id)?.full_name : '';
-                const borrowerText = borrower ? ` (${borrower})` : '';
+            // AUSLEIHEN BUTTON IS ALWAYS VISIBLE AND CLICKABLE (FOR FUTURE FREE SLOTS!)
+            let actionsHtml = `
+                <button onclick="openRentModal('${item.id}', '${(item.name || item.id).replace(/'/g, "\\'")}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1 rounded font-semibold transition flex items-center gap-1 shadow-sm">
+                    ➕ Ausleihen
+                </button>
+            `;
 
+            if (isCurrentlyRented) {
+                actionsHtml += `
+                    <span class="text-[11px] font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded flex items-center gap-1">
+                        🔒 Ausgeliehen (${borrowerName})
+                    </span>
+                `;
                 if (canManage && activeRental) {
-                    statusButtonHtml = `
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <span class="bg-amber-100 text-amber-800 text-[11px] font-bold px-2 py-0.5 rounded">🔒 Ausgeliehen${borrowerText}</span>
-                            <button onclick="openReturnModal('${activeRental.id}', '${item.id}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded font-semibold transition shrink-0">📦 Rückgabe</button>
-                        </div>`;
-                } else {
-                    statusButtonHtml = `<span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded">🔒 Ausgeliehen${borrowerText}</span>`;
+                    actionsHtml += `
+                        <button onclick="openReturnModal('${activeRental.id}', '${item.id}')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-2 py-1 rounded font-semibold transition flex items-center gap-1 shadow-sm">
+                            📦 Rückgabe
+                        </button>
+                    `;
                 }
-            } else if (effectiveStatus === 'In Inventur') {
-                statusButtonHtml = `<span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded">📋 In Inventur</span>`;
-            } else {
-                statusButtonHtml = `<span class="bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded">🛠️ In Wartung</span>`;
+            } else if (item.status === 'In Inventur') {
+                actionsHtml += `<span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded">📋 In Inventur</span>`;
+            } else if (item.status === 'Wartung / Defekt') {
+                actionsHtml += `<span class="bg-red-100 text-red-800 text-xs font-bold px-2 py-0.5 rounded">🛠️ Defekt</span>`;
             }
 
             card.innerHTML = `
@@ -1190,7 +1184,7 @@
                     <p class="text-xs text-[#1E293B]/80"><strong>Raum:</strong> ${item.main_category || item.room || '-'}</p>
                     
                     <div class="flex items-center gap-2 mt-2 flex-wrap">
-                        ${statusButtonHtml}
+                        ${actionsHtml}
                         <button onclick="openQrModal('${item.id}')" class="text-xs border border-slate-300 text-[#1E293B] px-2 py-1 rounded hover:bg-slate-200">QR</button>
                         ${canManage ? `
                             <button onclick="editItem('${item.id}')" class="text-xs text-blue-600 hover:underline">✏️</button>
@@ -1222,8 +1216,9 @@
 
     function updateDateDisplay() {
         const now = new Date();
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('currentDateDisplay').innerText = now.toLocaleDateString('de-DE', options);
+        const options = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
+        const el = document.getElementById('currentDateDisplay');
+        if (el) el.innerText = now.toLocaleDateString('de-DE', options);
     }
 
     function toggleSidebar() {
@@ -1248,23 +1243,37 @@
     function toggleAuthMode() {
         isRegisterMode = !isRegisterMode;
         document.getElementById('fullNameGroup').classList.toggle('hidden', !isRegisterMode);
-        document.getElementById('authBtnText').innerText = isRegisterMode ? 'Konto erstellen' : 'Anmelden';
-        document.getElementById('authToggleBtn').innerText = isRegisterMode ? 'Bereits ein Konto? Anmelden' : 'Noch kein Konto? Konto registrieren';
+        document.getElementById('authBtnText').innerText = isRegisterMode ? 'Konto Registrieren' : 'Anmelden';
+        document.getElementById('authToggleBtn').innerText = isRegisterMode 
+            ? 'Bereits registriert? Hier anmelden' 
+            : 'Noch kein Konto? Konto registrieren';
     }
 
     async function handleAuth(event) {
         event.preventDefault();
         const email = document.getElementById('authEmail').value.trim();
-        const password = document.getElementById('authPassword').value.trim();
+        const password = document.getElementById('authPassword').value;
         const fullName = document.getElementById('authFullName').value.trim();
 
         try {
             if (isRegisterMode) {
                 const { data, error } = await db.auth.signUp({
-                    email, password, options: { data: { full_name: fullName || email.split('@')[0], role: 'user' } }
+                    email,
+                    password,
+                    options: { data: { full_name: fullName || email.split('@')[0] } }
                 });
                 if (error) throw error;
-                showAppAlert("Konto erfolgreich registriert! Du kannst dich jetzt anmelden.");
+
+                if (data.user) {
+                    const isAdminEmail = email === 'joas.frese@gmail.com';
+                    await db.from('profiles').upsert([{
+                        id: data.user.id,
+                        full_name: fullName || email.split('@')[0],
+                        role: isAdminEmail ? 'admin' : 'user'
+                    }]);
+                }
+
+                showAppAlert("Konto erfolgreich registriert! Du kannst dich jetzt anmelden.", "success");
                 toggleAuthMode();
             } else {
                 const { data, error } = await db.auth.signInWithPassword({ email, password });
@@ -1272,41 +1281,11 @@
                 await loadUserProfile(data.user);
             }
         } catch (err) {
-            showAppAlert("Anmeldung/Registrierung fehlgeschlagen:\n" + (err.message || err));
+            showAppAlert("Anmeldung/Registrierung fehlgeschlagen:\n" + (err.message || err), "error");
         }
     }
 
-    async 
-    function setupRealtimeSubscriptions() {
-        if (!db) return;
-        try {
-            db.channel('public:realtime_changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, () => {
-                    fetchRentals();
-                })
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, () => {
-                    if (selectedRoom) fetchItems(currentPage);
-                })
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, () => {
-                    loadChatMessages();
-                    loadDashboardChat();
-                })
-                .subscribe();
-        } catch(e) {}
-    }
-
-    async function repairStatusInconsistencies() {
-        for (let item of allItems) {
-            const isRented = activeRentals.some(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
-            if (isRented && item.status === 'Verfügbar') {
-                await db.from('items').update({ status: 'Ausgeliehen' }).eq('id', item.id);
-            }
-        }
-        showAppAlert("Status-Inkonsistenzen wurden erfolgreich korrigiert!");
-        fetchAllData();
-    }
-
-async function loadUserProfile(user) {
+    async function loadUserProfile(user) {
         currentUser = user;
 
         let { data: profile } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
@@ -1318,37 +1297,37 @@ async function loadUserProfile(user) {
                 full_name: user.user_metadata?.full_name || user.email.split('@')[0],
                 role: isAdminEmail ? 'admin' : 'user'
             };
-            const { data: savedProfile } = await db.from('profiles').upsert([newProfile]).select().maybeSingle();
-            profile = savedProfile || newProfile;
+            await db.from('profiles').insert([newProfile]);
+            profile = newProfile;
         }
 
         userProfile = profile;
 
+        document.getElementById('userNameDisplay').innerText = profile.full_name || user.email;
+
+        const roleText = (profile.role || 'user').toUpperCase();
+        const badge = document.getElementById('userRoleBadge');
+        if (badge) {
+            badge.innerText = roleText;
+            if (roleText === 'ADMINISTRATOR' || roleText === 'ADMIN') badge.className = 'text-[9px] text-emerald-400 font-bold tracking-wider';
+            else if (roleText.includes('MANAGER')) badge.className = 'text-[9px] text-indigo-400 font-bold tracking-wider';
+            else badge.className = 'text-[9px] text-slate-400 font-bold tracking-wider';
+        }
+
+        const navUsers = document.getElementById('nav-users');
+        if (navUsers) navUsers.classList.toggle('hidden', !isManagerOrAdmin());
+
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('appLayout').classList.remove('hidden');
 
-        const initial = userProfile.full_name ? userProfile.full_name.charAt(0).toUpperCase() : 'U';
-        document.getElementById('userAvatar').innerText = initial;
-        document.getElementById('userNameDisplay').innerText = userProfile.full_name || user.email;
-
-        const isAdmin = userProfile.role && userProfile.role.toLowerCase() === 'admin';
-        document.getElementById('userRoleBadge').innerText = isAdmin ? 'ADMINISTRATOR' : 'BENUTZER';
-        document.getElementById('userRoleBadge').className = isAdmin ? 'text-[9px] text-emerald-400 font-bold tracking-wider' : 'text-[9px] text-slate-400 font-bold tracking-wider';
-
-        document.getElementById('nav-users').classList.toggle('hidden', !isAdmin);
-        document.getElementById('addItemBtn').classList.toggle('hidden', !isAdmin);
-        document.getElementById('importExcelBtn').classList.toggle('hidden', !isAdmin);
-        document.getElementById('bulkDeleteBtn').classList.toggle('hidden', !isAdmin);
-
-        document.getElementById('movementsScopeBadge').innerText = isAdmin ? '👑 Admin-Ansicht (Alle Einträge)' : '👤 Meine Warenbewegungen';
-
+        updateDateDisplay();
         await fetchAllData();
+
         loadChatMessages();
         loadDashboardChat();
         renderDashboardCalendar();
-
-        // ÜBERPRÜFUNG AUF ABGELAUFENE AUSLEIHEN & AUTOMATISCHE SYSTEM-NACHRICHT
         checkAndSendOverdueNotifications();
+        setupRealtimeSubscriptions();
     }
 
     async function fetchAllData() {
@@ -1371,7 +1350,6 @@ async function loadUserProfile(user) {
         } catch(e) {}
     }
 
-    
     function isManagerOrAdmin() {
         if (!userProfile || !userProfile.role) return false;
         const r = userProfile.role.toLowerCase();
@@ -1383,15 +1361,15 @@ async function loadUserProfile(user) {
         const currIdx = roles.indexOf((currentRole || 'user').toLowerCase());
         const newRole = roles[(currIdx + 1) % roles.length];
         await db.from('profiles').update({ role: newRole }).eq('id', userId);
-        showAppAlert(`Rolle erfolgreich geändert auf: ${newRole.toUpperCase()}`);
+        showAppAlert(`Rolle erfolgreich geändert auf: ${newRole.toUpperCase()}`, 'success');
         fetchAllUsers();
     }
 
-function populateAdminUserSelect() {
+    function populateAdminUserSelect() {
         const select = document.getElementById('rentForUserId');
-        const container = document.getElementById('rentForUserGroup');
+        const container = document.getElementById('adminUserSelectGroup');
         if (!select) return;
-        
+
         const canAssign = isManagerOrAdmin();
         if (container) container.classList.toggle('hidden', !canAssign);
 
@@ -1428,32 +1406,19 @@ function populateAdminUserSelect() {
         allProfiles.forEach(p => {
             if (p.id === SYSTEM_BOT_ID) return;
             const isMe = p.id === currentUser?.id;
-            const isAdmin = p.role && p.role.toLowerCase() === 'admin';
 
             body.innerHTML += `
                 <tr class="hover:bg-slate-50 transition">
                     <td class="p-4 font-bold text-slate-800">
                         ${p.full_name || 'Unbenannt'} ${isMe ? '<span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded ml-1">(Du)</span>' : ''}
                     </td>
-                    <td class="p-4 font-mono text-slate-500">${p.id.slice(0, 8)}...</td>
-                    <td class="p-4">
-                        <span class="${isAdmin ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'} font-bold text-[10px] px-2 py-1 rounded-md">
-                            ${isAdmin ? 'Administrator' : 'Benutzer'}
-                        </span>
-                    </td>
-                    <td class="p-4">
-                        ${!isMe ? `<button onclick="toggleUserRole('${p.id}', '${p.role}')" class="text-xs text-indigo-600 hover:underline">Rolle ändern</button>` : '-'}
+                    <td class="p-4 text-xs font-semibold text-emerald-700 uppercase">${p.role || 'USER'}</td>
+                    <td class="p-4 text-right">
+                        ${!isMe ? `<button onclick="toggleUserRole('${p.id}', '${p.role}')" class="text-xs text-indigo-600 hover:underline font-semibold">Rolle wechseln</button>` : '-'}
                     </td>
                 </tr>
             `;
         });
-    }
-
-    async function toggleUserRole(userId, currentRole) {
-        const isCurrentAdmin = currentRole && currentRole.toLowerCase() === 'admin';
-        const newRole = isCurrentAdmin ? 'user' : 'admin';
-        await db.from('profiles').update({ role: newRole }).eq('id', userId);
-        await fetchAllUsers();
     }
 
     async function fetchRentals() {
@@ -1466,20 +1431,19 @@ function populateAdminUserSelect() {
         } catch(e) {}
     }
 
-    // 3. PRÜFUNG AUF ABGELAUFENE AUSLEIHE & AUTOMATISCHE CHAT-BOT BENACHRICHTIGUNG
     async function checkAndSendOverdueNotifications() {
         if (!activeRentals || activeRentals.length === 0) return;
 
         const now = new Date();
 
         for (let rental of activeRentals) {
+            if (rental.status === 'Zurückgegeben') continue;
+
             const endDate = new Date(rental.end_date);
             if (endDate < now) {
-                // Ausleihe ist abgelaufen!
                 const itemName = rental.items ? rental.items.name : rental.item_id;
                 const formattedEnd = endDate.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-                // Prüfen ob heute bereits eine Mahnung an diesen User geschickt wurde
                 const { data: existingMsgs } = await db.from('chat_messages')
                     .select('*')
                     .eq('sender_id', SYSTEM_BOT_ID)
@@ -1488,7 +1452,7 @@ function populateAdminUserSelect() {
 
                 const hasRecentMsg = existingMsgs && existingMsgs.some(m => {
                     const msgDate = new Date(m.created_at);
-                    return (now.getTime() - msgDate.getTime()) < (24 * 60 * 60 * 1000); // Innerhalb der letzten 24 Std.
+                    return (now.getTime() - msgDate.getTime()) < (24 * 60 * 60 * 1000);
                 });
 
                 if (!hasRecentMsg) {
@@ -1512,81 +1476,70 @@ function populateAdminUserSelect() {
 
     async function fetchActivityLogs() {
         try {
-            const { data } = await db.from('activity_log').select('*').order('created_at', { ascending: false });
-            activityLogs = data || [];
-            renderActivityLogs();
+            const { data } = await db.from('activity_log').select('*').order('created_at', { ascending: false }).limit(50);
+            renderActivityLogs(data || []);
         } catch(e) {}
     }
 
-    function renderActivityLogs() {
-        const body = document.getElementById('activityLogTableBody');
+    function renderActivityLogs(logs) {
+        const body = document.getElementById('activityTableBody');
         if (!body) return;
-        const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
+        body.innerHTML = '';
 
-        const visibleLogs = activityLogs.filter(l => {
-            if (isAdmin) return true;
-            return (l.user_id && l.user_id === currentUser?.id) || (l.user_name === userProfile?.full_name);
-        });
-
-        if (visibleLogs.length === 0) {
-            body.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 italic">Keine eigenen Warenbewegungen vorhanden.</td></tr>`;
+        if (!logs || logs.length === 0) {
+            body.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400 italic">Keine Warenbewegungen erfasst.</td></tr>`;
             return;
         }
 
-        body.innerHTML = '';
-        visibleLogs.forEach(l => {
-            const dateStr = new Date(l.created_at).toLocaleString('de-DE');
+        logs.forEach(l => {
+            const date = new Date(l.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+            let actionBadge = `<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">${l.action}</span>`;
+            if (l.action === 'AUSLEIHE') actionBadge = `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">AUSLEIHE</span>`;
+            if (l.action === 'RÜCKGABE') actionBadge = `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">RÜCKGABE</span>`;
+            if (l.action === 'DEFECT_REPORTED') actionBadge = `<span class="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded">DEFECKT</span>`;
+
             body.innerHTML += `
-                <tr class="hover:bg-slate-50 transition">
-                    <td class="p-4 font-mono text-slate-400">${dateStr}</td>
-                    <td class="p-4"><span class="font-bold text-emerald-600">[${l.action}]</span></td>
-                    <td class="p-4 font-bold text-slate-800">${l.item_name}</td>
-                    <td class="p-4">${l.user_name}</td>
-                    <td class="p-4 text-slate-500">${l.details || '-'}</td>
+                <tr class="hover:bg-slate-50 transition border-b border-slate-100 text-xs">
+                    <td class="p-3 text-slate-500 whitespace-nowrap">${date}</td>
+                    <td class="p-3 font-bold text-slate-800">${l.item_name}</td>
+                    <td class="p-3">${l.user_name || 'Unbekannt'}</td>
+                    <td class="p-3">${actionBadge} <span class="text-slate-500 ml-1">${l.details || ''}</span></td>
                 </tr>
             `;
         });
     }
 
     function renderMyRentals() {
-        const card = document.getElementById('myRentalsCard');
-        const list = document.getElementById('myRentalsList');
-        if (!card || !list) return;
+        const container = document.getElementById('myRentalsList');
+        if (!container) return;
+        container.innerHTML = '';
 
-        const canManageAll = isManagerOrAdmin();
-        const relevantRentals = activeRentals.filter(r => r.status !== 'Zurückgegeben' && (canManageAll || r.user_id === currentUser?.id));
+        const canManage = isManagerOrAdmin();
+        const rentals = canManage 
+            ? activeRentals.filter(r => r.status !== 'Zurückgegeben')
+            : activeRentals.filter(r => r.user_id === currentUser?.id && r.status !== 'Zurückgegeben');
 
-        if (relevantRentals.length === 0) {
-            card.classList.add('hidden');
+        if (!rentals || rentals.length === 0) {
+            container.innerHTML = `<p class="text-slate-400 italic text-xs">Keine aktiven Ausleihen vorhanden.</p>`;
             return;
         }
 
-        card.classList.remove('hidden');
-        list.innerHTML = '';
-
-        const titleEl = card.querySelector('h4');
-        if (titleEl) {
-            titleEl.innerHTML = canManageAll 
-                ? '<span>📦</span> Aktive Ausleihen (Admin / Manager Übersicht & Rückgabe)' 
-                : '<span>📦</span> Meine aktiven Ausleihen';
-        }
-
-        relevantRentals.forEach(r => {
-            const end = new Date(r.end_date).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        rentals.forEach(r => {
             const itemName = r.items ? r.items.name : r.item_id;
             const borrower = allProfiles.find(p => p.id === r.user_id);
-            const borrowerName = borrower ? borrower.full_name : 'Unbekannt';
+            const borrowerName = borrower ? (borrower.full_name || 'Benutzer') : 'Unbekannt';
 
-            list.innerHTML += `
-                <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
+            const startStr = new Date(r.start_date).toLocaleDateString('de-DE');
+            const endStr = new Date(r.end_date).toLocaleDateString('de-DE');
+
+            container.innerHTML += `
+                <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs">
                     <div>
-                        <span class="font-bold text-xs text-slate-800">${itemName}</span>
-                        <p class="text-[10px] text-slate-500">
-                            ${canManageAll ? `Ausleiher: <b>${borrowerName}</b> | ` : ''}Projekt: <b>${r.project || 'Keins'}</b> | Bis: ${end} Uhr
-                        </p>
+                        <div class="font-bold text-slate-800">${itemName} ${canManage ? `<span class="text-slate-500 font-normal">(${borrowerName})</span>` : ''}</div>
+                        <div class="text-[11px] text-slate-500">Projekt: ${r.project || 'Keine Notiz'} • ${startStr} bis ${endStr}</div>
                     </div>
-                    <button onclick="openReturnModal('${r.id}', '${r.item_id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition shrink-0">
-                        Rückgabe
+                    <button onclick="openReturnModal('${r.id}', '${r.item_id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg transition shrink-0 shadow-sm">
+                        📦 Rückgabe
                     </button>
                 </div>
             `;
@@ -1596,7 +1549,7 @@ function populateAdminUserSelect() {
     function getItemEffectiveStatus(item) {
         if (item.status === 'Wartung / Defekt') return 'Wartung / Defekt';
         if (item.status === 'In Inventur') return 'In Inventur';
-        const isRented = activeRentals.some(r => r.item_id === item.id);
+        const isRented = activeRentals.some(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
         if (isRented) return 'Ausgeliehen';
         return 'Verfügbar';
     }
@@ -1620,11 +1573,7 @@ function populateAdminUserSelect() {
         const input = document.getElementById('searchInput');
         const btn = document.getElementById('clearSearchBtn');
         if (input && btn) {
-            if (input.value.length > 0) {
-                btn.classList.remove('hidden');
-            } else {
-                btn.classList.add('hidden');
-            }
+            btn.classList.toggle('hidden', input.value.length === 0);
         }
     }
 
@@ -1640,15 +1589,12 @@ function populateAdminUserSelect() {
 
     function toggleSelectAllVisible() {
         if (!allItems || allItems.length === 0) return;
-
         const allSelected = allItems.every(item => selectedItemIds.has(item.id));
-
         if (allSelected) {
             allItems.forEach(item => selectedItemIds.delete(item.id));
         } else {
             allItems.forEach(item => selectedItemIds.add(item.id));
         }
-
         renderCards(allItems);
         updateBulkActionBar();
     }
@@ -1671,36 +1617,31 @@ function populateAdminUserSelect() {
 
     function updateBulkActionBar() {
         const bar = document.getElementById('bulkActionBar');
-        if (!bar) return;
+        const countSpan = document.getElementById('selectedCount');
+        if (!bar || !countSpan) return;
+
         const count = selectedItemIds.size;
-        if (count > 0) {
-            bar.classList.remove('hidden');
-            document.getElementById('selectedCountBadge').innerText = `${count} ausgewählt`;
-        } else {
-            bar.classList.add('hidden');
-        }
+        countSpan.innerText = count;
+        bar.classList.toggle('hidden', count === 0);
     }
 
     async function bulkToggleInventur() {
         if (selectedItemIds.size === 0) return;
         const ids = Array.from(selectedItemIds);
-        const items = allItems.filter(i => ids.includes(i.id));
-        const shouldSetInventur = items.some(i => i.status !== 'In Inventur');
-        const newStatus = shouldSetInventur ? 'In Inventur' : 'Verfügbar';
-
-        for (let id of ids) {
-            await db.from('items').update({ status: newStatus }).eq('id', id);
+        const { error } = await db.from('items').update({ status: 'In Inventur' }).in('id', ids);
+        if (error) {
+            showAppAlert("Fehler beim Aktualisieren:\n" + error.message, "error");
+        } else {
+            clearSelection();
+            fetchAllData();
+            showAppAlert(`Status für ${ids.length} Objekt(e) geändert auf: In Inventur`, "success");
         }
-
-        clearSelection();
-        fetchAllData();
-        showAppAlert(`Status für ${ids.length} Objekt(e) geändert auf: ${newStatus}`);
     }
 
     function bulkRentModal() {
         if (selectedItemIds.size === 0) return;
-        const ids = Array.from(selectedItemIds);
-        openRentModal(ids.join(','), `${ids.length} ausgewählte Artikel`);
+        const idsStr = Array.from(selectedItemIds).join(', ');
+        openRentModal(idsStr, `${selectedItemIds.size} Ausgewählte Objekte`);
     }
 
     function bulkPrintQrCodes() {
@@ -1710,380 +1651,60 @@ function populateAdminUserSelect() {
 
     async function bulkDelete() {
         if (selectedItemIds.size === 0) return;
-        if (confirm(`Möchtest du wirklich alle ${selectedItemIds.size} ausgewählten Artikel löschen?`)) {
-            for (let id of Array.from(selectedItemIds)) {
-                await db.from('items').delete().eq('id', id);
-            }
-            clearSelection();
-            fetchAllData();
-        }
-    }
-
-    function openExcelImportModal() {
-        document.getElementById('excelFileInput').value = '';
-        document.getElementById('excelPreviewContainer').classList.add('hidden');
-        document.getElementById('excelImportModal').classList.remove('hidden');
-    }
-
-    function closeExcelImportModal() {
-        document.getElementById('excelImportModal').classList.add('hidden');
-    }
-
-    function processExcelFile(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
-
-            if (jsonData.length === 0) {
-                showAppAlert("Keine Daten in der Excel-Datei gefunden!");
-                return;
-            }
-
-            let highestNum = 1000;
-            allItems.forEach(item => {
-                if (item.id && item.id.startsWith('ART-')) {
-                    const num = parseInt(item.id.replace('ART-', ''), 10);
-                    if (!isNaN(num) && num > highestNum) {
-                        highestNum = num;
-                    }
-                }
-            });
-
-            importedExcelData = jsonData.map((row) => {
-                const keys = Object.keys(row);
-                const findKey = (terms) => keys.find(k => terms.some(t => k.toLowerCase().includes(t)));
-
-                highestNum++;
-                const autoGeneratedId = `ART-${highestNum}`;
-
-                const nameKey = findKey(['name', 'bezeichnung', 'titel', 'artikel', 'objekt']) || keys[0];
-                const catKey = findKey(['kategorie', 'typ', 'gruppe']) || keys[1];
-                const roomKey = findKey(['raum', 'oberkategorie', 'ort', 'gebäude', 'standort']);
-                const shelfKey = findKey(['regal', 'bereich']);
-                const compKey = findKey(['fach', 'ebene']);
-                const accKey = findKey(['zubehör', 'inhalt', 'beschreibung']);
-
-                const detectedRoom = String(row[roomKey] || 'Technik').trim();
-
-                return {
-                    id: autoGeneratedId,
-                    name: String(row[nameKey] || 'Unbenanntes Objekt').trim(),
-                    main_category: detectedRoom,
-                    category: String(row[catKey] || 'Allgemein').trim(),
-                    room: detectedRoom,
-                    shelf: String(row[shelfKey] || 'Regal A').trim(),
-                    compartment: String(row[compKey] || 'Fach 1').trim(),
-                    accessories: String(row[accKey] || '').trim(),
-                    status: 'Verfügbar',
-                    permission: 'Keine'
-                };
-            });
-
-            renderExcelPreview();
-        };
-        reader.readAsArrayBuffer(file);
-    }
-
-    function renderExcelPreview() {
-        const container = document.getElementById('excelPreviewContainer');
-        const head = document.getElementById('excelPreviewHead');
-        const body = document.getElementById('excelPreviewBody');
-
-        document.getElementById('excelRowCount').innerText = importedExcelData.length;
-
-        head.innerHTML = `
-            <tr>
-                <th class="p-2">GENERIERTE ID</th>
-                <th class="p-2">BEZEICHNUNG</th>
-                <th class="p-2">RAUM / OBERKATEGORIE</th>
-                <th class="p-2">KATEGORIE</th>
-                <th class="p-2">ZUBEHÖR</th>
-            </tr>
-        `;
-
-        body.innerHTML = importedExcelData.slice(0, 10).map(item => `
-            <tr class="hover:bg-slate-50 text-slate-700">
-                <td class="p-2 font-mono font-bold text-emerald-700">${item.id}</td>
-                <td class="p-2 font-semibold">${item.name}</td>
-                <td class="p-2 font-bold text-blue-600">${item.main_category}</td>
-                <td class="p-2 text-emerald-600 font-bold">${item.category}</td>
-                <td class="p-2 text-slate-500">${item.accessories || '-'}</td>
-            </tr>
-        `).join('');
-
-        container.classList.remove('hidden');
-    }
-
-    async function confirmExcelImport() {
-        if (importedExcelData.length === 0) return;
-
-        const btn = document.getElementById('confirmImportBtn');
-        btn.disabled = true;
-
-        const batchSize = 100;
-        const total = importedExcelData.length;
-        let successCount = 0;
-
-        for (let i = 0; i < total; i += batchSize) {
-            const batch = importedExcelData.slice(i, i + batchSize);
-            btn.innerText = `Speichere in Datenbank (${Math.min(i + batchSize, total)} / ${total})...`;
-
-            const { error } = await db.from('items').upsert(batch);
-
+        if (confirm(`Möchtest du wirklich ${selectedItemIds.size} ausgewählte Objekte löschen?`)) {
+            const ids = Array.from(selectedItemIds);
+            const { error } = await db.from('items').delete().in('id', ids);
             if (error) {
-                showAppAlert(`Fehler beim Importieren ab Eintrag ${i + 1}:\n` + error.message);
-                btn.innerText = 'Import Durchführen';
-                btn.disabled = false;
-                return;
-            }
-            successCount += batch.length;
-        }
-
-        btn.innerText = 'Import Durchführen';
-        btn.disabled = false;
-
-        showAppAlert(`Erfolgreich ${successCount} Objekte mit neu generierten IDs importiert!`);
-        closeExcelImportModal();
-        fetchAllData();
-    }
-
-    function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.75) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    let width = img.width;
-                    let height = img.height;
-                    if (width > maxWidth || height > maxHeight) {
-                        if (width / height > maxWidth / maxHeight) {
-                            height = Math.round((height * maxWidth) / width);
-                            width = maxWidth;
-                        } else {
-                            width = Math.round((width * maxHeight) / height);
-                            height = maxHeight;
-                        }
-                    }
-                    const canvas = document.createElement('canvas');
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', quality));
-                };
-                img.onerror = reject;
-                img.src = e.target.result;
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    }
-
-    function initPasteHandler() {
-        window.addEventListener('paste', async (e) => {
-            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-            for (let item of items) {
-                if (item.kind === 'file' && item.type.startsWith('image/')) {
-                    const blob = item.getAsFile();
-                    try {
-                        const compressed = await compressImage(blob);
-                        addPhotoData(compressed);
-                    } catch(err) {}
-                }
-            }
-        });
-    }
-
-    function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('border-emerald-500'); }
-    function handleDragLeave(e) { document.getElementById('dropZone').classList.remove('border-emerald-500'); }
-    function handleDrop(e) {
-        e.preventDefault();
-        document.getElementById('dropZone').classList.remove('border-emerald-500');
-        handleFiles(e.dataTransfer.files);
-    }
-
-    function handleFileSelect(e) { handleFiles(e.target.files); }
-
-    async function handleFiles(files) {
-        for (let file of Array.from(files)) {
-            if (file.type.startsWith('image/')) {
-                try {
-                    const compressed = await compressImage(file);
-                    addPhotoData(compressed);
-                } catch(e) {}
+                showAppAlert("Fehler beim Löschen:\n" + error.message, "error");
+            } else {
+                clearSelection();
+                fetchAllData();
+                showAppAlert(`${ids.length} Objekte erfolgreich gelöscht.`, "success");
             }
         }
     }
 
-    function addPhotoUrl() {
-        const url = document.getElementById('photoUrlInput').value.trim();
-        if (url) {
-            addPhotoData(url);
-            document.getElementById('photoUrlInput').value = '';
-        }
+    // --- AUSLEIHEN & ÜBERSCHNEIDUNGSPRÜFUNG ---
+    function openRentModal(itemId, itemName) {
+        document.getElementById('rentItemId').value = itemId;
+        document.getElementById('rentModalTitle').innerText = `Ausleihe: ${itemName || itemId}`;
+        document.getElementById('rentProject').value = '';
+
+        // Default start/end: NEXT FULL HOUR
+        const now = new Date();
+        now.setMinutes(0, 0, 0);
+        now.setHours(now.getHours() + 1);
+
+        const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+        const formatISO = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+        document.getElementById('rentStart').value = formatISO(now);
+        document.getElementById('rentEnd').value = formatISO(tomorrow);
+
+        const canAssign = isManagerOrAdmin();
+        const userGroup = document.getElementById('adminUserSelectGroup');
+        if (userGroup) userGroup.classList.toggle('hidden', !canAssign);
+
+        document.getElementById('rentModal').classList.remove('hidden');
+
+        setTimeout(() => {
+            renderRentModalCalendar(itemId);
+        }, 100);
     }
 
-    function addPhotoData(data) {
-        if (currentPhotos.length >= 5) {
-            showAppAlert("Maximal 5 Fotos pro Artikel!");
-            return;
-        }
-        currentPhotos.push(data);
-        renderPhotoStrip();
-    }
-
-    function renderPhotoStrip() {
-        const strip = document.getElementById('photoPreviewStrip');
-        strip.innerHTML = '';
-        currentPhotos.forEach((src, idx) => {
-            strip.innerHTML += `
-                <div class="relative border rounded-lg overflow-hidden group">
-                    <img src="${src}" class="w-full h-12 object-cover">
-                    ${idx === 0 ? '<span class="absolute top-0 left-0 bg-emerald-600 text-white text-[8px] font-bold px-1">Titel</span>' : ''}
-                    <div class="absolute inset-0 bg-black/60 hidden group-hover:flex items-center justify-center gap-1">
-                        ${idx !== 0 ? `<button type="button" onclick="makeMainPhoto(${idx})" class="text-[9px] text-white underline">Titel</button>` : ''}
-                        <button type="button" onclick="removePhoto(${idx})" class="text-[9px] text-red-400 underline">✕</button>
-                    </div>
-                </div>
-            `;
-        });
-    }
-
-    function makeMainPhoto(idx) {
-        const target = currentPhotos.splice(idx, 1)[0];
-        currentPhotos.unshift(target);
-        renderPhotoStrip();
-    }
-
-    function removePhoto(idx) {
-        currentPhotos.splice(idx, 1);
-        renderPhotoStrip();
-    }
-
-    function generateUniqueId() {
-        let highestNum = 1000;
-        allItems.forEach(item => {
-            if (item.id && item.id.startsWith('ART-')) {
-                const num = parseInt(item.id.replace('ART-', ''), 10);
-                if (!isNaN(num) && num > highestNum) {
-                    highestNum = num;
-                }
-            }
-        });
-        return `ART-${highestNum + 1}`;
-    }
-
-    function openItemModal() {
-        document.getElementById('editItemId').value = '';
-        document.getElementById('itemModalTitle').innerText = 'Neuen Artikel anlegen';
-        document.getElementById('itemIdInput').value = generateUniqueId();
-        document.getElementById('itemNameInput').value = '';
-        document.getElementById('itemMainCategorySelect').value = selectedRoom && selectedRoom !== 'ALL' ? selectedRoom : 'Technik';
-        document.getElementById('itemCategoryInput').value = '';
-        document.getElementById('itemPermissionSelect').value = 'Keine';
-        document.getElementById('itemRoomInput').value = '';
-        document.getElementById('itemShelfInput').value = '';
-        document.getElementById('itemCompartmentInput').value = '';
-        document.getElementById('itemAccessoriesInput').value = '';
-        currentPhotos = [];
-        renderPhotoStrip();
-        document.getElementById('itemModal').classList.remove('hidden');
-    }
-
-    function closeItemModal() { document.getElementById('itemModal').classList.add('hidden'); }
-
-    function editItem(id) {
-        const item = allItems.find(i => i.id === id);
-        if (!item) return;
-
-        document.getElementById('editItemId').value = item.id;
-        document.getElementById('itemModalTitle').innerText = 'Artikel bearbeiten';
-        document.getElementById('itemIdInput').value = item.id;
-        document.getElementById('itemNameInput').value = item.name || '';
-        document.getElementById('itemMainCategorySelect').value = item.main_category || item.room || 'Technik';
-        document.getElementById('itemCategoryInput').value = item.category || '';
-        document.getElementById('itemPermissionSelect').value = item.permission || 'Keine';
-        document.getElementById('itemRoomInput').value = item.room || '';
-        document.getElementById('itemShelfInput').value = item.shelf || '';
-        document.getElementById('itemCompartmentInput').value = item.compartment || '';
-        document.getElementById('itemAccessoriesInput').value = item.accessories || '';
-
-        currentPhotos = Array.isArray(item.photos) ? [...item.photos] : (item.image_url ? [item.image_url] : []);
-        renderPhotoStrip();
-        document.getElementById('itemModal').classList.remove('hidden');
-    }
-
-    async function saveItem(event) {
-        event.preventDefault();
-        const id = document.getElementById('itemIdInput').value.trim();
-        const editId = document.getElementById('editItemId').value;
-
-        const mainCat = document.getElementById('itemMainCategorySelect').value;
-
-        const itemData = {
-            id: id,
-            name: document.getElementById('itemNameInput').value.trim(),
-            main_category: mainCat,
-            category: document.getElementById('itemCategoryInput').value.trim(),
-            permission: document.getElementById('itemPermissionSelect').value,
-            room: document.getElementById('itemRoomInput').value.trim() || mainCat,
-            shelf: document.getElementById('itemShelfInput').value.trim(),
-            compartment: document.getElementById('itemCompartmentInput').value.trim(),
-            accessories: document.getElementById('itemAccessoriesInput').value.trim(),
-            photos: currentPhotos,
-            image_url: currentPhotos[0] || '',
-            status: editId ? (allItems.find(i => i.id === editId)?.status || 'Verfügbar') : 'Verfügbar'
-        };
-
-        const submitBtn = document.getElementById('saveItemSubmitBtn');
-        submitBtn.disabled = true;
-        submitBtn.innerText = 'Speichere...';
-
-        const { error } = await db.from('items').upsert([itemData]);
-
-        submitBtn.disabled = false;
-        submitBtn.innerText = 'Speichern';
-
-        if (error) {
-            showAppAlert("Fehler beim Speichern:\n" + error.message);
-            return;
-        }
-
-        closeItemModal();
-        fetchAllData();
-    }
-
-    async function deleteItem(id) {
-        if (confirm(`Möchtest du den Artikel '${id}' wirklich löschen?`)) {
-            const { error } = await db.from('items').delete().eq('id', id);
-            if (error) {
-                showAppAlert("Fehler beim Löschen:\n" + error.message);
-                return;
-            }
-            selectedItemIds.delete(id);
-            fetchAllData();
-        }
-    }
-
-    function renderRentModalCalendar(itemIdsArr) {
-        const containerEl = document.getElementById('rentModalCalendarContainer');
-        if (!containerEl) return;
+    function renderRentModalCalendar(itemId) {
+        const container = document.getElementById('rentModalCalendarContainer');
+        if (!container) return;
         if (rentModalCalendar) rentModalCalendar.destroy();
 
-        const itemRentals = activeRentals.filter(r => itemIdsArr.includes(r.item_id) && r.status !== 'Zurückgegeben');
-
+        const itemRentals = activeRentals.filter(r => r.item_id === itemId && r.status !== 'Zurückgegeben');
         const events = itemRentals.map(r => {
-            const borrower = allProfiles.find(p => p.id === r.user_id)?.full_name || 'Ausgeliehen';
-            const itemName = r.items?.name || r.item_id;
+            const borrower = allProfiles.find(p => p.id === r.user_id);
+            const name = borrower ? (borrower.full_name || 'Benutzer') : 'Ausgeliehen';
             return {
                 id: r.id,
-                title: `${itemName} (${borrower})`,
+                title: `🔒 Gebucht (${name})`,
                 start: r.start_date,
                 end: r.end_date,
                 backgroundColor: '#dc2626',
@@ -2091,51 +1712,15 @@ function populateAdminUserSelect() {
             };
         });
 
-        rentModalCalendar = new FullCalendar.Calendar(containerEl, {
+        rentModalCalendar = new FullCalendar.Calendar(container, {
             initialView: 'dayGridMonth',
             locale: 'de',
-            buttonText: { today: 'Heute', month: 'Monat', week: 'Woche' },
-            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
+            headerToolbar: { left: 'prev,next', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             events: events,
-            height: 'auto'
+            height: '100%'
         });
 
         rentModalCalendar.render();
-    }
-
-    function openRentModal(itemId, itemName) {
-        document.getElementById('rentItemId').value = itemId;
-        document.getElementById('rentModalTitle').innerText = `Ausleihe: ${itemName || itemId}`;
-        document.getElementById('rentProject').value = '';
-
-        const now = new Date();
-        now.setMinutes(0, 0, 0);
-        now.setHours(now.getHours() + 1);
-
-        const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-
-        const formatLocalISO = (d) => {
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const hours = String(d.getHours()).padStart(2, '0');
-            return `${year}-${month}-${day}T${hours}:00`;
-        };
-
-        document.getElementById('rentStart').value = formatLocalISO(now);
-        document.getElementById('rentEnd').value = formatLocalISO(tomorrow);
-
-        const canAssign = isManagerOrAdmin();
-        const adminGroup = document.getElementById('adminUserSelectGroup');
-        if (adminGroup) adminGroup.classList.toggle('hidden', !canAssign);
-
-        const itemIds = itemId.split(',').map(s => s.trim()).filter(Boolean);
-        renderRentModalCalendar(itemIds);
-
-        document.getElementById('rentModal').classList.remove('hidden');
-        setTimeout(() => {
-            if (rentModalCalendar) rentModalCalendar.render();
-        }, 100);
     }
 
     function closeRentModal() {
@@ -2150,7 +1735,7 @@ function populateAdminUserSelect() {
         const end_date = document.getElementById('rentEnd').value;
 
         if (!start_date || !end_date) {
-            showAppAlert("⚠️ Bitte wähle sowohl ein Start- als auch ein Enddatum für die Ausleihe aus!", "Ungültige Datumsangabe");
+            showAppAlert("⚠️ Bitte wähle sowohl ein Start- als auch ein Enddatum für die Ausleihe aus!", "error");
             return;
         }
 
@@ -2158,38 +1743,8 @@ function populateAdminUserSelect() {
         const newEnd = new Date(end_date);
 
         if (newEnd <= newStart) {
-            showAppAlert("⚠️ Ungültiger Zeitraum: Das Rückgabedatum muss nach dem Beginn liegen!", "Ungültiger Zeitraum");
+            showAppAlert("⚠️ Ungültiger Zeitraum: Das Enddatum muss nach dem Startdatum liegen!", "error");
             return;
-        }
-
-        const itemIds = itemIdsStr.split(',').map(s => s.trim()).filter(Boolean);
-
-        for (let id of itemIds) {
-            const overlapping = activeRentals.find(r => {
-                if (r.item_id !== id || r.status === 'Zurückgegeben') return false;
-                const existStart = new Date(r.start_date);
-                const existEnd = new Date(r.end_date);
-                return (newStart < existEnd) && (newEnd > existStart);
-            });
-
-            if (overlapping) {
-                const itemObj = allItems.find(i => i.id === id);
-                const itemName = itemObj ? itemObj.name : id;
-                const borrower = allProfiles.find(p => p.id === overlapping.user_id);
-                const borrowerName = borrower ? (borrower.full_name || 'einem anderen Nutzer') : 'einem anderen Nutzer';
-
-                const exStartStr = new Date(overlapping.start_date).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                const exEndStr = new Date(overlapping.end_date).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-                showAppAlert(`⚠️ Buchung abgelehnt!
-
-Der Artikel "${itemName}" ist im gewählten Zeitraum bereits durch ${borrowerName} ausgeliehen:
-
-📅 ${exStartStr} Uhr bis ${exEndStr} Uhr
-
-Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
-                return;
-            }
         }
 
         const canAssign = isManagerOrAdmin();
@@ -2197,6 +1752,36 @@ Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
         const selectedUser = allProfiles.find(p => p.id === selectedUserId);
         const userName = selectedUser?.full_name || currentUser.email;
 
+        const itemIds = itemIdsStr.split(',').map(s => s.trim()).filter(Boolean);
+
+        // 1. OVERLAP CHECK
+        for (let id of itemIds) {
+            const existing = activeRentals.filter(r => r.item_id === id && r.status !== 'Zurückgegeben');
+            for (let ex of existing) {
+                const exStart = new Date(ex.start_date);
+                const exEnd = new Date(ex.end_date);
+
+                // Overlap condition: newStart < exEnd && newEnd > exStart
+                if (newStart < exEnd && newEnd > exStart) {
+                    const item = allItems.find(i => i.id === id);
+                    const itemName = item ? item.name : id;
+                    const borrower = allProfiles.find(p => p.id === ex.user_id);
+                    const borrowerName = borrower ? (borrower.full_name || 'Benutzer') : 'einem anderen Benutzer';
+
+                    const formattedExStart = exStart.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const formattedExEnd = exEnd.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                    showAppAlert(
+                        `⚠️ Buchungskonflikt!\n\nDas Objekt "${itemName}" ist im Zeitraum vom ${formattedExStart} bis ${formattedExEnd} Uhr bereits durch ${borrowerName} ausgeliehen.\n\nBitte wähle einen freien Zeitraum.`,
+                        'error',
+                        'Überschneidung erkannt'
+                    );
+                    return;
+                }
+            }
+        }
+
+        // 2. NO OVERLAP -> EXECUTE BOOKING
         for (let id of itemIds) {
             const { error } = await db.from('rentals').insert([{
                 item_id: id,
@@ -2208,8 +1793,7 @@ Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
             }]);
 
             if (error) {
-                showAppAlert(`Fehler beim Buchen von ${id}:
-` + error.message, "Fehler");
+                showAppAlert(`Fehler beim Buchen von ${id}:\n` + error.message, 'error');
                 return;
             }
 
@@ -2222,13 +1806,13 @@ Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
             }]);
         }
 
-        showAppAlert(`Erfolgreich gebucht (${itemIds.length} Artikel)!`, "Buchung erfolgreich", () => {
-            closeRentModal();
-            clearSelection();
-            fetchAllData();
-        });
+        showAppAlert(`Erfolgreich gebucht (${itemIds.length} Artikel)!`, 'success');
+        closeRentModal();
+        clearSelection();
+        fetchAllData();
     }
 
+    // --- RÜCKGABE LOGIK ---
     function openReturnModal(rentalId, itemId) {
         document.getElementById('returnRentalId').value = rentalId;
         document.getElementById('returnItemId').value = itemId;
@@ -2241,7 +1825,7 @@ Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
             const parts = item.accessories.split(',').map(s => s.trim()).filter(Boolean);
             parts.forEach((part) => {
                 checklist.innerHTML += `
-                    <label class="flex items-center gap-2 text-slate-700">
+                    <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
                         <input type="checkbox" checked class="rounded text-emerald-600 focus:ring-emerald-500">
                         <span>${part}</span>
                     </label>
@@ -2250,6 +1834,9 @@ Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
         } else {
             checklist.innerHTML = `<p class="text-slate-400 italic">Keine Zubehörteile erfasst.</p>`;
         }
+
+        const noteEl = document.getElementById('returnNote');
+        if (noteEl) noteEl.value = '';
 
         document.getElementById('hasDamage').checked = false;
         document.getElementById('damageReport').value = '';
@@ -2267,7 +1854,6 @@ Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
         document.getElementById('damageFields').classList.toggle('hidden', !hasDamage);
     }
 
-    // 4. ANPASSUNG RÜCKGABE-PRINZIP: ARTIKEL WIRD ZWINGEND WIEDER AUF 'Verfügbar' GESETZT
     async function confirmReturn(event) {
         event.preventDefault();
         const rentalId = document.getElementById('returnRentalId').value;
@@ -2276,19 +1862,16 @@ Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
         const damageReport = document.getElementById('damageReport').value.trim();
         const returnNote = document.getElementById('returnNote')?.value.trim() || '';
 
-        // Status-Archivierung in 'rentals' Tabelle (RLS-freundlich)
-        const { error: updateErr } = await db.from('rentals').update({ 
-            status: 'Zurückgegeben', 
+        const { error: updateErr } = await db.from('rentals').update({
+            status: 'Zurückgegeben',
             returned_at: new Date().toISOString(),
-            return_note: returnNote 
+            return_note: returnNote
         }).eq('id', rentalId);
 
-        // Falls Update fehlschlägt (z.B. Schema ohne status), Fallback-Löschen versuchen
         if (updateErr) {
             await db.from('rentals').delete().eq('id', rentalId);
         }
 
-        // ZWINGENDE REGEL: Objekt wird nach Rückgabe IMMER als Verfügbar angegeben!
         await db.from('items').update({ status: 'Verfügbar' }).eq('id', itemId);
 
         let logDetails = [];
@@ -2302,108 +1885,20 @@ Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
             action: hasDamage ? 'DEFECT_REPORTED' : 'RÜCKGABE',
             details: logDetails.length > 0 ? logDetails.join(' | ') : 'Ordnungsgemäß zurückgegeben (Status: Verfügbar)'
         }]);
-        showAppAlert("Rückgabe erfolgreich! Artikel steht wieder als 'Verfügbar' bereit.");
+
+        showAppAlert("Rückgabe erfolgreich! Artikel steht wieder als 'Verfügbar' bereit.", "success");
         closeReturnModal();
         fetchAllData();
     }
 
-    function openQrModal(itemId) {
-        openA4QrSheet([itemId]);
-    }
-
-    function closeQrModal() {
-        document.getElementById('qrModal').classList.add('hidden');
-    }
-
-    function openA4QrSheet(itemIds) {
-        const printArea = document.getElementById('a4PrintArea');
-        printArea.innerHTML = '';
-
-        itemIds.forEach(id => {
-            const item = allItems.find(i => i.id === id) || { id: id, name: id, room: 'Lager' };
-            const sticker = document.createElement('div');
-            sticker.className = 'qr-sticker';
-
-            const qrContainer = document.createElement('div');
-            qrContainer.className = 'shrink-0';
-
-            new QRCode(qrContainer, {
-                text: `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(id)}`,
-                width: 80,
-                height: 80
-            });
-
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'flex-1 min-w-0 text-[10px] leading-tight';
-            infoDiv.innerHTML = `
-                <div class="font-extrabold text-slate-900 truncate">${item.name}</div>
-                <div class="font-mono text-emerald-700 font-bold mt-0.5">${item.id}</div>
-                <div class="text-slate-500 mt-1 truncate">📍 ${item.main_category || item.room || 'Lager'}</div>
-                <div class="text-[8px] text-slate-400 mt-0.5">Lagerverwaltung Pro</div>
-            `;
-
-            sticker.appendChild(qrContainer);
-            sticker.appendChild(infoDiv);
-            printArea.appendChild(sticker);
-        });
-
-        document.getElementById('qrModal').classList.remove('hidden');
-    }
-
-    function openScannerModal() {
-        document.getElementById('scannerModal').classList.remove('hidden');
-        html5QrScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 220, height: 220 } });
-        html5QrScanner.render((decodedText) => {
-            if (html5QrScanner) html5QrScanner.clear();
-            closeScannerModal();
-
-            let itemVal = decodedText;
-            try {
-                const url = new URL(decodedText);
-                if (url.searchParams.get('item')) {
-                    itemVal = url.searchParams.get('item');
-                }
-            } catch(e) {}
-
-            selectRoom('ALL');
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.value = itemVal;
-                handleSearchInput();
-            }
-            switchTab('inventory');
-        });
-    }
-
-    async function closeScannerModal() {
-        if (html5QrScanner) {
-            try { 
-                await html5QrScanner.stop();
-                html5QrScanner.clear(); 
-            } catch(e){}
-        }
-        document.getElementById('scannerModal').classList.add('hidden');
-    }
-
-    function openCalendarModal() {
-        document.getElementById('calendarModal').classList.remove('hidden');
-        renderModalCalendar();
-    }
-
-    function closeCalendarModal() {
-        document.getElementById('calendarModal').classList.add('hidden');
-    }
-
-    
-    let selectedCalEventData = null;
-
+    // --- KALENDER & INTERAKTION ---
     function buildCalendarEvents() {
         const canSeeDetails = isManagerOrAdmin();
-        
+
         return activeRentals.map(r => {
             const borrower = allProfiles.find(p => p.id === r.user_id);
-            const borrowerName = (canSeeDetails || r.user_id === currentUser?.id) 
-                ? (borrower?.full_name || 'Benutzer') 
+            const borrowerName = (canSeeDetails || r.user_id === currentUser?.id)
+                ? (borrower?.full_name || 'Benutzer')
                 : '[Ausgeliehen]';
 
             const itemName = r.items?.name || r.item_id;
@@ -2416,7 +1911,7 @@ Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
 
             return {
                 id: r.id,
-                title: `${itemName} - ${borrowerName} (${r.project || 'Ausleihe'})`,
+                title: `${itemName} - ${borrowerName}`,
                 start: r.start_date,
                 end: r.end_date,
                 backgroundColor: bgColor,
@@ -2426,6 +1921,7 @@ Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
                     itemId: r.item_id,
                     itemName: itemName,
                     borrowerName: borrowerName,
+                    borrowerId: r.user_id,
                     project: r.project || 'Keine Angabe',
                     startDate: r.start_date,
                     endDate: r.end_date,
@@ -2442,10 +1938,10 @@ Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
         document.getElementById('calDetailTitle').innerText = props.itemName;
         document.getElementById('calDetailBorrower').innerText = props.borrowerName;
         document.getElementById('calDetailProject').innerText = props.project;
-        
-        const startStr = new Date(props.startDate).toLocaleDateString('de-DE');
-        const endStr = new Date(props.endDate).toLocaleDateString('de-DE');
-        document.getElementById('calDetailDates').innerText = `${startStr} bis ${endStr}`;
+
+        const startStr = new Date(props.startDate).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const endStr = new Date(props.endDate).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        document.getElementById('calDetailDates').innerText = `${startStr} bis ${endStr} Uhr`;
 
         const badge = document.getElementById('calDetailStatusBadge');
         badge.innerText = props.status;
@@ -2460,6 +1956,10 @@ Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
         } else {
             returnRow.classList.add('hidden');
         }
+
+        const returnBtn = document.getElementById('returnItemFromCalBtn');
+        const canReturn = (isManagerOrAdmin() || props.borrowerId === currentUser?.id) && props.status !== 'Zurückgegeben';
+        if (returnBtn) returnBtn.classList.toggle('hidden', !canReturn);
 
         document.getElementById('calendarEventDetailModal').classList.remove('hidden');
     }
@@ -2479,8 +1979,7 @@ Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
 
         const gStart = formatGCalDate(startDate);
         const gEnd = formatGCalDate(endDate);
-        const details = encodeURIComponent(`Lagerverwaltung Ausleihe: ${itemName}
-Projekt: ${project}`);
+        const details = encodeURIComponent(`Lagerverwaltung Ausleihe: ${itemName}\nProjekt: ${project}`);
         const text = encodeURIComponent(`Lager-Ausleihe: ${itemName}`);
 
         const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${gStart}/${gEnd}&details=${details}`;
@@ -2523,7 +2022,22 @@ END:VCALENDAR`;
         openItemModal(selectedCalEventData.itemId);
     }
 
-function renderDashboardCalendar() {
+    function openReturnFromCalModal() {
+        if (!selectedCalEventData) return;
+        closeCalendarEventDetailModal();
+        openReturnModal(selectedCalEventData.rentalId, selectedCalEventData.itemId);
+    }
+
+    function openCalendarModal() {
+        document.getElementById('calendarModal').classList.remove('hidden');
+        setTimeout(() => { if (modalCalendar) modalCalendar.render(); }, 100);
+    }
+
+    function closeCalendarModal() {
+        document.getElementById('calendarModal').classList.add('hidden');
+    }
+
+    function renderDashboardCalendar() {
         const calendarEl = document.getElementById('dashboardCalendar');
         if (!calendarEl) return;
         if (calendar) calendar.destroy();
@@ -2536,8 +2050,16 @@ function renderDashboardCalendar() {
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             events: events,
+            eventContent: function(arg) {
+                return {
+                    html: `<div class="flex items-center justify-between gap-1 px-1.5 py-0.5 text-xs truncate font-semibold text-white bg-black/10 rounded cursor-pointer">
+                            <span class="truncate">${arg.event.title}</span>
+                            <span class="text-[9px] bg-white/25 px-1 rounded shrink-0">Details ➔</span>
+                           </div>`
+                };
+            },
             eventClick: function(info) {
-                if (info.event.extendedProps) {
+                if (info.event && info.event.extendedProps) {
                     openCalendarEventDetailModal(info.event.extendedProps);
                 }
             },
@@ -2560,8 +2082,16 @@ function renderDashboardCalendar() {
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             events: events,
+            eventContent: function(arg) {
+                return {
+                    html: `<div class="flex items-center justify-between gap-1 px-1.5 py-0.5 text-xs truncate font-semibold text-white bg-black/10 rounded cursor-pointer">
+                            <span class="truncate">${arg.event.title}</span>
+                            <span class="text-[9px] bg-white/25 px-1 rounded shrink-0">Details ➔</span>
+                           </div>`
+                };
+            },
             eventClick: function(info) {
-                if (info.event.extendedProps) {
+                if (info.event && info.event.extendedProps) {
                     openCalendarEventDetailModal(info.event.extendedProps);
                 }
             },
@@ -2590,7 +2120,7 @@ function renderDashboardCalendar() {
             movements: 'Warenbewegungen',
             chat: 'Team-Chat',
             users: 'Benutzerverwaltung',
-            help: 'Hilfe & App-Standpunkt (M4)'
+            help: 'Hilfe & KI-Diagnose'
         };
         document.getElementById('pageTitle').innerText = titles[tabId] || 'Lagerverwaltung';
 
@@ -2613,7 +2143,7 @@ function renderDashboardCalendar() {
         location.reload();
     }
 
-    // 5. SEPARATER TEAM-CHAT & DEAKTIVIERUNG DER ANTWORTFUNKTION FÜR SYSTEMBOT
+    // --- CHAT & MESSAGING ---
     async function loadChatMessages() {
         const recipient = document.getElementById('chatRecipientSelect')?.value || 'global';
         const box = document.getElementById('chatMessagesBox');
@@ -2623,7 +2153,6 @@ function renderDashboardCalendar() {
 
         if (!box || !currentUser) return;
 
-        // Prüfen ob System-Bot ausgewählt ist
         const isSystemChannel = recipient === SYSTEM_BOT_ID;
 
         if (isSystemChannel) {
@@ -2673,9 +2202,9 @@ function renderDashboardCalendar() {
             if (isBot) bubbleColor = 'bg-amber-100 text-amber-900 border border-amber-300 rounded-tl-none';
 
             return `
-                <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                    <div class="text-[10px] text-slate-400 mb-0.5">${m.sender_name} • ${date}</div>
-                    <div class="max-w-[80%] rounded-2xl px-3.5 py-2 text-xs ${bubbleColor}">
+                <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
+                    <span class="text-[10px] text-slate-400 px-1">${m.sender_name || 'Benutzer'} • ${date}</span>
+                    <div class="${bubbleColor} p-3 rounded-2xl text-xs max-w-[85%] shadow-sm leading-relaxed">
                         ${m.message}
                     </div>
                 </div>
@@ -2691,7 +2220,7 @@ function renderDashboardCalendar() {
         const message = input.value.trim();
         const recipient = document.getElementById('chatRecipientSelect').value;
 
-        if (recipient === SYSTEM_BOT_ID) return; // Gesperrt
+        if (recipient === SYSTEM_BOT_ID) return;
         if (!message || !currentUser) return;
 
         await db.from('chat_messages').insert([{
@@ -2732,7 +2261,7 @@ function renderDashboardCalendar() {
         } else if (isSystemChannel) {
             query = query.eq('sender_id', SYSTEM_BOT_ID).eq('recipient_id', currentUser.id);
         } else {
-            query = query.or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${recipient}),and(sender_id.eq.${recipient},recipient_id.eq.${currentUser.id})`);
+            query = query.or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${recipient}),and(sender_id.eq.${recipient},recipient_id.eq.${recipient})`);
         }
 
         const { data } = await query;
@@ -2744,12 +2273,12 @@ function renderDashboardCalendar() {
             const date = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
             
             let bubbleColor = isMe ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-800';
-            if (isBot) bubbleColor = 'bg-amber-100 text-amber-900 border border-amber-200';
+            if (isBot) bubbleColor = 'bg-amber-100 text-amber-900 border border-amber-300';
 
             return `
-                <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                    <div class="text-[9px] text-slate-400 mb-0.5">${m.sender_name} • ${date}</div>
-                    <div class="max-w-[85%] rounded-xl px-3 py-1.5 text-xs ${bubbleColor}">
+                <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
+                    <span class="text-[9px] text-slate-400">${m.sender_name || 'Benutzer'} • ${date}</span>
+                    <div class="${bubbleColor} p-2 rounded-xl text-xs max-w-[90%] shadow-sm">
                         ${m.message}
                     </div>
                 </div>
@@ -2780,11 +2309,504 @@ function renderDashboardCalendar() {
         loadChatMessages();
     }
 
+    // --- ITEM MODAL & EDIT ---
+    function openItemModal(itemId = null) {
+        currentPhotos = [];
+        document.getElementById('itemModalTitle').innerText = itemId ? 'Artikel bearbeiten' : 'Neuen Artikel anlegen';
+        document.getElementById('itemIdInput').value = itemId || generateUniqueId();
+        document.getElementById('itemIdInput').readOnly = !!itemId;
+
+        document.getElementById('itemNameInput').value = '';
+        document.getElementById('itemRoomSelect').value = 'Technik';
+        document.getElementById('itemCategoryInput').value = '';
+        document.getElementById('itemAccessoriesInput').value = '';
+        document.getElementById('itemStatusSelect').value = 'Verfügbar';
+
+        renderPhotoStrip();
+
+        if (itemId) {
+            const item = allItems.find(i => i.id === itemId);
+            if (item) {
+                document.getElementById('itemNameInput').value = item.name || '';
+                document.getElementById('itemRoomSelect').value = item.main_category || item.room || 'Technik';
+                document.getElementById('itemCategoryInput').value = item.category || '';
+                document.getElementById('itemAccessoriesInput').value = item.accessories || '';
+                document.getElementById('itemStatusSelect').value = item.status || 'Verfügbar';
+
+                if (Array.isArray(item.photos)) {
+                    currentPhotos = [...item.photos];
+                } else if (item.image_url) {
+                    currentPhotos = [item.image_url];
+                }
+                renderPhotoStrip();
+            }
+        }
+
+        document.getElementById('itemModal').classList.remove('hidden');
+    }
+
+    function closeItemModal() {
+        document.getElementById('itemModal').classList.add('hidden');
+    }
+
+    function editItem(itemId) {
+        openItemModal(itemId);
+    }
+
+    async function saveItem(event) {
+        event.preventDefault();
+        const id = document.getElementById('itemIdInput').value.trim();
+        const name = document.getElementById('itemNameInput').value.trim();
+        const main_category = document.getElementById('itemRoomSelect').value;
+        const category = document.getElementById('itemCategoryInput').value.trim();
+        const accessories = document.getElementById('itemAccessoriesInput').value.trim();
+        const status = document.getElementById('itemStatusSelect').value;
+
+        if (!id || !name) {
+            showAppAlert("Bitte fülle mindestens ID/SKU und Artikelname aus!", "error");
+            return;
+        }
+
+        const payload = {
+            id,
+            name,
+            main_category,
+            room: main_category,
+            category,
+            accessories,
+            status,
+            photos: currentPhotos,
+            image_url: currentPhotos[0] || null
+        };
+
+        const { error } = await db.from('items').upsert([payload]);
+
+        if (error) {
+            showAppAlert("Fehler beim Speichern:\n" + error.message, "error");
+            return;
+        }
+
+        showAppAlert("Artikel erfolgreich gespeichert!", "success");
+        closeItemModal();
+        fetchAllData();
+    }
+
+    async function deleteItem(id) {
+        if (confirm(`Möchtest du den Artikel '${id}' wirklich löschen?`)) {
+            const { error } = await db.from('items').delete().eq('id', id);
+            if (error) {
+                showAppAlert("Fehler beim Löschen:\n" + error.message, "error");
+            } else {
+                selectedItemIds.delete(id);
+                fetchAllData();
+                showAppAlert("Artikel gelöscht.", "success");
+            }
+        }
+    }
+
+    // --- QR CODE SHEET & SCANNER ---
+    function openQrModal(itemId) {
+        openA4QrSheet([itemId]);
+    }
+
+    function closeQrModal() {
+        document.getElementById('qrModal').classList.add('hidden');
+    }
+
+    function openA4QrSheet(itemIds) {
+        const printArea = document.getElementById('a4PrintArea');
+        printArea.innerHTML = '';
+
+        itemIds.forEach(id => {
+            const item = allItems.find(i => i.id === id) || { id: id, name: id, room: 'Lager' };
+            const sticker = document.createElement('div');
+            sticker.className = 'qr-sticker';
+
+            const qrContainer = document.createElement('div');
+            qrContainer.className = 'shrink-0';
+
+            new QRCode(qrContainer, {
+                text: `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(id)}`,
+                width: 80,
+                height: 80
+            });
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'flex flex-col justify-center min-w-0 text-slate-800';
+            infoDiv.innerHTML = `
+                <div class="font-bold text-xs truncate">${item.name || id}</div>
+                <div class="text-[10px] text-slate-500 font-mono">ID: ${id}</div>
+                <div class="text-[10px] text-emerald-700 font-semibold mt-1">Raum: ${item.main_category || item.room || 'Lager'}</div>
+            `;
+
+            sticker.appendChild(qrContainer);
+            sticker.appendChild(infoDiv);
+            printArea.appendChild(sticker);
+        });
+
+        document.getElementById('qrModal').classList.remove('hidden');
+    }
+
+    function openScannerModal() {
+        document.getElementById('scannerModal').classList.remove('hidden');
+
+        if (!html5QrScanner) {
+            html5QrScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
+            html5QrScanner.render(onScanSuccess);
+        }
+    }
+
+    function closeScannerModal() {
+        if (html5QrScanner) {
+            try { html5QrScanner.stop(); } catch(e){}
+            try { html5QrScanner.clear(); } catch(e){}
+        }
+        document.getElementById('scannerModal').classList.add('hidden');
+    }
+
+    function onScanSuccess(decodedText) {
+        closeScannerModal();
+        let scanItem = decodedText;
+        if (decodedText.includes('item=')) {
+            const url = new URL(decodedText);
+            scanItem = url.searchParams.get('item');
+        }
+
+        const item = allItems.find(i => i.id === scanItem);
+        if (item) {
+            openItemModal(item.id);
+        } else {
+            showAppAlert(`Gescannter QR-Code ID: '${scanItem}' wurde im Lagerbestand nicht gefunden.`, "info");
+        }
+    }
+
+    // --- PHOTO HANDLING & CANVAS COMPRESSION ---
+    function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.75) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth || height > maxHeight) {
+                        if (width / height > maxWidth / maxHeight) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        } else {
+                            width = Math.round((width * maxHeight) / height);
+                            height = maxHeight;
+                        }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.onerror = reject;
+                img.src = e.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function initPasteHandler() {
+        window.addEventListener('paste', async (e) => {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let item of items) {
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    const blob = item.getAsFile();
+                    try {
+                        const compressed = await compressImage(blob);
+                        addPhotoData(compressed);
+                    } catch(err) {}
+                }
+            }
+        });
+    }
+
+    function handleDragOver(e) { e.preventDefault(); }
+    function handleDragLeave(e) { e.preventDefault(); }
+    function handleDrop(e) {
+        e.preventDefault();
+        handleFiles(e.dataTransfer.files);
+    }
+    function handleFileSelect(e) { handleFiles(e.target.files); }
+
+    async function handleFiles(files) {
+        for (let file of Array.from(files)) {
+            if (file.type.startsWith('image/')) {
+                try {
+                    const compressed = await compressImage(file);
+                    addPhotoData(compressed);
+                } catch(e) {}
+            }
+        }
+    }
+
+    function addPhotoUrl() {
+        const url = prompt("Bild-URL eingeben:");
+        if (url) addPhotoData(url);
+    }
+
+    function addPhotoData(data) {
+        if (currentPhotos.length >= 5) {
+            showAppAlert("Maximal 5 Fotos pro Artikel!", "info");
+            return;
+        }
+        currentPhotos.push(data);
+        renderPhotoStrip();
+    }
+
+    function renderPhotoStrip() {
+        const strip = document.getElementById('photoStrip');
+        if (!strip) return;
+        strip.innerHTML = '';
+
+        currentPhotos.forEach((src, idx) => {
+            strip.innerHTML += `
+                <div class="relative group w-16 h-16 rounded-xl border border-slate-200 overflow-hidden shrink-0 shadow-sm">
+                    <img src="${src}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition">
+                        ${idx !== 0 ? `<button onclick="makeMainPhoto(${idx})" title="Als Hauptbild" class="text-white text-xs">⭐</button>` : ''}
+                        <button onclick="removePhoto(${idx})" title="Löschen" class="text-white text-xs">✕</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function makeMainPhoto(idx) {
+        const item = currentPhotos.splice(idx, 1)[0];
+        currentPhotos.unshift(item);
+        renderPhotoStrip();
+    }
+
+    function removePhoto(idx) {
+        currentPhotos.splice(idx, 1);
+        renderPhotoStrip();
+    }
+
+    function generateUniqueId() {
+        return 'SKU-' + Math.floor(100000 + Math.random() * 900000);
+    }
+
+    // --- EXCEL IMPORT ---
+    function openExcelImportModal() {
+        document.getElementById('excelImportModal').classList.remove('hidden');
+    }
+
+    function closeExcelImportModal() {
+        document.getElementById('excelImportModal').classList.add('hidden');
+        excelImportData = [];
+    }
+
+    function processExcelFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const data = new Uint8Array(event.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(firstSheet);
+
+            excelImportData = json;
+            renderExcelPreview(json);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function renderExcelPreview(data) {
+        const container = document.getElementById('excelPreviewArea');
+        if (!container) return;
+
+        if (!data || data.length === 0) {
+            container.innerHTML = `<p class="text-slate-400 italic text-xs">Keine Daten in der Excel-Datei gefunden.</p>`;
+            return;
+        }
+
+        let tableHtml = `
+            <div class="overflow-x-auto max-h-60 border rounded-xl text-xs">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-100 font-bold text-slate-700">
+                        <tr>
+                            <th class="p-2 border-b">ID/SKU</th>
+                            <th class="p-2 border-b">Name</th>
+                            <th class="p-2 border-b">Raum</th>
+                            <th class="p-2 border-b">Kategorie</th>
+                            <th class="p-2 border-b">Zubehör</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        data.slice(0, 10).forEach(row => {
+            tableHtml += `
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="p-2">${row.id || row.SKU || 'Auto-Gen'}</td>
+                    <td class="p-2 font-semibold">${row.name || row.Name || 'Unbenannt'}</td>
+                    <td class="p-2">${row.room || row.Raum || row.main_category || 'Technik'}</td>
+                    <td class="p-2">${row.category || row.Kategorie || '-'}</td>
+                    <td class="p-2">${row.accessories || row.Zubehör || '-'}</td>
+                </tr>
+            `;
+        });
+
+        tableHtml += `</tbody></table></div><p class="text-[11px] text-slate-500 mt-2">Vorschau zeigt max. 10 von ${data.length} Eintragszeilen.</p>`;
+        container.innerHTML = tableHtml;
+    }
+
+    async function confirmExcelImport() {
+        if (!excelImportData || excelImportData.length === 0) {
+            showAppAlert("Keine Daten zum Importieren vorhanden!", "error");
+            return;
+        }
+
+        const itemsToInsert = excelImportData.map(row => ({
+            id: String(row.id || row.SKU || generateUniqueId()),
+            name: String(row.name || row.Name || 'Importiertes Objekt'),
+            main_category: String(row.main_category || row.room || row.Raum || 'Technik'),
+            room: String(row.room || row.Raum || row.main_category || 'Technik'),
+            category: String(row.category || row.Kategorie || ''),
+            accessories: String(row.accessories || row.Zubehör || ''),
+            status: 'Verfügbar'
+        }));
+
+        const { error } = await db.from('items').upsert(itemsToInsert);
+
+        if (error) {
+            showAppAlert("Fehler beim Importieren:\n" + error.message, "error");
+            return;
+        }
+
+        showAppAlert(`Erfolgreich ${itemsToInsert.length} Objekte importiert!`, "success");
+        closeExcelImportModal();
+        fetchAllData();
+    }
+
+    // --- HILFE & KI-DIAGNOSE ---
+    async function runAiDiagnosticScan() {
+        const resDiv = document.getElementById('diagnosticResults');
+        if (!resDiv) return;
+
+        resDiv.innerHTML = '<p class="p-2 text-slate-500 font-semibold animate-pulse">⚡ Scanne Systemzustand und Datenbank-Verbindung...</p>';
+
+        try {
+            const { count: itemsCount, error: itemsErr } = await db.from('items').select('*', { count: 'exact', head: true });
+
+            let statusHtml = `
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5 text-xs">
+                    <div class="flex justify-between font-bold text-slate-700">
+                        <span>Supabase Status:</span>
+                        <span class="${!itemsErr ? 'text-emerald-600' : 'text-red-600'}">${!itemsErr ? '✅ Verbunden' : '❌ Fehler'}</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Angemeldeter Benutzer:</span>
+                        <span class="font-semibold">${userProfile?.full_name || currentUser?.email || 'Nicht angemeldet'}</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Aktuelle Rolle:</span>
+                        <span class="font-bold text-emerald-700">${(userProfile?.role || 'user').toUpperCase()}</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Gesamtbestand Objekte:</span>
+                        <span class="font-semibold">${itemsCount || 0} Artikel</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Aktive Ausleihen:</span>
+                        <span class="font-semibold">${activeRentals.length}</span>
+                    </div>
+                </div>
+            `;
+
+            let inconsistencies = 0;
+            for (let item of allItems) {
+                const isRented = activeRentals.some(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
+                if (isRented && item.status === 'Verfügbar') {
+                    inconsistencies++;
+                }
+            }
+
+            if (inconsistencies > 0) {
+                statusHtml += `
+                    <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs space-y-2">
+                        <p class="font-bold">⚠️ ${inconsistencies} Status-Abweichungen erkannt!</p>
+                        <p class="text-[11px]">Manche Objekte sind ausgeliehen, aber in der Tabelle noch als 'Verfügbar' markiert.</p>
+                        <button onclick="repairStatusInconsistencies()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-1.5 rounded-lg text-xs transition">
+                            🛠️ 1-Klick Status-Reparatur ausführen
+                        </button>
+                    </div>
+                `;
+            } else {
+                statusHtml += `
+                    <div class="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                        <span>✅ Keine Status-Inkonsistenzen gefunden. System ist optimal synchronisiert!</span>
+                    </div>
+                `;
+            }
+
+            resDiv.innerHTML = statusHtml;
+        } catch (err) {
+            resDiv.innerHTML = `<p class="p-2 text-red-600 font-semibold">Fehler bei der Diagnose: ${err.message}</p>`;
+        }
+    }
+
+    async function repairStatusInconsistencies() {
+        for (let item of allItems) {
+            const isRented = activeRentals.some(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
+            if (isRented && item.status === 'Verfügbar') {
+                await db.from('items').update({ status: 'Ausgeliehen' }).eq('id', item.id);
+            }
+        }
+        showAppAlert("Status-Inkonsistenzen wurden erfolgreich korrigiert!", "success");
+        fetchAllData();
+    }
+
+    async function sendHelpTicketToAiBot() {
+        const text = document.getElementById('helpTicketText')?.value.trim();
+        if (!text) {
+            showAppAlert("Bitte beschreibe dein Anliegen im Textfeld!", "error");
+            return;
+        }
+
+        const sysInfo = `[Support-Ticket v2.4.0]\nBenutzer: ${userProfile?.full_name || currentUser?.email}\nRolle: ${userProfile?.role || 'user'}\nAnliegen: ${text}`;
+
+        await db.from('chat_messages').insert([{
+            sender_id: currentUser?.id,
+            sender_name: userProfile?.full_name || currentUser?.email,
+            recipient_id: SYSTEM_BOT_ID,
+            message: sysInfo
+        }]);
+
+        await db.from('chat_messages').insert([{
+            sender_id: SYSTEM_BOT_ID,
+            sender_name: '🤖 System-Benachrichtigung',
+            recipient_id: currentUser?.id,
+            message: `🤖 KI-Support Bestätigung: Dein Ticket ("${text.slice(0, 40)}...") wurde erfasst. Ein Administrator prüft deine Anfrage.`
+        }]);
+
+        document.getElementById('helpTicketText').value = '';
+        showAppAlert("Dein Support-Ticket wurde erfolgreich an den KI-Bot gesendet! Prüfe deine Antworten im Team-Chat.", "success");
+        switchTab('chat');
+    }
+
+    function setupRealtimeSubscriptions() {
+        if (!db) return;
+        try {
+            db.channel('public-changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, () => { fetchRentals(); loadRoomCounts(); })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, () => { fetchItems(currentPage); loadRoomCounts(); })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, () => { loadChatMessages(); loadDashboardChat(); })
+                .subscribe();
+        } catch(e) {}
+    }
+
     function openNewUserModal() {
-        document.getElementById('newUserName').value = '';
-        document.getElementById('newUserEmail').value = '';
-        document.getElementById('newUserPass').value = '';
-        document.getElementById('newUserRole').value = 'user';
         document.getElementById('newUserModal').classList.remove('hidden');
     }
 
@@ -2795,8 +2817,8 @@ function renderDashboardCalendar() {
     async function adminCreateUser(event) {
         event.preventDefault();
         const email = document.getElementById('newUserEmail').value.trim();
-        const password = document.getElementById('newUserPass').value.trim();
-        const fullName = document.getElementById('newUserName').value.trim();
+        const password = document.getElementById('newUserPassword').value;
+        const fullName = document.getElementById('newUserFullName').value.trim();
         const role = document.getElementById('newUserRole').value;
 
         try {
@@ -2805,7 +2827,6 @@ function renderDashboardCalendar() {
                 password,
                 options: { data: { full_name: fullName, role: role } }
             });
-
             if (error) throw error;
 
             if (data.user) {
@@ -2816,11 +2837,23 @@ function renderDashboardCalendar() {
                 }]);
             }
 
-            showAppAlert("Neuer Benutzer erfolgreich angelegt!");
+            showAppAlert("Neuer Benutzer erfolgreich angelegt!", "success");
             closeNewUserModal();
             fetchAllUsers();
         } catch (err) {
-            showAppAlert("Fehler beim Anlegen des Benutzers:\n" + (err.message || err));
+            showAppAlert("Fehler beim Anlegen des Benutzers:\n" + (err.message || err), "error");
         }
     }
+
+    // --- STARTUP INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', () => {
+        initPasteHandler();
+        if (db) {
+            db.auth.getSession().then(({ data: { session } }) => {
+                if (session && session.user) {
+                    loadUserProfile(session.user);
+                }
+            });
+        }
+    });
 </script>
