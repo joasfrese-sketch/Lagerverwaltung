@@ -464,7 +464,6 @@
                                 <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                 <button id="clearSearchBtn" onclick="clearSearch()" title="Suche löschen" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none p-1 rounded-full text-xs font-bold leading-none">✕</button>
                             </div>
-                            <select id="sortSelect" onchange="fetchItems(1)" class="bg-white border border-slate-200/80 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm cursor-pointer"><option value="name_asc">Sortierung: Name A-Z</option><option value="name_desc">Sortierung: Name Z-A</option><option value="id_asc">Sortierung: SKU/ID A-Z</option><option value="status_asc">Sortierung: Status</option></select>
                             
                             <button id="importExcelBtn" onclick="openExcelImportModal()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2.5 rounded-xl flex items-center gap-1 transition shrink-0">📊 <span class="hidden sm:inline">Excel Import</span></button>
                         </div>
@@ -829,85 +828,57 @@
 
 <!-- MODAL: AUSLEIHE -->
 <div id="rentModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
-        <h3 id="rentModalTitle" class="text-lg font-bold text-slate-800">Artikel ausleihen</h3>
-        <form onsubmit="confirmRental(event)" class="space-y-3">
-            <input type="hidden" id="rentItemId">
-
-            <div id="adminUserSelectGroup" class="hidden">
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Ausleihen für Benutzer</label>
-                <select id="rentForUserId" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none font-semibold text-emerald-700"></select>
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Projekt / Einsatzort (Optional)</label>
-                <input type="text" id="rentProject" placeholder="z. B. Baustelle Süd, Drehort Berlin" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Beginn</label>
-                <input type="datetime-local" id="rentStart" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Rückgabe</label>
-                <input type="datetime-local" id="rentEnd" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
-            </div>
-
-            <div class="flex justify-end gap-2 pt-2">
-                <button type="button" onclick="closeRentModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
-                <button type="submit" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Verbindlich Buchen</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- MODAL: RÜCKGABE -->
-<div id="returnModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
-        <h3 class="text-lg font-bold text-slate-800">📦 Rückgabe & Prüfung</h3>
-        <p class="text-xs text-slate-500">Überprüfe alle Kofferinhalte vor der Rückgabe. Bei Rückgabe wird das Objekt direkt wieder als "Verfügbar" deklariert.</p>
-        
-        <form onsubmit="confirmReturn(event)" class="space-y-4">
-            <input type="hidden" id="returnRentalId">
-            <input type="hidden" id="returnItemId">
-
-            <div class="space-y-2 border p-3 bg-slate-50 rounded-xl max-h-40 overflow-y-auto">
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kofferinhalte / Zubehör</label>
-                <div id="accessoriesChecklist" class="space-y-1.5 text-xs"></div>
-            </div>
-
-            <div class="space-y-2 pt-2 border-t">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="hasDamage" onchange="toggleDamageFields()" class="rounded text-emerald-600">
-                    <span class="text-xs font-bold text-red-600">⚠️ Defekt oder Schaden melden</span>
-                </label>
-                <div id="damageFields" class="hidden space-y-2">
-                    <textarea id="damageReport" placeholder="Beschreibe den Defekt..." class="w-full border p-2 rounded-xl text-xs outline-none h-20"></textarea>
-                </div>
-            </div>
-
-            <div class="flex justify-end gap-2 pt-2">
-                <button type="button" onclick="closeReturnModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
-                <button type="submit" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Rückgabe Bestätigen (Als Verfügbar markieren)</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- MODAL & PRINT-AREA: QR-CODE DRUCK -->
-<div id="qrModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
-        <div class="flex justify-between items-center border-b pb-2">
-            <h3 class="text-base font-bold">🖨️️ Etikettendruck Vorschau (DIN A4 Raster: 24 Etiketten)</h3>
-            <button onclick="closeQrModal()" class="text-slate-400 font-bold">✕</button>
+    <div class="bg-white rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl">
+        <div class="flex justify-between items-center border-b pb-3">
+            <h3 id="rentModalTitle" class="text-lg font-bold text-slate-800">Artikel ausleihen</h3>
+            <button onclick="closeRentModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
         </div>
 
-        <div id="a4PrintArea" class="bg-white border p-2"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- LEFT COLUMN: FORM -->
+            <form onsubmit="confirmRental(event)" class="space-y-3">
+                <input type="hidden" id="rentItemId">
 
-        <div class="flex justify-end gap-2 pt-2 border-t">
-            <button onclick="closeQrModal()" class="px-4 py-2 text-xs border rounded-xl">Schließen</button>
-            <button onclick="window.print()" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Jetzt Drucken</button>
+                <div id="adminUserSelectGroup" class="hidden">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Ausleihen für Benutzer</label>
+                    <select id="rentForUserId" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none font-semibold text-emerald-700"></select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Projekt / Einsatzort (Optional)</label>
+                    <input type="text" id="rentProject" placeholder="z. B. Baustelle Süd, Drehort Berlin" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Beginn (Volle Stunde)</label>
+                    <input type="datetime-local" id="rentStart" step="3600" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Rückgabe (Volle Stunde)</label>
+                    <input type="datetime-local" id="rentEnd" step="3600" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeRentModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
+                    <button type="submit" class="px-4 py-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition">Verbindlich Buchen</button>
+                </div>
+            </form>
+
+            <!-- RIGHT COLUMN: ITEM-SPECIFIC CALENDAR -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col min-h-[320px]">
+                <div class="mb-2">
+                    <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                        <span>📅</span> Belegungsplan für dieses Objekt
+                    </h4>
+                    <p class="text-[10px] text-slate-500">Zeigt gebuchte Zeiträume für dieses Objekt, um Überschneidungen zu vermeiden:</p>
+                </div>
+                <div class="calendar-wrapper flex-1 overflow-x-auto">
+                    <div class="calendar-container-inner h-full">
+                        <div id="rentModalCalendarContainer" class="min-h-[260px] text-xs"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -953,6 +924,18 @@
     </div>
 </div>
 
+
+<!-- MODAL: APP ALERT / NOTIFICATION -->
+<div id="appAlertModal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+    <div class="bg-[#1e293b] text-white rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl border border-slate-700">
+        <h4 id="appAlertTitle" class="font-bold text-base text-slate-100">Hinweis</h4>
+        <p id="appAlertMessage" class="text-xs text-slate-300 leading-relaxed whitespace-pre-line"></p>
+        <div class="flex justify-end pt-2">
+            <button onclick="closeAppAlert()" class="px-5 py-2 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition shadow-lg">Schließen</button>
+        </div>
+    </div>
+</div>
+
 <!-- MAIN JAVASCRIPT LOGIK -->
 <script>
     const PAGE_SIZE = 20;
@@ -973,6 +956,8 @@
     let html5QrScanner = null;
     let calendar = null;
     let modalCalendar = null;
+    let rentModalCalendar = null;
+    let onAlertCloseCallback = null;
 
     let selectedItemIds = new Set();
     let currentStatusFilter = 'ALL';
@@ -1055,6 +1040,28 @@
     }
 
     // 2. GEFILTERTE ARTIKEL-ABFRAGE (GEZIELTES LAZY LOADING JE NACH RAUM)
+    
+    function showAppAlert(message, title = 'Hinweis', callback = null) {
+        onAlertCloseCallback = callback;
+        const modal = document.getElementById('appAlertModal');
+        const titleEl = document.getElementById('appAlertTitle');
+        const msgEl = document.getElementById('appAlertMessage');
+
+        if (titleEl) titleEl.innerText = title;
+        if (msgEl) msgEl.innerText = message;
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeAppAlert() {
+        const modal = document.getElementById('appAlertModal');
+        if (modal) modal.classList.add('hidden');
+        if (typeof onAlertCloseCallback === 'function') {
+            const cb = onAlertCloseCallback;
+            onAlertCloseCallback = null;
+            cb();
+        }
+    }
+
     async function fetchItems(page = 1) {
         const grid = document.getElementById('item-grid');
         if (!grid) return;
@@ -1064,7 +1071,7 @@
             return;
         }
 
-        grid.innerHTML = '<p class="p-4 text-slate-400 font-medium animate-pulse">Lade Objekte für diesen Raum...</p>';
+        grid.innerHTML = '<p class="p-4 text-slate-400">Lade Objekte für diesen Raum...</p>';
 
         const from = (page - 1) * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
@@ -1077,25 +1084,21 @@
                 query = query.or(`main_category.eq.${selectedRoom},room.ilike.%${selectedRoom}%`);
             }
 
-            // NUR ECHTE AKTIVE AUSLEIHEN (FILTER 'Zurückgegeben' AUSSCHLIESSEN)
-            const activeRentalsList = (activeRentals || []).filter(r => r.status !== 'Zurückgegeben');
-            const activeRentedIds = activeRentalsList.map(r => r.item_id);
-
-            // STATUS-FILTER FÜR SUPABASE-QUERY
+            // STATUS-FILTER
             if (currentStatusFilter !== 'ALL') {
                 if (currentStatusFilter === 'Ausgeliehen') {
-                    if (activeRentedIds.length > 0) {
-                        query = query.in('id', activeRentedIds);
+                    const rentedItemIds = activeRentals.map(r => r.item_id);
+                    if (rentedItemIds.length > 0) {
+                        query = query.in('id', rentedItemIds);
                     } else {
-                        query = query.eq('id', '___NO_RENTALS___');
+                        query = query.eq('id', '___NONE___');
                     }
                 } else if (currentStatusFilter === 'Verfügbar') {
-                    if (activeRentedIds.length > 0) {
-                        query = query.not('id', 'in', `(${activeRentedIds.join(',')})`);
+                    const rentedItemIds = activeRentals.map(r => r.item_id);
+                    if (rentedItemIds.length > 0) {
+                        query = query.not('id', 'in', `(${rentedItemIds.join(',')})`);
                     }
-                    query = query.neq('status', 'In Inventur').neq('status', 'Wartung / Defekt').neq('status', 'Defekt');
-                } else if (currentStatusFilter === 'Wartung / Defekt') {
-                    query = query.or('status.eq.Wartung / Defekt,status.eq.Defekt');
+                    query = query.neq('status', 'In Inventur').neq('status', 'Wartung / Defekt');
                 } else {
                     query = query.eq('status', currentStatusFilter);
                 }
@@ -1112,38 +1115,12 @@
 
             if (error) throw error;
 
-            let fetchedItems = data || [];
-
-            // CLIENTSEITIGE ABSICHERUNG: NUR OBJEKTE MIT EXAKTEM EFFECTIVE STATUS ANZEIGEN
-            if (currentStatusFilter !== 'ALL') {
-                fetchedItems = fetchedItems.filter(item => {
-                    const eff = getItemEffectiveStatus(item);
-                    if (currentStatusFilter === 'Ausgeliehen') return eff === 'Ausgeliehen';
-                    if (currentStatusFilter === 'Verfügbar') return eff === 'Verfügbar';
-                    if (currentStatusFilter === 'Wartung / Defekt') return eff === 'Wartung / Defekt';
-                    if (currentStatusFilter === 'In Inventur') return eff === 'In Inventur';
-                    return true;
-                });
-            }
-
-            // SORTIERUNG BEHANDELN
-            const sortVal = document.getElementById('sortSelect')?.value || 'name_asc';
-            if (sortVal === 'name_asc') {
-                fetchedItems.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-            } else if (sortVal === 'name_desc') {
-                fetchedItems.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
-            } else if (sortVal === 'id_asc') {
-                fetchedItems.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
-            } else if (sortVal === 'status_asc') {
-                fetchedItems.sort((a, b) => getItemEffectiveStatus(a).localeCompare(getItemEffectiveStatus(b)));
-            }
-
-            allItems = fetchedItems;
+            allItems = data || [];
             totalPages = Math.ceil((count || 1) / PAGE_SIZE) || 1;
             currentPage = page;
 
             renderCards(allItems);
-            updatePaginationControls(count || allItems.length);
+            updatePaginationControls(count || 0);
 
             const { data: categoriesData } = await db.from('items').select('category');
             if (categoriesData) {
@@ -1170,7 +1147,7 @@
             return;
         }
 
-        const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
+        const canManage = isManagerOrAdmin();
 
         items.forEach(item => {
             const isChecked = selectedItemIds.has(item.id);
@@ -1181,6 +1158,29 @@
             const card = document.createElement('div');
             card.className = `card flex gap-3 items-center ${isChecked ? 'ring-2 ring-emerald-500 bg-slate-100' : ''}`;
             
+            let statusButtonHtml = '';
+            if (effectiveStatus === 'Verfügbar') {
+                statusButtonHtml = `<button onclick="openRentModal('${item.id}', '${item.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1 rounded font-semibold transition">Ausleihen</button>`;
+            } else if (effectiveStatus === 'Ausgeliehen') {
+                const activeRental = activeRentals.find(r => r.item_id === item.id && r.status !== 'Zurückgegeben');
+                const borrower = activeRental ? allProfiles.find(p => p.id === activeRental.user_id)?.full_name : '';
+                const borrowerText = borrower ? ` (${borrower})` : '';
+
+                if (canManage && activeRental) {
+                    statusButtonHtml = `
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="bg-amber-100 text-amber-800 text-[11px] font-bold px-2 py-0.5 rounded">🔒 Ausgeliehen${borrowerText}</span>
+                            <button onclick="openReturnModal('${activeRental.id}', '${item.id}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded font-semibold transition shrink-0">📦 Rückgabe</button>
+                        </div>`;
+                } else {
+                    statusButtonHtml = `<span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded">🔒 Ausgeliehen${borrowerText}</span>`;
+                }
+            } else if (effectiveStatus === 'In Inventur') {
+                statusButtonHtml = `<span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded">📋 In Inventur</span>`;
+            } else {
+                statusButtonHtml = `<span class="bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded">🛠️ In Wartung</span>`;
+            }
+
             card.innerHTML = `
                 <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleItemSelection('${item.id}')" class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer shrink-0">
                 <img src="${mainPhoto}" class="w-16 h-16 object-cover rounded-lg border border-slate-300 shrink-0">
@@ -1188,12 +1188,11 @@
                     <h3 class="font-bold text-[#1E293B] text-sm truncate">${item.name || 'Unbenannt'}</h3>
                     <p class="text-xs text-[#1E293B]/80"><strong>SKU/ID:</strong> ${item.id}</p>
                     <p class="text-xs text-[#1E293B]/80"><strong>Raum:</strong> ${item.main_category || item.room || '-'}</p>
-                    <p class="text-xs text-[#1E293B]/80"><strong>Status:</strong> ${effectiveStatus}</p>
                     
-                    <div class="flex items-center gap-2 mt-2">
-                        <button onclick="openRentModal('${item.id}', '${item.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 py-1 rounded font-semibold">Ausleihen</button>
+                    <div class="flex items-center gap-2 mt-2 flex-wrap">
+                        ${statusButtonHtml}
                         <button onclick="openQrModal('${item.id}')" class="text-xs border border-slate-300 text-[#1E293B] px-2 py-1 rounded hover:bg-slate-200">QR</button>
-                        ${isAdmin ? `
+                        ${canManage ? `
                             <button onclick="editItem('${item.id}')" class="text-xs text-blue-600 hover:underline">✏️</button>
                             <button onclick="deleteItem('${item.id}')" class="text-xs text-red-600 hover:underline">🗑</button>
                         ` : ''}
@@ -1265,7 +1264,7 @@
                     email, password, options: { data: { full_name: fullName || email.split('@')[0], role: 'user' } }
                 });
                 if (error) throw error;
-                alert("Konto erfolgreich registriert! Du kannst dich jetzt anmelden.");
+                showAppAlert("Konto erfolgreich registriert! Du kannst dich jetzt anmelden.");
                 toggleAuthMode();
             } else {
                 const { data, error } = await db.auth.signInWithPassword({ email, password });
@@ -1273,7 +1272,7 @@
                 await loadUserProfile(data.user);
             }
         } catch (err) {
-            alert("Anmeldung/Registrierung fehlgeschlagen:\n" + (err.message || err));
+            showAppAlert("Anmeldung/Registrierung fehlgeschlagen:\n" + (err.message || err));
         }
     }
 
@@ -1303,7 +1302,7 @@
                 await db.from('items').update({ status: 'Ausgeliehen' }).eq('id', item.id);
             }
         }
-        alert("Status-Inkonsistenzen wurden erfolgreich korrigiert!");
+        showAppAlert("Status-Inkonsistenzen wurden erfolgreich korrigiert!");
         fetchAllData();
     }
 
@@ -1384,7 +1383,7 @@ async function loadUserProfile(user) {
         const currIdx = roles.indexOf((currentRole || 'user').toLowerCase());
         const newRole = roles[(currIdx + 1) % roles.length];
         await db.from('profiles').update({ role: newRole }).eq('id', userId);
-        alert(`Rolle erfolgreich geändert auf: ${newRole.toUpperCase()}`);
+        showAppAlert(`Rolle erfolgreich geändert auf: ${newRole.toUpperCase()}`);
         fetchAllUsers();
     }
 
@@ -1550,12 +1549,14 @@ function populateAdminUserSelect() {
     }
 
     function renderMyRentals() {
-        const myRentals = activeRentals.filter(r => r.user_id === currentUser?.id);
         const card = document.getElementById('myRentalsCard');
         const list = document.getElementById('myRentalsList');
         if (!card || !list) return;
 
-        if (myRentals.length === 0) {
+        const canManageAll = isManagerOrAdmin();
+        const relevantRentals = activeRentals.filter(r => r.status !== 'Zurückgegeben' && (canManageAll || r.user_id === currentUser?.id));
+
+        if (relevantRentals.length === 0) {
             card.classList.add('hidden');
             return;
         }
@@ -1563,21 +1564,29 @@ function populateAdminUserSelect() {
         card.classList.remove('hidden');
         list.innerHTML = '';
 
-        myRentals.forEach(r => {
-            const endDate = new Date(r.end_date);
-            const isOverdue = endDate < new Date();
-            const end = endDate.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const titleEl = card.querySelector('h4');
+        if (titleEl) {
+            titleEl.innerHTML = canManageAll 
+                ? '<span>📦</span> Aktive Ausleihen (Admin / Manager Übersicht & Rückgabe)' 
+                : '<span>📦</span> Meine aktiven Ausleihen';
+        }
+
+        relevantRentals.forEach(r => {
+            const end = new Date(r.end_date).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
             const itemName = r.items ? r.items.name : r.item_id;
+            const borrower = allProfiles.find(p => p.id === r.user_id);
+            const borrowerName = borrower ? borrower.full_name : 'Unbekannt';
 
             list.innerHTML += `
-                <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border ${isOverdue ? 'border-red-300 bg-red-50/50' : ''}">
+                <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
                     <div>
                         <span class="font-bold text-xs text-slate-800">${itemName}</span>
-                        ${isOverdue ? '<span class="ml-1 text-[9px] bg-red-600 text-white font-bold px-1.5 py-0.5 rounded">Überfällig</span>' : ''}
-                        <p class="text-[10px] text-slate-500">Projekt: <b>${r.project || 'Keins'}</b> | Bis: ${end} Uhr</p>
+                        <p class="text-[10px] text-slate-500">
+                            ${canManageAll ? `Ausleiher: <b>${borrowerName}</b> | ` : ''}Projekt: <b>${r.project || 'Keins'}</b> | Bis: ${end} Uhr
+                        </p>
                     </div>
-                    <button onclick="openReturnModal('${r.id}', '${r.item_id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg">
-                        Zurückgeben
+                    <button onclick="openReturnModal('${r.id}', '${r.item_id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition shrink-0">
+                        Rückgabe
                     </button>
                 </div>
             `;
@@ -1685,7 +1694,7 @@ function populateAdminUserSelect() {
 
         clearSelection();
         fetchAllData();
-        alert(`Status für ${ids.length} Objekt(e) geändert auf: ${newStatus}`);
+        showAppAlert(`Status für ${ids.length} Objekt(e) geändert auf: ${newStatus}`);
     }
 
     function bulkRentModal() {
@@ -1732,7 +1741,7 @@ function populateAdminUserSelect() {
             const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
 
             if (jsonData.length === 0) {
-                alert("Keine Daten in der Excel-Datei gefunden!");
+                showAppAlert("Keine Daten in der Excel-Datei gefunden!");
                 return;
             }
 
@@ -1828,7 +1837,7 @@ function populateAdminUserSelect() {
             const { error } = await db.from('items').upsert(batch);
 
             if (error) {
-                alert(`Fehler beim Importieren ab Eintrag ${i + 1}:\n` + error.message);
+                showAppAlert(`Fehler beim Importieren ab Eintrag ${i + 1}:\n` + error.message);
                 btn.innerText = 'Import Durchführen';
                 btn.disabled = false;
                 return;
@@ -1839,7 +1848,7 @@ function populateAdminUserSelect() {
         btn.innerText = 'Import Durchführen';
         btn.disabled = false;
 
-        alert(`Erfolgreich ${successCount} Objekte mit neu generierten IDs importiert!`);
+        showAppAlert(`Erfolgreich ${successCount} Objekte mit neu generierten IDs importiert!`);
         closeExcelImportModal();
         fetchAllData();
     }
@@ -1922,7 +1931,7 @@ function populateAdminUserSelect() {
 
     function addPhotoData(data) {
         if (currentPhotos.length >= 5) {
-            alert("Maximal 5 Fotos pro Artikel!");
+            showAppAlert("Maximal 5 Fotos pro Artikel!");
             return;
         }
         currentPhotos.push(data);
@@ -2042,7 +2051,7 @@ function populateAdminUserSelect() {
         submitBtn.innerText = 'Speichern';
 
         if (error) {
-            alert("Fehler beim Speichern:\n" + error.message);
+            showAppAlert("Fehler beim Speichern:\n" + error.message);
             return;
         }
 
@@ -2054,12 +2063,44 @@ function populateAdminUserSelect() {
         if (confirm(`Möchtest du den Artikel '${id}' wirklich löschen?`)) {
             const { error } = await db.from('items').delete().eq('id', id);
             if (error) {
-                alert("Fehler beim Löschen:\n" + error.message);
+                showAppAlert("Fehler beim Löschen:\n" + error.message);
                 return;
             }
             selectedItemIds.delete(id);
             fetchAllData();
         }
+    }
+
+    function renderRentModalCalendar(itemIdsArr) {
+        const containerEl = document.getElementById('rentModalCalendarContainer');
+        if (!containerEl) return;
+        if (rentModalCalendar) rentModalCalendar.destroy();
+
+        const itemRentals = activeRentals.filter(r => itemIdsArr.includes(r.item_id) && r.status !== 'Zurückgegeben');
+
+        const events = itemRentals.map(r => {
+            const borrower = allProfiles.find(p => p.id === r.user_id)?.full_name || 'Ausgeliehen';
+            const itemName = r.items?.name || r.item_id;
+            return {
+                id: r.id,
+                title: `${itemName} (${borrower})`,
+                start: r.start_date,
+                end: r.end_date,
+                backgroundColor: '#dc2626',
+                borderColor: '#b91c1c'
+            };
+        });
+
+        rentModalCalendar = new FullCalendar.Calendar(containerEl, {
+            initialView: 'dayGridMonth',
+            locale: 'de',
+            buttonText: { today: 'Heute', month: 'Monat', week: 'Woche' },
+            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
+            events: events,
+            height: 'auto'
+        });
+
+        rentModalCalendar.render();
     }
 
     function openRentModal(itemId, itemName) {
@@ -2068,17 +2109,33 @@ function populateAdminUserSelect() {
         document.getElementById('rentProject').value = '';
 
         const now = new Date();
+        now.setMinutes(0, 0, 0);
+        now.setHours(now.getHours() + 1);
+
         const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-        const formatISO = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        const formatLocalISO = (d) => {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hours = String(d.getHours()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:00`;
+        };
 
-        document.getElementById('rentStart').value = formatISO(now);
-        document.getElementById('rentEnd').value = formatISO(tomorrow);
+        document.getElementById('rentStart').value = formatLocalISO(now);
+        document.getElementById('rentEnd').value = formatLocalISO(tomorrow);
 
-        const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
-        document.getElementById('adminUserSelectGroup').classList.toggle('hidden', !isAdmin);
+        const canAssign = isManagerOrAdmin();
+        const adminGroup = document.getElementById('adminUserSelectGroup');
+        if (adminGroup) adminGroup.classList.toggle('hidden', !canAssign);
+
+        const itemIds = itemId.split(',').map(s => s.trim()).filter(Boolean);
+        renderRentModalCalendar(itemIds);
 
         document.getElementById('rentModal').classList.remove('hidden');
+        setTimeout(() => {
+            if (rentModalCalendar) rentModalCalendar.render();
+        }, 100);
     }
 
     function closeRentModal() {
@@ -2092,22 +2149,53 @@ function populateAdminUserSelect() {
         const start_date = document.getElementById('rentStart').value;
         const end_date = document.getElementById('rentEnd').value;
 
-        // DATUMS-VALIDIERUNG
         if (!start_date || !end_date) {
-            alert("⚠️ Bitte wähle sowohl ein Start- als auch ein Enddatum für die Ausleihe aus!");
-            return;
-        }
-        if (new Date(end_date) < new Date(start_date)) {
-            alert("⚠️ Ungültiger Zeitraum: Das Enddatum darf nicht vor dem Startdatum liegen!");
+            showAppAlert("⚠️ Bitte wähle sowohl ein Start- als auch ein Enddatum für die Ausleihe aus!", "Ungültige Datumsangabe");
             return;
         }
 
-        const isAdmin = userProfile?.role && userProfile.role.toLowerCase() === 'admin';
-        const selectedUserId = isAdmin ? document.getElementById('rentForUserId').value : currentUser.id;
-        const selectedUser = allProfiles.find(p => p.id === selectedUserId);
-        const userName = selectedUser?.full_name || currentUser.email;
+        const newStart = new Date(start_date);
+        const newEnd = new Date(end_date);
+
+        if (newEnd <= newStart) {
+            showAppAlert("⚠️ Ungültiger Zeitraum: Das Rückgabedatum muss nach dem Beginn liegen!", "Ungültiger Zeitraum");
+            return;
+        }
 
         const itemIds = itemIdsStr.split(',').map(s => s.trim()).filter(Boolean);
+
+        for (let id of itemIds) {
+            const overlapping = activeRentals.find(r => {
+                if (r.item_id !== id || r.status === 'Zurückgegeben') return false;
+                const existStart = new Date(r.start_date);
+                const existEnd = new Date(r.end_date);
+                return (newStart < existEnd) && (newEnd > existStart);
+            });
+
+            if (overlapping) {
+                const itemObj = allItems.find(i => i.id === id);
+                const itemName = itemObj ? itemObj.name : id;
+                const borrower = allProfiles.find(p => p.id === overlapping.user_id);
+                const borrowerName = borrower ? (borrower.full_name || 'einem anderen Nutzer') : 'einem anderen Nutzer';
+
+                const exStartStr = new Date(overlapping.start_date).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const exEndStr = new Date(overlapping.end_date).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                showAppAlert(`⚠️ Buchung abgelehnt!
+
+Der Artikel "${itemName}" ist im gewählten Zeitraum bereits durch ${borrowerName} ausgeliehen:
+
+📅 ${exStartStr} Uhr bis ${exEndStr} Uhr
+
+Bitte passe deinen Ausleihzeitraum an.`, "Überschneidung erkannt");
+                return;
+            }
+        }
+
+        const canAssign = isManagerOrAdmin();
+        const selectedUserId = canAssign ? document.getElementById('rentForUserId').value : currentUser.id;
+        const selectedUser = allProfiles.find(p => p.id === selectedUserId);
+        const userName = selectedUser?.full_name || currentUser.email;
 
         for (let id of itemIds) {
             const { error } = await db.from('rentals').insert([{
@@ -2120,7 +2208,8 @@ function populateAdminUserSelect() {
             }]);
 
             if (error) {
-                alert(`Fehler beim Buchen von ${id}:\n` + error.message);
+                showAppAlert(`Fehler beim Buchen von ${id}:
+` + error.message, "Fehler");
                 return;
             }
 
@@ -2133,10 +2222,11 @@ function populateAdminUserSelect() {
             }]);
         }
 
-        alert(`Erfolgreich gebucht (${itemIds.length} Artikel)!`);
-        closeRentModal();
-        clearSelection();
-        fetchAllData();
+        showAppAlert(`Erfolgreich gebucht (${itemIds.length} Artikel)!`, "Buchung erfolgreich", () => {
+            closeRentModal();
+            clearSelection();
+            fetchAllData();
+        });
     }
 
     function openReturnModal(rentalId, itemId) {
@@ -2212,7 +2302,7 @@ function populateAdminUserSelect() {
             action: hasDamage ? 'DEFECT_REPORTED' : 'RÜCKGABE',
             details: logDetails.length > 0 ? logDetails.join(' | ') : 'Ordnungsgemäß zurückgegeben (Status: Verfügbar)'
         }]);
-        alert("Rückgabe erfolgreich! Artikel steht wieder als 'Verfügbar' bereit.");
+        showAppAlert("Rückgabe erfolgreich! Artikel steht wieder als 'Verfügbar' bereit.");
         closeReturnModal();
         fetchAllData();
     }
@@ -2446,18 +2536,8 @@ function renderDashboardCalendar() {
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             events: events,
-            eventContent: function(arg) {
-                const title = arg.event.title;
-                return {
-                    html: `<div class="fc-event-main-frame flex items-center justify-between gap-1 px-1.5 py-0.5 cursor-pointer w-full overflow-hidden text-white font-medium text-xs">
-                        <span class="truncate">${title}</span>
-                        <span class="shrink-0 bg-white/20 hover:bg-white/40 text-[10px] px-1.5 py-0.5 rounded font-bold transition">Details ➔</span>
-                    </div>`
-                };
-            },
             eventClick: function(info) {
-                if (info.jsEvent) info.jsEvent.preventDefault();
-                if (info.event && info.event.extendedProps) {
+                if (info.event.extendedProps) {
                     openCalendarEventDetailModal(info.event.extendedProps);
                 }
             },
@@ -2474,24 +2554,14 @@ function renderDashboardCalendar() {
 
         const events = buildCalendarEvents();
 
-        calendar = new FullCalendar.Calendar(calendarEl, {
+        modalCalendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'de',
             buttonText: { today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             events: events,
-            eventContent: function(arg) {
-                const title = arg.event.title;
-                return {
-                    html: `<div class="fc-event-main-frame flex items-center justify-between gap-1 px-1.5 py-0.5 cursor-pointer w-full overflow-hidden text-white font-medium text-xs">
-                        <span class="truncate">${title}</span>
-                        <span class="shrink-0 bg-white/20 hover:bg-white/40 text-[10px] px-1.5 py-0.5 rounded font-bold transition">Details ➔</span>
-                    </div>`
-                };
-            },
             eventClick: function(info) {
-                if (info.jsEvent) info.jsEvent.preventDefault();
-                if (info.event && info.event.extendedProps) {
+                if (info.event.extendedProps) {
                     openCalendarEventDetailModal(info.event.extendedProps);
                 }
             },
@@ -2746,146 +2816,11 @@ function renderDashboardCalendar() {
                 }]);
             }
 
-            alert("Neuer Benutzer erfolgreich angelegt!");
+            showAppAlert("Neuer Benutzer erfolgreich angelegt!");
             closeNewUserModal();
             fetchAllUsers();
         } catch (err) {
-            alert("Fehler beim Anlegen des Benutzers:\n" + (err.message || err));
+            showAppAlert("Fehler beim Anlegen des Benutzers:\n" + (err.message || err));
         }
     }
-
-    async function runAiDiagnosticScan() {
-        const container = document.getElementById('diagnosticResults');
-        if (!container) return;
-
-        container.innerHTML = `
-            <div class="flex items-center gap-2 text-emerald-600 font-semibold p-2 bg-emerald-50 rounded-xl animate-pulse">
-                <span>⚡ KI-System-Diagnose läuft... Analyse aller Code-Funktionen & Supabase-Werte...</span>
-            </div>
-        `;
-
-        setTimeout(async () => {
-            let logs = [];
-
-            if (db) {
-                logs.push(`<div class="flex items-center gap-2 text-slate-700"><span>✅</span> <strong>Supabase Client:</strong> Verbunden (${SUPABASE_URL})</div>`);
-            } else {
-                logs.push(`<div class="flex items-center gap-2 text-red-600"><span>❌</span> <strong>Supabase Client:</strong> Nicht initialisiert!</div>`);
-            }
-
-            if (currentUser) {
-                const roleLabel = (userProfile?.role || 'user').toUpperCase();
-                logs.push(`<div class="flex items-center gap-2 text-slate-700"><span>👤</span> <strong>Aktiver Benutzer:</strong> ${userProfile?.full_name || currentUser.email} (${roleLabel})</div>`);
-            } else {
-                logs.push(`<div class="flex items-center gap-2 text-amber-600"><span>⚠️</span> <strong>Nutzer-Session:</strong> Nicht angemeldet</div>`);
-            }
-
-            const currentRoomName = selectedRoom || 'Alle Räume';
-            logs.push(`<div class="flex items-center gap-2 text-slate-700"><span>📊</span> <strong>Geladene Artikel:</strong> ${allItems.length} Objekte im Raum '${currentRoomName}'</div>`);
-
-            const trueActiveRentals = (activeRentals || []).filter(r => r.status !== 'Zurückgegeben');
-            logs.push(`<div class="flex items-center gap-2 text-slate-700"><span>📦</span> <strong>Aktive Ausleihen:</strong> ${trueActiveRentals.length} laufende Leihen</div>`);
-
-            let inconsistentCount = 0;
-            allItems.forEach(item => {
-                const isRented = trueActiveRentals.some(r => r.item_id === item.id);
-                if (isRented && item.status === 'Verfügbar') inconsistentCount++;
-                if (!isRented && item.status === 'Ausgeliehen') inconsistentCount++;
-            });
-
-            if (inconsistentCount > 0) {
-                logs.push(`
-                    <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-2 mt-2">
-                        <div class="font-bold text-amber-800 flex items-center gap-1.5">
-                            <span>⚠️</span> <span>Status-Abweichungen erkannt: ${inconsistentCount} Objekt(e) haben abweichende Statuswerte.</span>
-                        </div>
-                        <button onclick="repairStatusInconsistencies()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-sm">
-                            🔧 Status-Inkonsistenzen jetzt automatisch reparieren
-                        </button>
-                    </div>
-                `);
-            } else {
-                logs.push(`<div class="flex items-center gap-2 text-emerald-700 font-semibold pt-1"><span>✨</span> <strong>Code & Datenintegrität:</strong> 100% Fehlerfrei (Keine Abweichungen)</div>`);
-            }
-
-            container.innerHTML = logs.join('');
-        }, 300);
-    }
-
-    async function repairStatusInconsistencies() {
-        const trueActiveRentals = (activeRentals || []).filter(r => r.status !== 'Zurückgegeben');
-        let repaired = 0;
-
-        for (let item of allItems) {
-            const isRented = trueActiveRentals.some(r => r.item_id === item.id);
-            if (isRented && item.status === 'Verfügbar') {
-                await db.from('items').update({ status: 'Ausgeliehen' }).eq('id', item.id);
-                repaired++;
-            } else if (!isRented && item.status === 'Ausgeliehen') {
-                await db.from('items').update({ status: 'Verfügbar' }).eq('id', item.id);
-                repaired++;
-            }
-        }
-
-        alert(`${repaired} Status-Inkonsistenzen wurden erfolgreich in der Datenbank korrigiert!`);
-        fetchAllData();
-        runAiDiagnosticScan();
-    }
-
-    async function sendHelpTicketToAiBot() {
-        const input = document.getElementById('helpTicketText');
-        const message = input ? input.value.trim() : '';
-
-        if (!message) {
-            alert("Bitte beschreibe dein Problem oder deine Frage vor dem Absenden.");
-            return;
-        }
-
-        if (!currentUser) {
-            alert("Bitte melde dich an, um ein Support-Ticket zu senden.");
-            return;
-        }
-
-        const roomInfo = selectedRoom || 'Alle';
-        const roleInfo = (userProfile?.role || 'user').toUpperCase();
-
-        try {
-            await db.from('chat_messages').insert([{
-                sender_id: currentUser.id,
-                sender_name: userProfile?.full_name || currentUser.email,
-                recipient_id: SYSTEM_BOT_ID,
-                message: `[SUPPORT-TICKET M4] ${message} (Info: Raum: '${roomInfo}', Rolle: '${roleInfo}', Artikel: ${allItems.length})`
-            }]);
-
-            await db.from('chat_messages').insert([{
-                sender_id: SYSTEM_BOT_ID,
-                sender_name: '🤖 System-Benachrichtigung',
-                recipient_id: currentUser.id,
-                message: `🤖 KI-Support-Bot: Dein Ticket ("${message.substring(0, 40)}...") wurde registriert. Die System-Diagnose wurde gestartet (Raum: ${roomInfo}). Falls du Status-Probleme hast, führe die '⚡ KI-Diagnose' im Hilfe-Tab aus.`
-            }]);
-
-            if (input) input.value = '';
-
-            alert("Support-Ticket wurde erfolgreich übermittelt! Der KI-Bot hat im Chat geantwortet.");
-            
-            switchTab('chat');
-            const select = document.getElementById('chatRecipientSelect');
-            if (select) {
-                select.value = SYSTEM_BOT_ID;
-                loadChatMessages();
-            }
-        } catch (err) {
-            alert("Fehler beim Absenden des Tickets: " + err.message);
-        }
-    }
-
-    window.runAiDiagnosticScan = runAiDiagnosticScan;
-    window.sendHelpTicketToAiBot = sendHelpTicketToAiBot;
-    window.repairStatusInconsistencies = repairStatusInconsistencies;
-    window.openCalendarEventDetailModal = openCalendarEventDetailModal;
-    window.closeCalendarEventDetailModal = closeCalendarEventDetailModal;
-    window.exportToGoogleCalendar = exportToGoogleCalendar;
-    window.downloadIcsFile = downloadIcsFile;
-    window.openItemFromCalModal = openItemFromCalModal;
-
 </script>
