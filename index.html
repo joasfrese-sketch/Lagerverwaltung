@@ -120,16 +120,6 @@
 </script>
 
 <!-- 1. LOGIN / REGISTRIERUNG -->
-
-<!-- STICKY IMPERSONATION BANNER -->
-<div id="impersonationBanner" class="hidden fixed top-0 left-0 right-0 z-50 bg-amber-500 text-slate-950 font-bold px-4 py-2 text-xs flex items-center justify-between shadow-lg">
-    <div class="flex items-center gap-2">
-        <span class="text-base">🎭</span>
-        <span>PERSPEKTIVE AKTIV: Du agierst aktuell als <strong id="impersonatedUserName" class="underline"></strong> (<span id="impersonatedUserRole"></span>)</span>
-    </div>
-    <button onclick="stopImpersonation()" class="bg-slate-900 text-white hover:bg-slate-800 px-3 py-1 rounded-lg text-xs font-semibold shadow transition">✕ Perspektive beenden</button>
-</div>
-
 <div id="loginScreen" class="fixed inset-0 bg-[#0f172a] z-50 flex items-center justify-center p-4">
     <div class="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl">
         <div class="bg-[#0f172a] p-8 text-center border-b border-slate-800 flex flex-col items-center">
@@ -178,6 +168,18 @@
 <div id="sidebarOverlay" onclick="closeSidebar()" class="hidden fixed inset-0 bg-slate-900/60 z-30 md:hidden backdrop-blur-sm transition-opacity"></div>
 
 <!-- 2. HAUPTANWENDUNG -->
+
+<!-- FIXED TOP IMPERSONATION BANNER -->
+<div id="impersonationBanner" class="hidden sticky top-0 z-50 bg-amber-500 text-slate-900 px-4 py-2 text-xs font-bold shadow-md flex items-center justify-between">
+    <div class="flex items-center gap-2">
+        <span class="text-base">🎭</span>
+        <span>PERSPEKTIVE AKTIV: Du agierst aktuell als <span id="impersonatedUserName" class="underline">Benutzer</span> (<span id="impersonatedUserRole">USER</span>)</span>
+    </div>
+    <button onclick="stopImpersonation()" class="bg-slate-900 text-white hover:bg-slate-800 px-3 py-1 rounded-lg text-xs font-semibold shadow transition">
+        ✕ Perspektive beenden
+    </button>
+</div>
+
 <div id="appLayout" class="hidden flex-1 flex min-h-screen relative">
     
     <!-- SIDEBAR -->
@@ -783,8 +785,7 @@
             <div class="grid grid-cols-3 gap-2">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase">Detail-Raum</label>
-                    <div id="customAttributesContainer" class="space-y-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100"></div>
-<input type="text" id="itemRoomInput" placeholder="Raum 101" class="w-full bg-slate-50 border rounded-xl p-2 text-xs">
+                    <input type="text" id="itemRoomInput" placeholder="Raum 101" class="w-full bg-slate-50 border rounded-xl p-2 text-xs">
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase">Regal</label>
@@ -837,20 +838,33 @@
     </div>
 </div>
 
-<!-- MODAL: AUSLEIHE -->
 
 <!-- IN-APP ALERT MODAL -->
 <div id="appAlertModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl border border-slate-100 text-center">
-        <div id="appAlertIcon" class="text-4xl">⚠️</div>
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center border border-slate-100">
+        <div id="appAlertIcon" class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl mx-auto">ℹ️</div>
         <h3 id="appAlertTitle" class="text-base font-bold text-slate-800">Hinweis</h3>
-        <p id="appAlertMessage" class="text-xs text-slate-600 leading-relaxed"></p>
-        <button onclick="closeAppAlert()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-md">
-            OK / Verstanden
-        </button>
+        <p id="appAlertMessage" class="text-xs text-slate-600 leading-relaxed max-h-48 overflow-y-auto"></p>
+        <button onclick="closeAppAlert()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2.5 rounded-xl transition">OK / Verstanden</button>
     </div>
 </div>
 
+
+<!-- MODAL: RAUM BAUKASTEN -->
+<div id="roomBaukastenModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-2xl w-full space-y-4 shadow-2xl">
+        <div class="flex justify-between items-center border-b pb-3">
+            <h3 class="text-base font-bold text-slate-800">🏢 Raum- & Variable-Baukasten Manager</h3>
+            <button onclick="closeRoomBaukastenModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+        </div>
+        <p class="text-xs text-slate-500">Definiere hier dynamische Variablen für verschiedene Raum-Klassen.</p>
+        <div class="flex justify-end pt-3 border-t">
+            <button onclick="closeRoomBaukastenModal()" class="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-xl">Fertig</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: AUSLEIHE -->
 <div id="rentModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
         <h3 id="rentModalTitle" class="text-lg font-bold text-slate-800">Artikel ausleihen</h3>
@@ -885,6 +899,29 @@
     </div>
 </div>
 
+
+<!-- MODAL: VERBRAUCHSMATERIAL ENTNEHMEN -->
+<div id="consumeModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
+        <h3 id="consumeModalTitle" class="text-base font-bold text-slate-800">📦 Verbrauchsmaterial entnehmen</h3>
+        <form onsubmit="confirmConsume(event)" class="space-y-3 text-xs">
+            <input type="hidden" id="consumeItemId">
+            <div>
+                <label class="block font-bold text-slate-500 uppercase mb-1">Entnahmemenge</label>
+                <input type="number" id="consumeQuantity" min="1" value="1" required class="w-full bg-slate-50 border rounded-xl p-2.5">
+            </div>
+            <div>
+                <label class="block font-bold text-slate-500 uppercase mb-1">Verwendungszweck / Projekt</label>
+                <input type="text" id="consumeProject" placeholder="z. B. Kabel nachbestellt" class="w-full bg-slate-50 border rounded-xl p-2.5">
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button type="button" onclick="closeConsumeModal()" class="px-4 py-2 border rounded-xl">Abbrechen</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white font-bold rounded-xl">Entnahme Buchen</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- MODAL: RÜCKGABE -->
 <div id="returnModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
@@ -907,6 +944,11 @@
                 </label>
                 <div id="damageFields" class="hidden space-y-2">
                     <textarea id="damageReport" placeholder="Beschreibe den Defekt..." class="w-full border p-2 rounded-xl text-xs outline-none h-20"></textarea>
+
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">📸 Schadensfotos hinzufügen</label>
+                        <input type="file" id="damagePhotoInput" accept="image/*" capture="environment" multiple onchange="handleDamagePhotos(event)" class="text-xs text-slate-500">
+                    </div>
                 </div>
             </div>
 
@@ -945,59 +987,6 @@
 </div>
 
 <!-- MODAL: NEUER BENUTZER -->
-
-<!-- MODAL: ROOM BAUKASTEN MANAGER (ADMIN) -->
-<div id="roomBaukastenModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl border border-slate-100">
-        <div class="flex justify-between items-center border-b pb-3">
-            <h3 class="text-base font-bold text-slate-800">🏢 Raum- & Baukasten-Manager</h3>
-            <button onclick="closeRoomBaukastenModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
-        </div>
-
-        <p class="text-xs text-slate-500">Definiere Räume und erstelle per Baukasten benutzerdefinierte Variablen für jede Raumklasse.</p>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="space-y-2 border-r pr-3">
-                <h4 class="text-xs font-bold text-slate-700 uppercase">Räume</h4>
-                <div id="baukastenRoomList" class="space-y-1"></div>
-                <button onclick="addNewBaukastenRoomPrompt()" class="w-full mt-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold py-2 rounded-xl border border-indigo-200">
-                    ➕ Neuer Raum
-                </button>
-            </div>
-
-            <div class="md:col-span-2 space-y-3">
-                <h4 id="selectedBaukastenRoomTitle" class="text-xs font-bold text-slate-800">Baukasten-Variablen für Raum</h4>
-                <div id="baukastenFieldsList" class="space-y-2 max-h-60 overflow-y-auto border p-2 rounded-xl bg-slate-50"></div>
-
-                <div class="p-3 bg-slate-100 rounded-xl space-y-2">
-                    <h5 class="text-[11px] font-bold text-slate-700">Neue Variable hinzufügen:</h5>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="text" id="newFieldKey" placeholder="Feld-ID (z. B. isbn)" class="bg-white border rounded-lg p-1.5 text-xs">
-                        <input type="text" id="newFieldLabel" placeholder="Anzeigename (z. B. ISBN)" class="bg-white border rounded-lg p-1.5 text-xs">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <select id="newFieldType" class="bg-white border rounded-lg p-1.5 text-xs">
-                            <option value="text">Textfeld</option>
-                            <option value="number">Zahlenfeld</option>
-                            <option value="date">Datum</option>
-                            <option value="boolean">Ja/Nein Schalter</option>
-                        </select>
-                        <button onclick="addBaukastenFieldToCurrentRoom()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-1.5 rounded-lg">
-                            Hinzufügen
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex justify-end pt-2">
-                    <button onclick="saveCurrentBaukastenRoom()" class="px-4 py-2 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl">
-                        Baukasten Speichern
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div id="newUserModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
         <h3 class="text-lg font-bold text-slate-800">Neuen Benutzer anlegen</h3>
@@ -1311,7 +1300,7 @@
                     email, password, options: { data: { full_name: fullName || email.split('@')[0], role: 'user' } }
                 });
                 if (error) throw error;
-                alert("Konto erfolgreich registriert! Du kannst dich jetzt anmelden.");
+                showAppAlert("Konto erfolgreich registriert! Du kannst dich jetzt anmelden.");
                 toggleAuthMode();
             } else {
                 const { data, error } = await db.auth.signInWithPassword({ email, password });
@@ -1319,7 +1308,7 @@
                 await loadUserProfile(data.user);
             }
         } catch (err) {
-            alert("Anmeldung/Registrierung fehlgeschlagen:\n" + (err.message || err));
+            showAppAlert("Anmeldung/Registrierung fehlgeschlagen:\n" + (err.message || err));
         }
     }
 
@@ -1349,7 +1338,7 @@
                 await db.from('items').update({ status: 'Ausgeliehen' }).eq('id', item.id);
             }
         }
-        alert("Status-Inkonsistenzen wurden erfolgreich korrigiert!");
+        showAppAlert("Status-Inkonsistenzen wurden erfolgreich korrigiert!");
         fetchAllData();
     }
 
@@ -1430,7 +1419,7 @@ async function loadUserProfile(user) {
         const currIdx = roles.indexOf((currentRole || 'user').toLowerCase());
         const newRole = roles[(currIdx + 1) % roles.length];
         await db.from('profiles').update({ role: newRole }).eq('id', userId);
-        alert(`Rolle erfolgreich geändert auf: ${newRole.toUpperCase()}`);
+        showAppAlert(`Rolle erfolgreich geändert auf: ${newRole.toUpperCase()}`);
         fetchAllUsers();
     }
 
@@ -1731,7 +1720,7 @@ function populateAdminUserSelect() {
 
         clearSelection();
         fetchAllData();
-        alert(`Status für ${ids.length} Objekt(e) geändert auf: ${newStatus}`);
+        showAppAlert(`Status für ${ids.length} Objekt(e) geändert auf: ${newStatus}`);
     }
 
     function bulkRentModal() {
@@ -1778,7 +1767,7 @@ function populateAdminUserSelect() {
             const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
 
             if (jsonData.length === 0) {
-                alert("Keine Daten in der Excel-Datei gefunden!");
+                showAppAlert("Keine Daten in der Excel-Datei gefunden!");
                 return;
             }
 
@@ -1874,7 +1863,7 @@ function populateAdminUserSelect() {
             const { error } = await db.from('items').upsert(batch);
 
             if (error) {
-                alert(`Fehler beim Importieren ab Eintrag ${i + 1}:\n` + error.message);
+                showAppAlert(`Fehler beim Importieren ab Eintrag ${i + 1}:\n` + error.message);
                 btn.innerText = 'Import Durchführen';
                 btn.disabled = false;
                 return;
@@ -1885,7 +1874,7 @@ function populateAdminUserSelect() {
         btn.innerText = 'Import Durchführen';
         btn.disabled = false;
 
-        alert(`Erfolgreich ${successCount} Objekte mit neu generierten IDs importiert!`);
+        showAppAlert(`Erfolgreich ${successCount} Objekte mit neu generierten IDs importiert!`);
         closeExcelImportModal();
         fetchAllData();
     }
@@ -1968,7 +1957,7 @@ function populateAdminUserSelect() {
 
     function addPhotoData(data) {
         if (currentPhotos.length >= 5) {
-            alert("Maximal 5 Fotos pro Artikel!");
+            showAppAlert("Maximal 5 Fotos pro Artikel!");
             return;
         }
         currentPhotos.push(data);
@@ -2088,7 +2077,7 @@ function populateAdminUserSelect() {
         submitBtn.innerText = 'Speichern';
 
         if (error) {
-            alert("Fehler beim Speichern:\n" + error.message);
+            showAppAlert("Fehler beim Speichern:\n" + error.message);
             return;
         }
 
@@ -2100,7 +2089,7 @@ function populateAdminUserSelect() {
         if (confirm(`Möchtest du den Artikel '${id}' wirklich löschen?`)) {
             const { error } = await db.from('items').delete().eq('id', id);
             if (error) {
-                alert("Fehler beim Löschen:\n" + error.message);
+                showAppAlert("Fehler beim Löschen:\n" + error.message);
                 return;
             }
             selectedItemIds.delete(id);
@@ -2140,11 +2129,11 @@ function populateAdminUserSelect() {
 
         // DATUMS-VALIDIERUNG
         if (!start_date || !end_date) {
-            alert("⚠️ Bitte wähle sowohl ein Start- als auch ein Enddatum für die Ausleihe aus!");
+            showAppAlert("⚠️ Bitte wähle sowohl ein Start- als auch ein Enddatum für die Ausleihe aus!");
             return;
         }
         if (new Date(end_date) < new Date(start_date)) {
-            alert("⚠️ Ungültiger Zeitraum: Das Enddatum darf nicht vor dem Startdatum liegen!");
+            showAppAlert("⚠️ Ungültiger Zeitraum: Das Enddatum darf nicht vor dem Startdatum liegen!");
             return;
         }
 
@@ -2166,7 +2155,7 @@ function populateAdminUserSelect() {
             }]);
 
             if (error) {
-                alert(`Fehler beim Buchen von ${id}:\n` + error.message);
+                showAppAlert(`Fehler beim Buchen von ${id}:\n` + error.message);
                 return;
             }
 
@@ -2179,7 +2168,7 @@ function populateAdminUserSelect() {
             }]);
         }
 
-        alert(`Erfolgreich gebucht (${itemIds.length} Artikel)!`);
+        showAppAlert(`Erfolgreich gebucht (${itemIds.length} Artikel)!`);
         closeRentModal();
         clearSelection();
         fetchAllData();
@@ -2258,7 +2247,7 @@ function populateAdminUserSelect() {
             action: hasDamage ? 'DEFECT_REPORTED' : 'RÜCKGABE',
             details: logDetails.length > 0 ? logDetails.join(' | ') : 'Ordnungsgemäß zurückgegeben (Status: Verfügbar)'
         }]);
-        alert("Rückgabe erfolgreich! Artikel steht wieder als 'Verfügbar' bereit.");
+        showAppAlert("Rückgabe erfolgreich! Artikel steht wieder als 'Verfügbar' bereit.");
         closeReturnModal();
         fetchAllData();
     }
@@ -2772,107 +2761,65 @@ function renderDashboardCalendar() {
                 }]);
             }
 
-            alert("Neuer Benutzer erfolgreich angelegt!");
+            showAppAlert("Neuer Benutzer erfolgreich angelegt!");
             closeNewUserModal();
             fetchAllUsers();
         } catch (err) {
-            alert("Fehler beim Anlegen des Benutzers:\n" + (err.message || err));
+            showAppAlert("Fehler beim Anlegen des Benutzers:\n" + (err.message || err));
         }
     }
 
+    // IN-APP BENACHRICHTIGUNGEN
+    function showAppAlert(message, title = 'Hinweis', icon = 'ℹ️') {
+        const modal = document.getElementById('appAlertModal');
+        if (!modal) return;
+        document.getElementById('appAlertTitle').innerText = title;
+        document.getElementById('appAlertMessage').innerText = message;
+        document.getElementById('appAlertIcon').innerText = icon;
+        modal.classList.remove('hidden');
+    }
 
-    // ==========================================
-    // IMPERSONATION (PERSPKETIVEN-WECHSEL) LOGIK
-    // ==========================================
-    let impersonatedUserProfile = null;
+    function closeAppAlert() {
+        const modal = document.getElementById('appAlertModal');
+        if (modal) modal.classList.add('hidden');
+    }
 
+    // IMPERSONATION HELPER
+    let impersonatedUser = null;
     function getActiveProfile() {
-        return impersonatedUserProfile || userProfile;
+        return impersonatedUser || userProfile;
     }
 
-    function getActiveUserId() {
-        const p = getActiveProfile();
-        return p ? p.id : currentUser?.id;
-    }
-
-    function startImpersonation(targetUserId) {
-        const target = allProfiles.find(p => p.id === targetUserId);
-        if (!target) {
-            showAppAlert("Benutzerprofil nicht gefunden.", "Fehler", "❌");
-            return;
-        }
-        impersonatedUserProfile = target;
-        document.getElementById('impersonatedUserName').innerText = target.full_name || target.email || target.id;
+    function startImpersonation(userId) {
+        const target = allProfiles.find(p => p.id === userId);
+        if (!target) return;
+        impersonatedUser = target;
+        document.getElementById('impersonatedUserName').innerText = target.full_name || target.email;
         document.getElementById('impersonatedUserRole').innerText = (target.role || 'user').toUpperCase();
         document.getElementById('impersonationBanner').classList.remove('hidden');
-        
-        showAppAlert(`Du agierst jetzt als '${target.full_name || target.id}'. Alle Ausleihen und Ansichten spiegeln diese Identität wider.`, "Perspektiven-Wechsel", "🎭");
-        
-        refreshUIForActiveProfile();
+        showAppAlert(`Du agierst jetzt in der Perspektive von ${target.full_name || target.email}.`, 'Perspektive Gewechselt', '🎭');
+        renderMyRentals();
     }
 
     function stopImpersonation() {
-        impersonatedUserProfile = null;
+        impersonatedUser = null;
         document.getElementById('impersonationBanner').classList.add('hidden');
-        showAppAlert("Perspektive beendet. Du agierst wieder als Admin/Manager.", "Info", "ℹ️");
-        refreshUIForActiveProfile();
-    }
-
-    function refreshUIForActiveProfile() {
-        if (typeof populateAdminUserSelect === 'function') populateAdminUserSelect();
-        if (typeof renderMyRentals === 'function') renderMyRentals();
-        if (typeof renderCards === 'function') renderCards(allItems);
-        if (typeof renderUsersTable === 'function') renderUsersTable();
-        if (calendar) renderDashboardCalendar();
+        showAppAlert('Du agierst wieder in deiner eigenen Identität.', 'Perspektive Beendet', '👤');
+        renderMyRentals();
     }
 
     function isManagerOrAdminForRoom(roomName) {
-        const profile = getActiveProfile();
-        if (!profile || !profile.role) return false;
-        const r = profile.role.toLowerCase();
+        const p = getActiveProfile();
+        if (!p || !p.role) return false;
+        const r = p.role.toLowerCase();
         if (r === 'admin') return true;
         if (r === 'raum_manager' || r === 'raummanager') {
-            if (!profile.managed_room || profile.managed_room === 'ALL') return true;
-            return profile.managed_room.toLowerCase() === (roomName || '').toLowerCase();
+            if (!p.managed_room || p.managed_room === roomName || roomName === 'ALL') return true;
         }
         return false;
     }
 
-    // ==========================================
-    // IN-APP NOTIFICATIONS (showAppAlert)
-    // ==========================================
-    function showAppAlert(msg, title = "Hinweis", icon = "ℹ️") {
-        const titleEl = document.getElementById('appAlertTitle');
-        const msgEl = document.getElementById('appAlertMessage');
-        const iconEl = document.getElementById('appAlertIcon');
-        const modalEl = document.getElementById('appAlertModal');
-        if (titleEl) titleEl.innerText = title;
-        if (msgEl) msgEl.innerText = msg;
-        if (iconEl) iconEl.innerText = icon;
-        if (modalEl) modalEl.classList.remove('hidden');
-    }
-
-    function closeAppAlert() {
-        const modalEl = document.getElementById('appAlertModal');
-        if (modalEl) modalEl.classList.add('hidden');
-    }
-
-    // ==========================================
-    // RAUM-BAUKASTEN MANAGER LOGIK
-    // ==========================================
-    let allRoomDefinitions = [
-        { id: 'Bibliothek', name: 'Bibliothek', field_definitions: [{ key: 'isbn', label: 'ISBN-Nummer', type: 'text' }, { key: 'author', label: 'Autor', type: 'text' }] },
-        { id: 'Freizeitheimlager', name: 'Freizeitheimlager', field_definitions: [{ key: 'material', label: 'Material', type: 'text' }] },
-        { id: 'Küche', name: 'Küche', field_definitions: [{ key: 'power_watt', label: 'Leistung (Watt)', type: 'number' }] },
-        { id: 'Technik', name: 'Technik', field_definitions: [{ key: 'voltage', label: 'Spannung (Volt)', type: 'text' }] },
-        { id: 'Büro', name: 'Büro', field_definitions: [{ key: 'sn', label: 'Seriennummer', type: 'text' }] }
-    ];
-    let selectedBaukastenRoomId = 'Bibliothek';
-    let currentEditingItemCustomAttrs = {};
-
     function openRoomBaukastenModal() {
-        renderBaukastenRoomList();
-        renderBaukastenFieldsForSelectedRoom();
         document.getElementById('roomBaukastenModal').classList.remove('hidden');
     }
 
@@ -2880,225 +2827,57 @@ function renderDashboardCalendar() {
         document.getElementById('roomBaukastenModal').classList.add('hidden');
     }
 
-    function renderBaukastenRoomList() {
-        const listEl = document.getElementById('baukastenRoomList');
-        if (!listEl) return;
-        listEl.innerHTML = '';
-        allRoomDefinitions.forEach(r => {
-            const isSel = r.id === selectedBaukastenRoomId;
-            listEl.innerHTML += `
-                <button onclick="selectBaukastenRoom('${r.id}')" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition ${isSel ? 'bg-indigo-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}">
-                    🏢 ${r.name}
-                </button>
-            `;
-        });
-    }
-
-    function selectBaukastenRoom(roomId) {
-        selectedBaukastenRoomId = roomId;
-        renderBaukastenRoomList();
-        renderBaukastenFieldsForSelectedRoom();
-    }
-
-    function renderBaukastenFieldsForSelectedRoom() {
-        const titleEl = document.getElementById('selectedBaukastenRoomTitle');
-        const fieldsListEl = document.getElementById('baukastenFieldsList');
-        if (!titleEl || !fieldsListEl) return;
-
-        const roomDef = allRoomDefinitions.find(r => r.id === selectedBaukastenRoomId);
-        if (!roomDef) return;
-
-        titleEl.innerText = `Baukasten-Variablen für Raum: ${roomDef.name}`;
-        fieldsListEl.innerHTML = '';
-
-        if (!roomDef.field_definitions || roomDef.field_definitions.length === 0) {
-            fieldsListEl.innerHTML = '<p class="text-xs text-slate-400 italic p-2">Keine benutzerdefinierten Variablen für diesen Raum angelegt.</p>';
-            return;
-        }
-
-        roomDef.field_definitions.forEach((f, idx) => {
-            fieldsListEl.innerHTML += `
-                <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200 text-xs">
-                    <div>
-                        <span class="font-bold text-slate-800">${f.label}</span>
-                        <span class="text-[10px] text-slate-400 ml-2">(${f.key} • ${f.type})</span>
-                    </div>
-                    <button onclick="removeBaukastenFieldFromRoom(${idx})" class="text-red-500 hover:text-red-700 font-bold px-2">✕</button>
-                </div>
-            `;
-        });
-    }
-
-    function addBaukastenFieldToCurrentRoom() {
-        const keyInput = document.getElementById('newFieldKey');
-        const labelInput = document.getElementById('newFieldLabel');
-        const typeInput = document.getElementById('newFieldType');
-
-        const key = keyInput.value.trim().toLowerCase().replace(/\s+/g, '_');
-        const label = labelInput.value.trim();
-        const type = typeInput.value;
-
-        if (!key || !label) {
-            showAppAlert("Bitte sowohl Feld-ID als auch Anzeigename ausfüllen!", "Fehler", "⚠️");
-            return;
-        }
-
-        const roomDef = allRoomDefinitions.find(r => r.id === selectedBaukastenRoomId);
-        if (roomDef) {
-            if (!roomDef.field_definitions) roomDef.field_definitions = [];
-            roomDef.field_definitions.push({ key, label, type });
-            keyInput.value = '';
-            labelInput.value = '';
-            renderBaukastenFieldsForSelectedRoom();
-            showAppAlert(`Variable '${label}' hinzugefügt!`, "Erfolg", "✅");
-        }
-    }
-
-    function removeBaukastenFieldFromRoom(idx) {
-        const roomDef = allRoomDefinitions.find(r => r.id === selectedBaukastenRoomId);
-        if (roomDef && roomDef.field_definitions) {
-            roomDef.field_definitions.splice(idx, 1);
-            renderBaukastenFieldsForSelectedRoom();
-        }
-    }
-
-    function saveCurrentBaukastenRoom() {
-        showAppAlert("Raum-Baukasten erfolgreich gespeichert!", "Erfolg", "✅");
-        closeRoomBaukastenModal();
-    }
-
-    function addNewBaukastenRoomPrompt() {
-        const name = prompt("Name des neuen Raumes (z. B. Musiksaal, Werkstatt):");
-        if (name && name.trim()) {
-            const cleanName = name.trim();
-            if (!allRoomDefinitions.some(r => r.name.toLowerCase() === cleanName.toLowerCase())) {
-                allRoomDefinitions.push({
-                    id: cleanName,
-                    name: cleanName,
-                    field_definitions: []
-                });
-                selectedBaukastenRoomId = cleanName;
-                renderBaukastenRoomList();
-                renderBaukastenFieldsForSelectedRoom();
-
-                const sel = document.getElementById('itemMainCategory');
-                if (sel) {
-                    sel.innerHTML += `<option value="${cleanName}">${cleanName}</option>`;
-                }
-                showAppAlert(`Raum '${cleanName}' angelegt!`, "Erfolg", "✅");
-            }
-        }
-    }
-
     function renderDynamicRoomFields() {
-        const roomSelect = document.getElementById('itemMainCategory');
         const container = document.getElementById('customAttributesContainer');
-        if (!container || !roomSelect) return;
-
-        const roomName = roomSelect.value;
-        const roomDef = allRoomDefinitions.find(r => r.name === roomName || r.id === roomName);
-        container.innerHTML = '';
-
-        if (!roomDef || !roomDef.field_definitions || roomDef.field_definitions.length === 0) {
-            container.innerHTML = '<p class="text-xs text-slate-400 italic">Keine spezifischen Baukasten-Variablen für diesen Raum definiert.</p>';
-            return;
-        }
-
-        container.innerHTML = '<p class="text-[10px] font-bold text-indigo-800 uppercase tracking-wider mb-2">🏢 Raum-Spezifische Baukasten-Felder</p>';
-
-        roomDef.field_definitions.forEach(field => {
-            const val = currentEditingItemCustomAttrs[field.key] || '';
-            let inputHtml = '';
-
-            if (field.type === 'boolean') {
-                inputHtml = `
-                    <label class="flex items-center gap-2 cursor-pointer pt-1">
-                        <input type="checkbox" id="custom_attr_${field.key}" ${val ? 'checked' : ''} class="rounded text-emerald-600 focus:ring-emerald-500">
-                        <span class="text-xs text-slate-700 font-medium">${field.label}</span>
-                    </label>
-                `;
-            } else {
-                inputHtml = `
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">${field.label}</label>
-                    <input type="${field.type || 'text'}" id="custom_attr_${field.key}" value="${val}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500">
-                `;
-            }
-
-            container.innerHTML += `<div class="space-y-1">${inputHtml}</div>`;
-        });
+        if (container) container.classList.remove('hidden');
     }
 
-    // AI DIAGNOSTICS & HELP TICKET
-    async function runAiDiagnosticScan() {
-        const container = document.getElementById('diagnosticResults');
-        if (!container) return;
-
-        container.innerHTML = '<p class="p-2 text-indigo-600 animate-pulse">⚡ KI-Diagnosescan läuft...</p>';
-
-        setTimeout(() => {
-            const activeCount = activeRentals.length;
-            const itemsCount = allItems.length;
-            const prof = getActiveProfile();
-
-            container.innerHTML = `
-                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
-                    <div class="flex justify-between font-bold text-slate-800"><span>Supabase Backend:</span> <span class="text-emerald-600">✅ Verbunden (200 OK)</span></div>
-                    <div class="flex justify-between font-bold text-slate-800"><span>Aktive Identität:</span> <span class="text-indigo-600">${prof?.full_name || 'Anonym'} (${(prof?.role || 'user').toUpperCase()})</span></div>
-                    <div class="flex justify-between text-slate-600"><span>Geladener Bestand:</span> <span>${itemsCount} Objekte</span></div>
-                    <div class="flex justify-between text-slate-600"><span>Aktive Ausleihen:</span> <span>${activeCount} Buchungen</span></div>
-                    <div class="pt-2 border-t flex justify-between items-center">
-                        <span class="text-slate-700 font-semibold">Status-Inkonsistenzen:</span>
-                        <button onclick="repairStatusInconsistencies()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded-lg text-[10px]">
-                            0 Konflikte • Auto-Sync
-                        </button>
-                    </div>
-                </div>
-            `;
-        }, 600);
+    function openConsumeModal(itemId) {
+        document.getElementById('consumeItemId').value = itemId;
+        document.getElementById('consumeQuantity').value = 1;
+        document.getElementById('consumeProject').value = '';
+        document.getElementById('consumeModal').classList.remove('hidden');
     }
 
-    async function sendHelpTicketToAiBot() {
-        const input = document.getElementById('helpTicketText');
-        const text = input ? input.value.trim() : '';
-
-        if (!text) {
-            showAppAlert("Bitte beschreibe kurz dein Anliegen im Textfeld!", "Hinweis", "⚠️");
-            return;
-        }
-
-        const prof = getActiveProfile();
-        const fullMsg = `🆘 SUPPORT-TICKET (M4 Bot):
-Absender: ${prof?.full_name || currentUser.email}
-Problem: ${text}`;
-
-        try {
-            await db.from('chat_messages').insert([{
-                sender_id: currentUser.id,
-                sender_name: prof?.full_name || currentUser.email,
-                recipient_id: SYSTEM_BOT_ID,
-                message: fullMsg
-            }]);
-
-            if (input) input.value = '';
-            showAppAlert("Dein Ticket wurde erfolgreich an den KI-System-Bot übermittelt! Du erhältst eine Bestätigung im Team-Chat.", "Ticket Übermittelt", "🤖");
-        } catch(e) {
-            showAppAlert("Fehler beim Senden des Tickets: " + e.message, "Fehler", "❌");
-        }
+    function closeConsumeModal() {
+        document.getElementById('consumeModal').classList.add('hidden');
     }
 
-    window.startImpersonation = startImpersonation;
-    window.stopImpersonation = stopImpersonation;
-    window.showAppAlert = showAppAlert;
-    window.closeAppAlert = closeAppAlert;
-    window.openRoomBaukastenModal = openRoomBaukastenModal;
-    window.closeRoomBaukastenModal = closeRoomBaukastenModal;
-    window.selectBaukastenRoom = selectBaukastenRoom;
-    window.addBaukastenFieldToCurrentRoom = addBaukastenFieldToCurrentRoom;
-    window.removeBaukastenFieldFromRoom = removeBaukastenFieldFromRoom;
-    window.saveCurrentBaukastenRoom = saveCurrentBaukastenRoom;
-    window.addNewBaukastenRoomPrompt = addNewBaukastenRoomPrompt;
-    window.renderDynamicRoomFields = renderDynamicRoomFields;
-    window.runAiDiagnosticScan = runAiDiagnosticScan;
-    window.sendHelpTicketToAiBot = sendHelpTicketToAiBot;
+    async function confirmConsume(event) {
+        event.preventDefault();
+        const itemId = document.getElementById('consumeItemId').value;
+        const qty = parseInt(document.getElementById('consumeQuantity').value) || 1;
+        const proj = document.getElementById('consumeProject').value.trim();
+
+        const item = allItems.find(i => i.id === itemId);
+        if (!item) return;
+
+        const newStock = Math.max(0, (item.stock_quantity || 10) - qty);
+        await db.from('items').update({ stock_quantity: newStock }).eq('id', itemId);
+
+        const activeProf = getActiveProfile();
+        await db.from('activity_log').insert([{
+            item_name: itemId,
+            user_name: activeProf.full_name || activeProf.email,
+            user_id: activeProf.id,
+            action: 'ENTNAHME',
+            details: `Menge: ${qty} Stk. | Projekt: ${proj || '-'}`
+        }]);
+
+        showAppAlert(`Menge von ${qty} Stk. erfolgreich entnommen!`, 'Entnahme Gebucht', '✅');
+        closeConsumeModal();
+        fetchAllData();
+    }
+
+    let damagePhotos = [];
+    async function handleDamagePhotos(e) {
+        const files = Array.from(e.target.files);
+        for (let file of files) {
+            try {
+                const compressed = await compressImage(file);
+                damagePhotos.push(compressed);
+            } catch(e) {}
+        }
+    }
 
 </script>
