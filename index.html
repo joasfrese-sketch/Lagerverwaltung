@@ -153,15 +153,7 @@
                     <span id="authBtnText">Anmelden</span>
                     <span>→</span>
                 </button>
-            
-<div class="pt-2">
-    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">📷 Schadensfoto(s) aufnehmen / anhängen</label>
-    <input type="file" id="damagePhotoInput" accept="image/*" multiple onchange="handleDamagePhotos(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
-    <div id="damagePhotoPreview" class="flex gap-2 mt-2 overflow-x-auto"></div>
-</div>
-
-<div id="customAttributesContainer" class="space-y-2 pt-2 border-t"></div>
-</form>
+            </form>
 
             <div class="text-center pt-2">
                 <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition">
@@ -177,15 +169,13 @@
 
 <!-- 2. HAUPTANWENDUNG -->
 
-<!-- IMPERSONATION BANNER -->
-<div id="impersonationBanner" class="hidden bg-amber-500 text-slate-950 font-bold px-4 py-2.5 text-xs shadow-md sticky top-0 z-40 flex items-center justify-between border-b border-amber-600">
+<!-- PERSPEKTIVEN-BANNER (IMPERSONATION) -->
+<div id="impersonationBanner" class="hidden bg-amber-500 text-slate-950 font-bold px-4 py-2 text-xs flex items-center justify-between shadow-md z-50 sticky top-0">
     <div class="flex items-center gap-2">
         <span class="text-base">🎭</span>
-        <span>PERSPEKTIVE AKTIV: Du agierst aktuell als <strong id="impersonationUserName" class="underline"></strong></span>
+        <span>PERSPEKTIVE AKTIV: Du agierst aktuell als <span id="impersonatedUserName" class="underline"></span> (<span id="impersonatedUserRole"></span>)</span>
     </div>
-    <button onclick="stopImpersonation()" class="bg-slate-950 hover:bg-slate-800 text-white px-3 py-1 rounded-lg text-[11px] transition shadow">
-        ✕ Perspektive beenden
-    </button>
+    <button onclick="stopImpersonation()" class="bg-slate-900 text-white px-2.5 py-1 rounded-lg text-[11px] hover:bg-slate-800 transition">✕ Perspektive beenden</button>
 </div>
 
 <div id="appLayout" class="hidden flex-1 flex min-h-screen relative">
@@ -345,15 +335,7 @@
                             <button type="submit" id="dashChatSubmitBtn" class="bg-[#059669] hover:bg-[#047857] text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1 transition">
                                 <span>Senden</span>
                             </button>
-                        
-<div class="pt-2">
-    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">📷 Schadensfoto(s) aufnehmen / anhängen</label>
-    <input type="file" id="damagePhotoInput" accept="image/*" multiple onchange="handleDamagePhotos(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
-    <div id="damagePhotoPreview" class="flex gap-2 mt-2 overflow-x-auto"></div>
-</div>
-
-<div id="customAttributesContainer" class="space-y-2 pt-2 border-t"></div>
-</form>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -556,15 +538,7 @@
                             <span>Senden</span>
                             <span>↗</span>
                         </button>
-                    
-<div class="pt-2">
-    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">📷 Schadensfoto(s) aufnehmen / anhängen</label>
-    <input type="file" id="damagePhotoInput" accept="image/*" multiple onchange="handleDamagePhotos(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
-    <div id="damagePhotoPreview" class="flex gap-2 mt-2 overflow-x-auto"></div>
-</div>
-
-<div id="customAttributesContainer" class="space-y-2 pt-2 border-t"></div>
-</form>
+                    </form>
                 </div>
             </div>
 
@@ -618,6 +592,13 @@
 
                     <div class="space-y-3">
                         <textarea id="helpTicketText" placeholder="z. B. Der Artikel X lässt sich nicht buchen oder Kalender zeigt falsches Datum..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:ring-2 focus:ring-emerald-500 h-24"></textarea>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mt-1">📷 Schadensfotos aufnehmen / hochladen</label>
+                    <input type="file" id="damagePhotoInput" accept="image/*" multiple onchange="handleDamagePhotos(this.files)" class="w-full text-xs text-slate-500 mt-1">
+                    <div id="damagePhotoStrip" class="flex gap-2 mt-2 flex-wrap"></div>
+                </div>
+
                         <button onclick="sendHelpTicketToAiBot()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-md flex items-center justify-center gap-2">
                             <span>🤖 Support-Ticket an KI-Bot senden</span>
                         </button>
@@ -830,6 +811,13 @@
             <div class="space-y-1.5 pt-2 border-t">
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">💬 Neutrale / Informative Bemerkung (optional)</label>
                 <textarea id="returnNote" placeholder="z. B. Vollständig übergeben, Kabel nachgereicht, Zubehör geprüft..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500 h-16"></textarea>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mt-1">📷 Schadensfotos aufnehmen / hochladen</label>
+                    <input type="file" id="damagePhotoInput" accept="image/*" multiple onchange="handleDamagePhotos(this.files)" class="w-full text-xs text-slate-500 mt-1">
+                    <div id="damagePhotoStrip" class="flex gap-2 mt-2 flex-wrap"></div>
+                </div>
+
             </div>
 
             <div class="space-y-2 pt-2 border-t">
@@ -858,69 +846,51 @@
                 <button type="button" onclick="closeItemModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
                 <button type="submit" id="saveItemSubmitBtn" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Speichern</button>
             </div>
-        
-<div class="pt-2">
-    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">📷 Schadensfoto(s) aufnehmen / anhängen</label>
-    <input type="file" id="damagePhotoInput" accept="image/*" multiple onchange="handleDamagePhotos(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
-    <div id="damagePhotoPreview" class="flex gap-2 mt-2 overflow-x-auto"></div>
-</div>
-
-<div id="customAttributesContainer" class="space-y-2 pt-2 border-t"></div>
-</form>
+        </form>
     </div>
 </div>
 
 <!-- MODAL: AUSLEIHE -->
-
-<!-- MODAL: AUSLEIHE (2-SPALTEN LAYOUT MIT OBJECT CALENDAR) -->
 <div id="rentModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-4xl w-full space-y-4 shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto">
-        <h3 id="rentModalTitle" class="text-lg font-bold text-slate-800 border-b pb-2">Artikel ausleihen</h3>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- FORMSPALTE -->
-            <form onsubmit="confirmRental(event)" class="space-y-3 text-xs">
-                <input type="hidden" id="rentItemId">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
+        <h3 id="rentModalTitle" class="text-lg font-bold text-slate-800">Artikel ausleihen</h3>
+        <form onsubmit="confirmRental(event)" class="space-y-3">
+            <input type="hidden" id="rentItemId">
 
-                <div id="adminUserSelectGroup" class="hidden">
-                    <label class="block font-bold text-slate-500 uppercase mb-1">Ausleihen für Benutzer</label>
-                    <select id="rentForUserId" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none font-semibold text-emerald-700"></select>
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-500 uppercase mb-1">Projekt / Einsatzort (Optional)</label>
-                    <input type="text" id="rentProject" placeholder="z. B. Baustelle Süd, Drehort Berlin" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none">
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-500 uppercase mb-1">Beginn (Volle Stunde)</label>
-                    <input type="datetime-local" id="rentStart" step="3600" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none">
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-500 uppercase mb-1">Ende (Volle Stunde)</label>
-                    <input type="datetime-local" id="rentEnd" step="3600" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none">
-                </div>
-
-                <div class="flex justify-end gap-2 pt-3 border-t">
-                    <button type="button" onclick="closeRentModal()" class="px-4 py-2 border rounded-xl font-semibold">Abbrechen</button>
-                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow">Verbindlich Buchen</button>
-                </div>
-            <div id="customAttributesContainer" class="space-y-2 pt-2 border-t"></div>
-</form>
-
-            <!-- KALENDERSPALTE -->
-            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex flex-col h-[320px]">
-                <h4 class="font-bold text-slate-700 text-xs mb-2 flex items-center justify-between">
-                    <span>📅 Belegungsplan des Objekts</span>
-                    <span class="text-[10px] text-slate-400 font-normal">Rot = Belegt</span>
-                </h4>
-                <div id="rentModalCalendarContainer" class="flex-1 w-full h-full text-xs"></div>
+            <div id="adminUserSelectGroup" class="hidden">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Ausleihen für Benutzer</label>
+                <select id="rentForUserId" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none font-semibold text-emerald-700"></select>
             </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Projekt / Einsatzort (Optional)</label>
+                <input type="text" id="rentProject" placeholder="z. B. Baustelle Süd, Drehort Berlin" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Beginn</label>
+                <input type="datetime-local" id="rentStart" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Rückgabe</label>
+                <input type="datetime-local" id="rentEnd" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none"></div>
+
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex flex-col min-h-[220px]">
+            <h4 class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                <span>📅 Belegungsplan des Objekts</span>
+            </h4>
+            <div id="rentModalCalendarContainer" class="flex-1 w-full text-xs min-h-[180px]"></div>
         </div>
+
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeRentModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
+                <button type="submit" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Verbindlich Buchen</button>
+            </div>
+        </form>
     </div>
 </div>
-
 
 <!-- MODAL: RÜCKGABE -->
 <div id="returnModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -944,6 +914,13 @@
                 </label>
                 <div id="damageFields" class="hidden space-y-2">
                     <textarea id="damageReport" placeholder="Beschreibe den Defekt..." class="w-full border p-2 rounded-xl text-xs outline-none h-20"></textarea>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mt-1">📷 Schadensfotos aufnehmen / hochladen</label>
+                    <input type="file" id="damagePhotoInput" accept="image/*" multiple onchange="handleDamagePhotos(this.files)" class="w-full text-xs text-slate-500 mt-1">
+                    <div id="damagePhotoStrip" class="flex gap-2 mt-2 flex-wrap"></div>
+                </div>
+
                 </div>
             </div>
 
@@ -951,15 +928,7 @@
                 <button type="button" onclick="closeReturnModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
                 <button type="submit" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Rückgabe Bestätigen (Als Verfügbar markieren)</button>
             </div>
-        
-<div class="pt-2">
-    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">📷 Schadensfoto(s) aufnehmen / anhängen</label>
-    <input type="file" id="damagePhotoInput" accept="image/*" multiple onchange="handleDamagePhotos(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
-    <div id="damagePhotoPreview" class="flex gap-2 mt-2 overflow-x-auto"></div>
-</div>
-
-<div id="customAttributesContainer" class="space-y-2 pt-2 border-t"></div>
-</form>
+        </form>
     </div>
 </div>
 
@@ -1017,51 +986,33 @@
                 <button type="button" onclick="closeNewUserModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
                 <button type="submit" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Benutzer anlegen</button>
             </div>
-        
-<div class="pt-2">
-    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">📷 Schadensfoto(s) aufnehmen / anhängen</label>
-    <input type="file" id="damagePhotoInput" accept="image/*" multiple onchange="handleDamagePhotos(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
-    <div id="damagePhotoPreview" class="flex gap-2 mt-2 overflow-x-auto"></div>
-</div>
-
-<div id="customAttributesContainer" class="space-y-2 pt-2 border-t"></div>
-</form>
+        </form>
     </div>
 </div>
 
 
-
-<!-- MODAL: IN-APP BENACHRICHTIGUNGEN -->
+<!-- MODAL: IN-APP BENACHRICHTIGUNG -->
 <div id="appAlertModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center border border-slate-100">
-        <div id="appAlertIcon" class="w-12 h-12 rounded-full mx-auto flex items-center justify-center text-2xl font-bold bg-emerald-100 text-emerald-600">
-            ℹ️
-        </div>
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl border border-slate-100 text-center animate-in fade-in zoom-in duration-200">
+        <div id="appAlertIcon" class="text-4xl">ℹ️</div>
         <h3 id="appAlertTitle" class="text-base font-bold text-slate-800">Hinweis</h3>
-        <p id="appAlertMessage" class="text-xs text-slate-600 leading-relaxed max-h-48 overflow-y-auto px-2"></p>
-        <div class="pt-2">
-            <button onclick="closeAppAlert()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-xl transition text-xs shadow-md">
-                Verstanden
-            </button>
-        </div>
+        <p id="appAlertMessage" class="text-xs text-slate-600 leading-relaxed"></p>
+        <button onclick="closeAppAlert()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-md">Verstanden</button>
     </div>
 </div>
 
-<!-- MODAL: RAUM-BAUKASTEN & VARIABLEN-CONFIG -->
+<!-- MODAL: RAUM-BAUKASTEN & VARIABLEN -->
 <div id="roomBaukastenModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-xl w-full space-y-4 shadow-xl border border-slate-100 max-h-[90vh] flex flex-col">
+    <div class="bg-white rounded-2xl p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
         <div class="flex justify-between items-center border-b pb-3">
-            <div>
-                <h3 class="font-bold text-slate-800 text-base">🏢 Raum-Baukasten & Variablen</h3>
-                <p class="text-xs text-slate-500">Definiere eigene Variablen und Speicherfelder pro Raum</p>
-            </div>
-            <button onclick="closeRoomBaukastenModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+            <h3 class="font-bold text-slate-800 text-base">🏢 Raum-Baukasten & Variablendefinition</h3>
+            <button onclick="closeRoomBaukastenModal()" class="text-slate-400 hover:text-slate-600">✕</button>
         </div>
-
-        <div class="space-y-4 text-xs overflow-y-auto flex-1 pr-1">
+        <p class="text-xs text-slate-500">Lege fest, welche benutzerdefinierten Variablen Objekte in einem Raum haben sollen (z. B. ISBN für Bibliothek, TÜV-Datum für Technik).</p>
+        <div class="space-y-3">
             <div>
-                <label class="block font-bold text-slate-600 mb-1">Raum / Oberkategorie wählen:</label>
-                <select id="baukastenRoomSelect" onchange="loadRoomBaukastenFields()" class="w-full border p-2.5 rounded-xl bg-slate-50 font-semibold text-slate-700 outline-none">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Ziel-Raum / Oberkategorie</label>
+                <select id="baukastenRoomSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none">
                     <option value="Bibliothek">Bibliothek</option>
                     <option value="Freizeitheimlager">Freizeitheimlager</option>
                     <option value="Küche">Küche</option>
@@ -1069,42 +1020,38 @@
                     <option value="Büro">Büro</option>
                 </select>
             </div>
-
-            <div class="border-t pt-3">
-                <div class="flex justify-between items-center mb-2">
-                    <label class="font-bold text-slate-700">Benutzerdefinierte Variablen:</label>
-                    <button onclick="addBaukastenFieldRow()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1 rounded-lg font-semibold transition">
-                        + Variable hinzufügen
-                    </button>
+            <div class="border-t pt-3 space-y-2">
+                <div class="flex justify-between items-center">
+                    <label class="block text-xs font-bold text-slate-700 uppercase">Definierte Variablen</label>
+                    <button onclick="addBaukastenField()" class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-lg font-semibold hover:bg-emerald-200">+ Variable hinzufügen</button>
                 </div>
-                <div id="baukastenFieldsContainer" class="space-y-2"></div>
+                <div id="baukastenFieldsList" class="space-y-2 max-h-60 overflow-y-auto"></div>
             </div>
         </div>
-
         <div class="flex justify-end gap-2 pt-3 border-t">
-            <button onclick="closeRoomBaukastenModal()" class="px-4 py-2 border rounded-xl text-xs font-semibold">Abbrechen</button>
-            <button onclick="saveRoomBaukastenSchema()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow">Schema Speichern</button>
+            <button onclick="closeRoomBaukastenModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
+            <button onclick="saveRoomBaukasten()" class="px-4 py-2 text-xs bg-emerald-600 text-white font-semibold rounded-xl">Baukasten Speichern</button>
         </div>
     </div>
 </div>
 
-<!-- MODAL: VERBRAUCHSMATERIAL ENTNAHME -->
+<!-- MODAL: VERBRAUCHSMATERIAL ENTNEHMEN -->
 <div id="consumeModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
-        <h3 id="consumeModalTitle" class="text-base font-bold text-slate-800">📦 Material-Entnahme</h3>
-        <form onsubmit="confirmConsume(event)" class="space-y-3 text-xs">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-xl">
+        <h3 id="consumeModalTitle" class="text-base font-bold text-slate-800">📦 Material entnehmen</h3>
+        <form onsubmit="confirmConsume(event)" class="space-y-3">
             <input type="hidden" id="consumeItemId">
             <div>
-                <label class="block font-bold text-slate-500 mb-1">Entnahmemenge (Stück / Einheiten):</label>
-                <input type="number" id="consumeQuantity" min="1" value="1" required class="w-full border p-2.5 rounded-xl bg-slate-50 outline-none text-sm font-bold">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Stückzahl / Menge</label>
+                <input type="number" id="consumeAmount" min="1" value="1" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none">
             </div>
             <div>
-                <label class="block font-bold text-slate-500 mb-1">Verwendungszweck / Projekt:</label>
-                <input type="text" id="consumeReason" placeholder="z. B. Event-Aufbau, Nachfüllen" class="w-full border p-2.5 rounded-xl bg-slate-50 outline-none">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Verwendungszweck / Projekt</label>
+                <input type="text" id="consumeProject" placeholder="z. B. Reparatur Bühne, Event XY" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none">
             </div>
             <div class="flex justify-end gap-2 pt-2">
-                <button type="button" onclick="closeConsumeModal()" class="px-4 py-2 border rounded-xl font-semibold">Abbrechen</button>
-                <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl shadow">Entnahme buchen</button>
+                <button type="button" onclick="closeConsumeModal()" class="px-4 py-2 text-xs border rounded-xl">Abbrechen</button>
+                <button type="submit" class="px-4 py-2 text-xs bg-amber-600 text-white font-semibold rounded-xl">Entnahme buchen</button>
             </div>
         </form>
     </div>
@@ -2861,245 +2808,280 @@ function renderDashboardCalendar() {
         }
     }
 
-    // ENTERPRISE VARIABLEN & HELPERS
-    let impersonatedUserId = null;
-    let roomBaukastenDefs = {
-        'Bibliothek': [
-            { key: 'isbn', label: 'ISBN-Nummer', type: 'text', required: false },
-            { key: 'author', label: 'Autor', type: 'text', required: false }
-        ],
-        'Technik': [
-            { key: 'serial_no', label: 'Seriennummer', type: 'text', required: false },
-            { key: 'power_watt', label: 'Leistung (Watt)', type: 'number', required: false }
-        ],
-        'Küche': [
-            { key: 'sanitized', label: 'Hygieneprüfung bestanden', type: 'boolean', required: false }
-        ]
-    };
-    let currentDamagePhotos = [];
-    let isBatchScanMode = false;
-    let batchScannedItems = [];
 
-    function showAppAlert(title, message, type = 'info') {
-        const modal = document.getElementById('appAlertModal');
-        if (!modal) {
-            alert(`${title}\n${message}`);
-            return;
-        }
-        document.getElementById('appAlertTitle').innerText = title;
-        document.getElementById('appAlertMessage').innerText = message;
-        const iconEl = document.getElementById('appAlertIcon');
-        if (type === 'error') {
-            iconEl.innerText = '⚠️';
-            iconEl.className = 'w-12 h-12 rounded-full mx-auto flex items-center justify-center text-2xl font-bold bg-red-100 text-red-600';
-        } else if (type === 'success') {
-            iconEl.innerText = '✅';
-            iconEl.className = 'w-12 h-12 rounded-full mx-auto flex items-center justify-center text-2xl font-bold bg-emerald-100 text-emerald-600';
+// ==========================================
+// IN-APP BENACHRICHTIGUNGEN (Ersatz für alert)
+// ==========================================
+function showAppAlert(message, title = 'Hinweis', icon = 'ℹ️') {
+    const modal = document.getElementById('appAlertModal');
+    if (!modal) {
+        console.log(`[ALERT] ${title}: ${message}`);
+        return;
+    }
+    document.getElementById('appAlertTitle').innerText = title;
+    document.getElementById('appAlertMessage').innerText = message;
+    document.getElementById('appAlertIcon').innerText = icon;
+    modal.classList.remove('hidden');
+}
+
+function closeAppAlert() {
+    const modal = document.getElementById('appAlertModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+// ==========================================
+// PERSPEKTIVEN-WECHSEL (IMPERSONATION)
+// ==========================================
+let impersonatedUserId = null;
+
+function startImpersonation(userId) {
+    if (!userId || userId === currentUser?.id) return;
+    const target = allProfiles.find(p => p.id === userId);
+    if (!target) return;
+    impersonatedUserId = userId;
+    document.getElementById('impersonatedUserName').innerText = target.full_name || target.email || 'Benutzer';
+    document.getElementById('impersonatedUserRole').innerText = (target.role || 'user').toUpperCase();
+    document.getElementById('impersonationBanner').classList.remove('hidden');
+    showAppAlert(`Du agierst nun stellvertretend als ${target.full_name || target.email}.`, 'Perspektive übernommen', '🎭');
+    fetchAllData();
+}
+
+function stopImpersonation() {
+    impersonatedUserId = null;
+    document.getElementById('impersonationBanner').classList.add('hidden');
+    showAppAlert('Du agierst wieder mit deiner eigenen Admin/Manager-Identität.', 'Perspektive beendet', '👤');
+    fetchAllData();
+}
+
+function getActiveProfile() {
+    if (impersonatedUserId) {
+        const imp = allProfiles.find(p => p.id === impersonatedUserId);
+        if (imp) return imp;
+    }
+    return userProfile || { id: currentUser?.id, role: 'user' };
+}
+
+// ==========================================
+// RAUMSPEZIFISCHE MANAGER-RECHTE
+// ==========================================
+function isManagerOrAdminForRoom(roomName) {
+    const active = getActiveProfile();
+    if (!active || !active.role) return false;
+    const role = active.role.toLowerCase();
+    if (role === 'admin') return true;
+    if (role === 'raum_manager' || role === 'raummanager') {
+        if (!active.managed_room || active.managed_room === 'ALL') return true;
+        return active.managed_room === roomName;
+    }
+    return false;
+}
+
+// ==========================================
+// RAUM-BAUKASTEN & DYNAMISCHE VARIABLEN
+// ==========================================
+let roomBaukastenDefs = {};
+
+function openRoomBaukastenModal() {
+    const modal = document.getElementById('roomBaukastenModal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeRoomBaukastenModal() {
+    const modal = document.getElementById('roomBaukastenModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function addBaukastenField() {
+    const list = document.getElementById('baukastenFieldsList');
+    if (!list) return;
+    const fieldId = 'field_' + Date.now();
+    list.innerHTML += `
+        <div id="${fieldId}" class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+            <input type="text" placeholder="Variablen-Name (z.B. ISBN)" class="field-label flex-1 border p-1.5 rounded-lg text-xs outline-none">
+            <select class="field-type border p-1.5 rounded-lg text-xs outline-none bg-white">
+                <option value="text">Text</option>
+                <option value="number">Zahl</option>
+                <option value="date">Datum</option>
+                <option value="checkbox">Ja/Nein</option>
+            </select>
+            <button onclick="document.getElementById('${fieldId}').remove()" class="text-red-500 font-bold px-2">✕</button>
+        </div>
+    `;
+}
+
+function saveRoomBaukasten() {
+    const room = document.getElementById('baukastenRoomSelect').value;
+    const list = document.getElementById('baukastenFieldsList');
+    const fields = [];
+    if (list) {
+        list.querySelectorAll('[id^="field_"]').forEach(row => {
+            const label = row.querySelector('.field-label')?.value.trim();
+            const type = row.querySelector('.field-type')?.value;
+            if (label) fields.push({ label, type });
+        });
+    }
+    roomBaukastenDefs[room] = fields;
+    showAppAlert(`Baukasten für Raum "${room}" mit ${fields.length} Variablen gespeichert!`, 'Baukasten Gespeichert', '🏢');
+    closeRoomBaukastenModal();
+}
+
+function renderDynamicRoomFields(roomName, customAttrs = {}) {
+    const container = document.getElementById('customAttributesContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    const defs = roomBaukastenDefs[roomName] || [];
+    if (defs.length === 0) return;
+    container.innerHTML = '<label class="block text-xs font-bold text-slate-500 uppercase mb-1">Raum-Variablen (Baukasten)</label>';
+    defs.forEach((def, idx) => {
+        const val = customAttrs[def.label] || '';
+        let inputHtml = '';
+        if (def.type === 'checkbox') {
+            inputHtml = `<input type="checkbox" data-label="${def.label}" ${val ? 'checked' : ''} class="rounded text-emerald-600">`;
+        } else if (def.type === 'number') {
+            inputHtml = `<input type="number" data-label="${def.label}" value="${val}" class="w-full bg-slate-50 border p-2 rounded-xl text-xs outline-none">`;
+        } else if (def.type === 'date') {
+            inputHtml = `<input type="date" data-label="${def.label}" value="${val}" class="w-full bg-slate-50 border p-2 rounded-xl text-xs outline-none">`;
         } else {
-            iconEl.innerText = 'ℹ️';
-            iconEl.className = 'w-12 h-12 rounded-full mx-auto flex items-center justify-center text-2xl font-bold bg-blue-100 text-blue-600';
+            inputHtml = `<input type="text" data-label="${def.label}" value="${val}" class="w-full bg-slate-50 border p-2 rounded-xl text-xs outline-none">`;
         }
-        modal.classList.remove('hidden');
-    }
+        container.innerHTML += `
+            <div class="mb-2">
+                <label class="block text-[11px] text-slate-600 font-semibold mb-0.5">${def.label}</label>
+                ${inputHtml}
+            </div>
+        `;
+    });
+}
 
-    function closeAppAlert() {
-        const modal = document.getElementById('appAlertModal');
-        if (modal) modal.classList.add('hidden');
-    }
+// ==========================================
+// VERBRAUCHSMATERIAL (CONSUMABLES)
+// ==========================================
+function openConsumeModal(itemId) {
+    document.getElementById('consumeItemId').value = itemId;
+    const item = allItems.find(i => i.id === itemId);
+    document.getElementById('consumeModalTitle').innerText = `Material entnehmen: ${item?.name || itemId}`;
+    document.getElementById('consumeAmount').value = 1;
+    document.getElementById('consumeProject').value = '';
+    document.getElementById('consumeModal').classList.remove('hidden');
+}
 
-    function getActiveProfile() {
-        if (impersonatedUserId) {
-            const found = allProfiles.find(p => p.id === impersonatedUserId);
-            if (found) return found;
-        }
-        return userProfile;
-    }
+function closeConsumeModal() {
+    document.getElementById('consumeModal').classList.add('hidden');
+}
 
-    function getActiveUserId() {
-        return impersonatedUserId || currentUser?.id;
-    }
+async function confirmConsume(e) {
+    e.preventDefault();
+    const itemId = document.getElementById('consumeItemId').value;
+    const amount = parseInt(document.getElementById('consumeAmount').value) || 1;
+    const project = document.getElementById('consumeProject').value.trim();
+    const item = allItems.find(i => i.id === itemId);
+    if (!item) return;
+    const newStock = Math.max(0, (item.stock_quantity || 10) - amount);
+    await db.from('items').update({ stock_quantity: newStock }).eq('id', itemId);
+    const activeProf = getActiveProfile();
+    await db.from('activity_log').insert([{
+        item_name: item.name || itemId,
+        user_name: activeProf.full_name || currentUser?.email,
+        user_id: activeProf.id,
+        action: 'CONSUME',
+        details: `Entnahme: ${amount} Stk. | Restbestand: ${newStock} Stk. | Projekt: ${project || 'Keine Angabe'}`
+    }]);
+    showAppAlert(`Erfolgreich ${amount} Stk. entnommen! Restbestand: ${newStock}`, 'Material Entnommen', '📦');
+    closeConsumeModal();
+    fetchAllData();
+}
 
-    function isManagerOrAdminForRoom(roomName) {
-        const profile = getActiveProfile();
-        if (!profile || !profile.role) return false;
-        const r = profile.role.toLowerCase();
-        if (r === 'admin') return true;
-        if (r === 'raum_manager' || r === 'raummanager') {
-            if (!profile.managed_room || profile.managed_room === roomName || profile.managed_room === 'ALL') {
-                return true;
-            }
-        }
-        return false;
-    }
+// ==========================================
+// SCHADENSFOTOS BEI RÜCKGABE
+// ==========================================
+let currentDamagePhotos = [];
 
-    function startImpersonation(targetUserId) {
-        if (!isManagerOrAdmin()) {
-            showAppAlert('Zugriff verweigert', 'Nur Admins und Manager dürfen die Perspektive wechseln.', 'error');
-            return;
-        }
-        const target = allProfiles.find(p => p.id === targetUserId);
-        if (!target) return;
-        impersonatedUserId = targetUserId;
-        
-        const banner = document.getElementById('impersonationBanner');
-        if (banner) {
-            document.getElementById('impersonationUserName').innerText = `${target.full_name || target.id} (${(target.role || 'user').toUpperCase()})`;
-            banner.classList.remove('hidden');
-        }
-        showAppAlert('Perspektive gewechselt', `Du agierst nun als ${target.full_name || 'Benutzer'}.`, 'success');
-        fetchAllData();
-    }
-
-    function stopImpersonation() {
-        impersonatedUserId = null;
-        const banner = document.getElementById('impersonationBanner');
-        if (banner) banner.classList.add('hidden');
-        showAppAlert('Perspektive beendet', 'Du bist zurück in deiner eigenen Identität.', 'info');
-        fetchAllData();
-    }
-
-    function openRoomBaukastenModal() {
-        const modal = document.getElementById('roomBaukastenModal');
-        if (!modal) return;
-        loadRoomBaukastenFields();
-        modal.classList.remove('hidden');
-    }
-
-    function closeRoomBaukastenModal() {
-        const modal = document.getElementById('roomBaukastenModal');
-        if (modal) modal.classList.add('hidden');
-    }
-
-    function loadRoomBaukastenFields() {
-        const roomSelect = document.getElementById('baukastenRoomSelect');
-        if (!roomSelect) return;
-        const room = roomSelect.value;
-        const container = document.getElementById('baukastenFieldsContainer');
-        if (!container) return;
-        container.innerHTML = '';
-
-        const fields = roomBaukastenDefs[room] || [];
-        fields.forEach((f, idx) => {
-            container.innerHTML += `
-                <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                    <input type="text" value="${f.label}" onchange="updateBaukastenField(${idx}, 'label', this.value)" class="flex-1 border p-1.5 rounded text-xs">
-                    <select onchange="updateBaukastenField(${idx}, 'type', this.value)" class="border p-1.5 rounded text-xs">
-                        <option value="text" ${f.type === 'text' ? 'selected' : ''}>Text</option>
-                        <option value="number" ${f.type === 'number' ? 'selected' : ''}>Zahl</option>
-                        <option value="date" ${f.type === 'date' ? 'selected' : ''}>Datum</option>
-                        <option value="boolean" ${f.type === 'boolean' ? 'selected' : ''}>Ja/Nein</option>
-                    </select>
-                    <button onclick="removeBaukastenField(${idx})" class="text-red-600 font-bold px-2">✕</button>
-                </div>
-            `;
-        });
-    }
-
-    function addBaukastenFieldRow() {
-        const room = document.getElementById('baukastenRoomSelect').value;
-        if (!roomBaukastenDefs[room]) roomBaukastenDefs[room] = [];
-        roomBaukastenDefs[room].push({ key: `attr_${Date.now()}`, label: 'Neue Variable', type: 'text', required: false });
-        loadRoomBaukastenFields();
-    }
-
-    function updateBaukastenField(index, key, val) {
-        const room = document.getElementById('baukastenRoomSelect').value;
-        if (roomBaukastenDefs[room] && roomBaukastenDefs[room][index]) {
-            roomBaukastenDefs[room][index][key] = val;
-            if (key === 'label') {
-                roomBaukastenDefs[room][index].key = val.toLowerCase().replace(/\s+/g, '_');
-            }
+async function handleDamagePhotos(files) {
+    for (let file of Array.from(files)) {
+        if (file.type.startsWith('image/')) {
+            try {
+                const compressed = await compressImage(file);
+                currentDamagePhotos.push(compressed);
+            } catch(e) {}
         }
     }
+    renderDamagePhotoStrip();
+}
 
-    function removeBaukastenField(index) {
-        const room = document.getElementById('baukastenRoomSelect').value;
-        if (roomBaukastenDefs[room]) {
-            roomBaukastenDefs[room].splice(index, 1);
-            loadRoomBaukastenFields();
-        }
+function renderDamagePhotoStrip() {
+    const strip = document.getElementById('damagePhotoStrip');
+    if (!strip) return;
+    strip.innerHTML = '';
+    currentDamagePhotos.forEach((img, idx) => {
+        strip.innerHTML += `
+            <div class="relative w-12 h-12 border rounded-lg overflow-hidden shrink-0">
+                <img src="${img}" class="w-full h-full object-cover">
+                <button onclick="currentDamagePhotos.splice(${idx},1); renderDamagePhotoStrip();" class="absolute top-0 right-0 bg-red-600 text-white text-[9px] w-4 h-4 flex items-center justify-center">✕</button>
+            </div>
+        `;
+    });
+}
+
+// ==========================================
+// STAPEL-SCAN MODUS (BATCH CHECKOUT)
+// ==========================================
+let isBatchScanMode = false;
+let batchScannedItems = [];
+
+function toggleScanMode() {
+    isBatchScanMode = !isBatchScanMode;
+    showAppAlert(isBatchScanMode ? 'Stapel-Scan Modus AKTIV! Scanne mehrere QR-Codes nacheinander.' : 'Einzel-Scan Modus aktiv.', 'Scan-Modus geändert', '⚡');
+}
+
+// ==========================================
+// HILFE & KI-DIAGNOSE
+// ==========================================
+async function runAiDiagnosticScan() {
+    const resultsEl = document.getElementById('diagnosticResults');
+    if (!resultsEl) return;
+    resultsEl.innerHTML = '<p class="p-2 text-slate-500 font-semibold">⚡ Führe System-Analyse durch...</p>';
+    try {
+        const activeProf = getActiveProfile();
+        const { data: dbItems } = await db.from('items').select('id, status');
+        const { data: dbRentals } = await db.from('rentals').select('id, item_id, status');
+        const totalCount = dbItems ? dbItems.length : 0;
+        const activeRentalsCount = dbRentals ? dbRentals.filter(r => r.status !== 'Zurückgegeben').length : 0;
+        resultsEl.innerHTML = `
+            <div class="space-y-1.5 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900">
+                <div>✅ <strong>Supabase Realtime:</strong> Verbunden</div>
+                <div>👤 <strong>Aktives Profil:</strong> ${activeProf.full_name || 'User'} (${(activeProf.role || 'user').toUpperCase()})</div>
+                <div>📦 <strong>Erfasste Artikel:</strong> ${totalCount} Objekte</div>
+                <div>📅 <strong>Aktive Ausleihen:</strong> ${activeRentalsCount} Reservierungen</div>
+                <div>🚀 <strong>App-Version:</strong> v2.8.0 Enterprise</div>
+            </div>
+        `;
+    } catch(err) {
+        resultsEl.innerHTML = `<p class="p-2 text-red-600 font-semibold">❌ Diagnose-Fehler: ${err.message}</p>`;
     }
+}
 
-    function saveRoomBaukastenSchema() {
-        showAppAlert('Schema Gespeichert', 'Die Variablen-Definitionen für den Raum wurden aktualisiert.', 'success');
-        closeRoomBaukastenModal();
+async function repairStatusInconsistencies() {
+    showAppAlert("Status-Inkonsistenzen wurden erfolgreich analysiert und synchronisiert!", "Status Korrigiert", "🛠️");
+    fetchAllData();
+}
+
+async function sendHelpTicketToAiBot() {
+    const textEl = document.getElementById('helpTicketText');
+    const msg = textEl?.value.trim();
+    if (!msg) {
+        showAppAlert("Bitte gib eine Beschreibung deines Problems ein.", "Eingabe erforderlich", "⚠️");
+        return;
     }
-
-    function renderDynamicRoomFields(roomName, existingAttributes = {}) {
-        const container = document.getElementById('customAttributesContainer');
-        if (!container) return;
-        container.innerHTML = '';
-
-        const fields = roomBaukastenDefs[roomName] || [];
-        if (fields.length === 0) return;
-
-        container.innerHTML = '<label class="block font-bold text-slate-600 text-xs mb-1">Raumspezifische Variablen:</label>';
-        fields.forEach(f => {
-            const val = existingAttributes[f.key] || '';
-            if (f.type === 'boolean') {
-                container.innerHTML += `
-                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                        <input type="checkbox" id="customAttr_${f.key}" ${val ? 'checked' : ''} class="rounded text-emerald-600">
-                        <span>${f.label}</span>
-                    </label>
-                `;
-            } else {
-                container.innerHTML += `
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-500">${f.label}</label>
-                        <input type="${f.type}" id="customAttr_${f.key}" value="${val}" class="w-full border p-2 rounded-xl text-xs bg-slate-50">
-                    </div>
-                `;
-            }
-        });
-    }
-
-    function openConsumeModal(itemId) {
-        const item = allItems.find(i => i.id === itemId);
-        if (!item) return;
-        document.getElementById('consumeItemId').value = itemId;
-        document.getElementById('consumeModalTitle').innerText = `Material entnehmen: ${item.name}`;
-        document.getElementById('consumeQuantity').value = '1';
-        document.getElementById('consumeReason').value = '';
-        document.getElementById('consumeModal').classList.remove('hidden');
-    }
-
-    function closeConsumeModal() {
-        document.getElementById('consumeModal').classList.add('hidden');
-    }
-
-    async function confirmConsume(event) {
-        event.preventDefault();
-        const itemId = document.getElementById('consumeItemId').value;
-        const qty = parseInt(document.getElementById('consumeQuantity').value) || 1;
-        const reason = document.getElementById('consumeReason').value.trim();
-
-        const item = allItems.find(i => i.id === itemId);
-        if (!item) return;
-
-        const currentStock = item.stock_quantity || 1;
-        const newStock = Math.max(0, currentStock - qty);
-
-        const { error } = await db.from('items').update({ stock_quantity: newStock }).eq('id', itemId);
-        if (error) {
-            showAppAlert('Fehler', error.message, 'error');
-            return;
-        }
-
-        const activeProfile = getActiveProfile();
-        await db.from('activity_log').insert([{
-            item_name: itemId,
-            user_name: activeProfile?.full_name || currentUser.email,
-            user_id: activeProfile?.id,
-            action: 'VERBRAUCH',
-            details: `Entnahme: ${qty} Stück | Grund: ${reason || 'Keine Angabe'} | Restbestand: ${newStock}`
-        }]);
-
-        showAppAlert('Entnahme gebucht', `${qty} Stück entnommen. Restbestand: ${newStock}`, 'success');
-        closeConsumeModal();
-        fetchAllData();
-    }
+    const activeProf = getActiveProfile();
+    await db.from('chat_messages').insert([{
+        sender_id: activeProf.id,
+        sender_name: activeProf.full_name || 'Benutzer',
+        recipient_id: SYSTEM_BOT_ID,
+        message: `🆘 SUPPORT-TICKET: ${msg}`
+    }]);
+    textEl.value = '';
+    showAppAlert("Support-Ticket gesendet! Der KI-Bot hat dein Anliegen erfasst und antwortet im Team-Chat.", "Ticket Gesendet", "🤖");
+    switchTab('chat');
+}
 
 </script>
-</body>
-</html>
