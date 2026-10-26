@@ -1479,6 +1479,36 @@
         };
 
         // PROFILE & PERSPEKTIVEN (IMPERSONATION)
+        
+        function updateRoleBasedUI() {
+            const activeProf = getActiveProfile();
+            const role = (activeProf?.role || 'user').toLowerCase();
+            const isAdmin = role === 'admin';
+            const isManager = role === 'raum_manager' || role === 'raummanager';
+            const canManage = isAdmin || isManager;
+
+            const roomText = activeProf.managed_room ? ` (${activeProf.managed_room})` : '';
+            const badgeEl = document.getElementById('userRoleBadge');
+            if (badgeEl) {
+                badgeEl.innerText = isAdmin ? 'ADMINISTRATOR' : (isManager ? `RAUM-MANAGER${roomText.toUpperCase()}` : 'BENUTZER');
+                badgeEl.className = isAdmin ? 'text-[9px] text-purple-400 font-bold tracking-wider' : (isManager ? 'text-[9px] text-amber-400 font-bold tracking-wider' : 'text-[9px] text-slate-400 font-bold tracking-wider');
+            }
+
+            // Role-driven UI Visibility Toggles
+            document.getElementById('nav-users')?.classList.toggle('hidden', !isAdmin);
+            document.getElementById('nav-lagerwart')?.classList.toggle('hidden', !canManage);
+            document.getElementById('createNewUserBtn')?.classList.toggle('hidden', !isAdmin);
+
+            document.getElementById('addItemBtn')?.classList.toggle('hidden', !canManage);
+            document.getElementById('importExcelBtn')?.classList.toggle('hidden', !canManage);
+            document.getElementById('roomBaukastenBtn')?.classList.toggle('hidden', !canManage);
+            document.getElementById('bulkDeleteBtn')?.classList.toggle('hidden', !canManage);
+            document.getElementById('bulkInventurBtn')?.classList.toggle('hidden', !canManage);
+
+            const scopeBadge = document.getElementById('movementsScopeBadge');
+            if (scopeBadge) scopeBadge.innerText = canManage ? '👑 Manager/Admin-Ansicht (Alle)' : '👤 Meine Warenbewegungen';
+        }
+
         function getActiveProfile() {
             if (impersonatedUserId) {
                 const imp = allProfiles.find(p => p.id === impersonatedUserId);
@@ -1502,6 +1532,7 @@
             renderCards(allItems);
             renderMyRentals();
             renderUsersTable();
+            updateRoleBasedUI();
         }
 
         function stopImpersonation() {
@@ -1511,6 +1542,7 @@
             renderCards(allItems);
             renderMyRentals();
             renderUsersTable();
+            updateRoleBasedUI();
         }
 
         // RAUM-MANAGER BERECHTIGUNG
@@ -1931,7 +1963,7 @@
             document.getElementById('roomBaukastenBtn')?.classList.toggle('hidden', !canManage);
             document.getElementById('bulkDeleteBtn')?.classList.toggle('hidden', !canManage);
             document.getElementById('bulkInventurBtn')?.classList.toggle('hidden', !canManage);
-            document.getElementById('movementsScopeBadge').innerText = canManage ? '👑 Manager/Admin-Ansicht (Alle)' : '👤 Meine Warenbewegungen';
+            updateRoleBasedUI();
 
             await fetchAllData();
             loadChatMessages();
