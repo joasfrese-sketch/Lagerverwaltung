@@ -212,6 +212,10 @@
                         <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                         <span class="sidebar-text truncate">Benutzerverwaltung</span>
                     </button>
+                                        <button onclick="switchTab('lagerwart')" id="nav-lagerwart" class="nav-item hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                        <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        <span class="sidebar-text truncate">Lagerwart-Cockpit</span>
+                    </button>
                     <button onclick="switchTab('help')" id="nav-help" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
                         <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         <span class="sidebar-text truncate">Hilfe & App-Standpunkt</span>
@@ -624,11 +628,185 @@
                     </div>
                 </div>
 
+                <!-- TAB 7: LAGERWART-COCKPIT (RAUM-COCKPIT) -->
+                <div id="tab-lagerwart" class="hidden space-y-6">
+                    <!-- COCKPIT HEADER CARD -->
+                    <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 text-white p-6 rounded-2xl shadow-xl flex flex-wrap items-center justify-between gap-4 border border-amber-500/30">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Lagerwart-Modus</span>
+                                <span id="lagerwartRoomBadge" class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold px-2.5 py-0.5 rounded-full">Raum: Technik</span>
+                            </div>
+                            <h2 class="text-xl md:text-2xl font-extrabold tracking-tight">🛡️ Lagerwart-Cockpit & Kiosk</h2>
+                            <p class="text-xs text-slate-300 mt-1">Zentrale Steuerung für Bestände, Reparaturen, Schnellausgabe & Protokolle im zugewiesenen Raum.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <select id="lagerwartRoomFilter" onchange="changeLagerwartRoom(this.value)" class="bg-slate-800 border border-slate-700 text-amber-300 text-xs font-bold px-3 py-2 rounded-xl outline-none">
+                                <option value="Technik">🔌 Technik</option>
+                                <option value="Küche">🍳 Küche</option>
+                                <option value="Bibliothek">📚 Bibliothek</option>
+                                <option value="Freizeitheimlager">🏠 Freizeitheimlager</option>
+                                <option value="Büro">🏢 Büro</option>
+                            </select>
+                            <button onclick="renderLagerwartCockpit()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1">
+                                🔄 Aktualisieren
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- KIOSK QUICK ACTIONS BAR -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <button onclick="openScannerModal()" class="bg-white hover:bg-amber-50/50 p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center group transition">
+                            <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">📷</span>
+                            <span class="font-bold text-slate-800 text-xs">Schnell-Rücknahme (Scanner)</span>
+                            <span class="text-[10px] text-slate-400 mt-0.5">QR / Personen-Code lesen</span>
+                        </button>
+                        <button onclick="openLagerwartQuickRent()" class="bg-white hover:bg-emerald-50/50 p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center group transition">
+                            <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">📤</span>
+                            <span class="font-bold text-slate-800 text-xs">Schnell-Ausgabe</span>
+                            <span class="text-[10px] text-slate-400 mt-0.5">Direkte Buchung im Raum</span>
+                        </button>
+                        <button onclick="openBulkReturnModal()" class="bg-white hover:bg-blue-50/50 p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center group transition">
+                            <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">📦</span>
+                            <span class="font-bold text-slate-800 text-xs">Sammel-Abgabe</span>
+                            <span class="text-[10px] text-slate-400 mt-0.5">Mehrere Objekte annehmen</span>
+                        </button>
+                        <button onclick="openHandoverProtocolModal()" class="bg-white hover:bg-purple-50/50 p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center group transition">
+                            <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">📄</span>
+                            <span class="font-bold text-slate-800 text-xs">Übergabeprotokoll</span>
+                            <span class="text-[10px] text-slate-400 mt-0.5">PDF / Druckbeleg erstellen</span>
+                        </button>
+                    </div>
+
+                    <!-- ROOM SUMMARY STATS BAR -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <span class="text-[10px] font-bold uppercase text-slate-400 block mb-1">Raum-Gesamtbestand</span>
+                            <div id="lwStatTotal" class="text-2xl font-black text-slate-800">0</div>
+                            <span class="text-[10px] text-slate-500">Registrierte Objekte</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <span class="text-[10px] font-bold uppercase text-amber-500 block mb-1">Aktuell Ausgeliehen</span>
+                            <div id="lwStatBorrowed" class="text-2xl font-black text-amber-600">0</div>
+                            <span class="text-[10px] text-slate-500">Unterwegs bei Nutzern</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <span class="text-[10px] font-bold uppercase text-red-500 block mb-1">In Reparatur / Defekt</span>
+                            <div id="lwStatMaintenance" class="text-2xl font-black text-red-600">0</div>
+                            <span class="text-[10px] text-slate-500">Wartung erforderlich</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <span class="text-[10px] font-bold uppercase text-blue-500 block mb-1">Nachzubestellen</span>
+                            <div id="lwStatConsumables" class="text-2xl font-black text-blue-600">0</div>
+                            <span class="text-[10px] text-slate-500">Verbrauchsmaterial unter Min.</span>
+                        </div>
+                    </div>
+
+                    <!-- MAIN LAGERWART PANELS GRID -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- PANEL 1: WARTUNGS- & SCHADENSBOARD -->
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col">
+                            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <span>🛠️</span> Wartungs- & Schadens-Board
+                                </h3>
+                                <span class="text-[10px] bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded-full">Prüfaufgaben</span>
+                            </div>
+                            <div id="lwMaintenanceList" class="space-y-3 flex-1 max-h-96 overflow-y-auto">
+                                <p class="text-slate-400 italic text-xs">Keine beschädigten oder in Reparatur befindlichen Objekte in diesem Raum.</p>
+                            </div>
+                        </div>
+
+                        <!-- PANEL 2: SCHNELL-INVENTUR PRÜFUNG -->
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col">
+                            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <span>📋</span> Raum-Inventur Schnellprüfung
+                                </h3>
+                                <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Live-Prüfung</span>
+                            </div>
+                            <div id="lwQuickAuditList" class="space-y-2 flex-1 max-h-96 overflow-y-auto">
+                                <p class="text-slate-400 italic text-xs">Lade Objekte...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
 
     <!-- MODALS SECTION -->
+    <!-- MODAL: ÜBERGABEPROTOKOLL / DRUCKBELEG -->
+    <div id="handoverProtocolModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-base">📄 Übergabeprotokoll & Ausleihbestätigung</h3>
+                    <p class="text-xs text-slate-500">Druckfähiger Beleg zur Dokumentation der Aushändigung</p>
+                </div>
+                <button onclick="closeHandoverProtocolModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+            </div>
+
+            <div id="handoverPrintArea" class="border p-6 rounded-xl bg-slate-50 space-y-4 text-xs text-slate-800">
+                <div class="flex justify-between items-start border-b pb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-emerald-700">Lagerverwaltung Pro</h2>
+                        <p class="text-[11px] text-slate-500">Offizielles Gerätetransfer-Protokoll</p>
+                    </div>
+                    <div class="text-right text-[11px] text-slate-500">
+                        <p><strong>Datum:</strong> <span id="hpDate">-</span></p>
+                        <p><strong>Protokoll-ID:</strong> <span id="hpProtocolId">-</span></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 bg-white p-3 rounded-lg border">
+                    <div>
+                        <h4 class="font-bold text-slate-600 uppercase text-[10px] mb-1">Ausleiher / Empfänger</h4>
+                        <p id="hpBorrowerName" class="font-bold text-sm">-</p>
+                        <p id="hpBorrowerRole" class="text-slate-500 text-[11px]">-</p>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-600 uppercase text-[10px] mb-1">Lagerwart / Ausgabe durch</h4>
+                        <p id="hpIssuerName" class="font-bold text-sm">-</p>
+                        <p id="hpRoomName" class="text-slate-500 text-[11px]">-</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-3 rounded-lg border">
+                    <h4 class="font-bold text-slate-600 uppercase text-[10px] mb-2">Ausgeliehene Objekte / Equipment</h4>
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b bg-slate-100 text-slate-600">
+                                <th class="p-2">ID / SKU</th>
+                                <th class="p-2">Bezeichnung</th>
+                                <th class="p-2">Zustand</th>
+                                <th class="p-2">Rückgabefrist</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hpItemsTableBody">
+                            <tr><td colspan="4" class="p-2 text-slate-400 italic">Keine Objekte geladen</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="border-t pt-4 grid grid-cols-2 gap-8 text-[11px] text-slate-500 mt-6">
+                    <div>
+                        <p class="mb-8">Unterschrift Empfänger / Ausleiher:</p>
+                        <div class="border-b border-slate-400"></div>
+                    </div>
+                    <div>
+                        <p class="mb-8">Unterschrift Lagerwart / Ausgabe:</p>
+                        <div class="border-b border-slate-400"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 border-t pt-3">
+                <button onclick="closeHandoverProtocolModal()" class="px-4 py-2 text-xs border rounded-xl font-semibold text-slate-600">Schließen</button>
+                <button onclick="printHandoverProtocol()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center gap-1">🖨️ Protokoll Drucken / PDF</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 1. MODAL: IN-APP ALERT MODAL -->
     <div id="appAlertModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
@@ -1124,6 +1302,152 @@
             if (modal) modal.classList.add('hidden');
         }
 
+
+        // LAGERWART-COCKPIT & RAUM-KIOSK FUNKTIONEN
+        function changeLagerwartRoom(roomName) {
+            renderLagerwartCockpit(roomName);
+        }
+
+        function renderLagerwartCockpit(forcedRoom = null) {
+            const activeProf = getActiveProfile();
+            const room = forcedRoom || document.getElementById('lagerwartRoomFilter')?.value || activeProf?.managed_room || 'Technik';
+
+            const badge = document.getElementById('lagerwartRoomBadge');
+            const select = document.getElementById('lagerwartRoomFilter');
+            if (badge) badge.innerText = `Raum: ${room}`;
+            if (select && select.value !== room) select.value = room;
+
+            const roomItems = allItems.filter(i => (i.main_category === room || i.room === room));
+            const roomItemIds = new Set(roomItems.map(i => i.id));
+            const roomRentals = activeRentals.filter(r => roomItemIds.has(r.item_id) && r.status !== 'Zurückgegeben');
+
+            // Update Stats
+            const statTotal = document.getElementById('lwStatTotal');
+            const statBorrowed = document.getElementById('lwStatBorrowed');
+            const statMaint = document.getElementById('lwStatMaintenance');
+            const statCons = document.getElementById('lwStatConsumables');
+
+            if (statTotal) statTotal.innerText = roomItems.length;
+            if (statBorrowed) statBorrowed.innerText = roomRentals.length;
+
+            const maintItems = roomItems.filter(i => i.status === 'In Reparatur' || i.status === 'Defekt' || i.permission === 'Defekt');
+            if (statMaint) statMaint.innerText = maintItems.length;
+
+            const consItems = roomItems.filter(i => i.item_type === 'consumable' && (i.stock_quantity || 0) <= (i.min_stock || 0));
+            if (statCons) statCons.innerText = consItems.length;
+
+            // Render Maintenance Board
+            const maintList = document.getElementById('lwMaintenanceList');
+            if (maintList) {
+                if (maintItems.length === 0) {
+                    maintList.innerHTML = '<p class="text-slate-400 italic text-xs py-4 text-center">Keine beschädigten oder wartungspflichtigen Objekte in diesem Raum.</p>';
+                } else {
+                    maintList.innerHTML = maintItems.map(item => `
+                        <div class="p-3 rounded-xl bg-red-50/80 border border-red-200 flex items-center justify-between gap-3">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-xs">${item.name}</h4>
+                                <p class="text-[11px] text-slate-500">SKU: ${item.id} | Status: <strong class="text-red-700">${item.status || 'Defekt'}</strong></p>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button onclick="setLagerwartItemStatus('${item.id}', 'Verfügbar')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2.5 py-1.5 rounded-lg transition">
+                                    ✅ Freigeben
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // Render Quick Audit List
+            const auditList = document.getElementById('lwQuickAuditList');
+            if (auditList) {
+                if (roomItems.length === 0) {
+                    auditList.innerHTML = '<p class="text-slate-400 italic text-xs py-4 text-center">Keine Objekte in diesem Raum gefunden.</p>';
+                } else {
+                    auditList.innerHTML = roomItems.slice(0, 15).map(item => {
+                        const isBorrowed = roomRentals.some(r => r.item_id === item.id);
+                        return `
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="font-bold text-slate-800 text-xs truncate">${item.name}</h4>
+                                    <span class="text-[10px] ${isBorrowed ? 'text-amber-600 font-bold' : 'text-emerald-600 font-semibold'}">${isBorrowed ? '🔄 Ausgeliehen' : '🟢 Verfügbar'}</span>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <button onclick="openHandoverProtocolModal('${item.id}')" class="text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-2 py-1 rounded">📄 Protokoll</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        async function setLagerwartItemStatus(itemId, newStatus) {
+            if (!db) return;
+            const { error } = await db.from('items').update({ status: newStatus }).eq('id', itemId);
+            if (error) {
+                showAppAlert("Fehler beim Aktualisieren: " + error.message, "Fehler", "❌");
+                return;
+            }
+            showAppAlert(`Artikelstatus geändert auf: ${newStatus}`, "Status aktualisiert", "✅");
+            addNotification("Lagerwart-Aktion", `Artikel ${itemId} auf ${newStatus} gesetzt`, "info");
+            await fetchItems();
+            renderLagerwartCockpit();
+        }
+
+        function openLagerwartQuickRent() {
+            const room = document.getElementById('lagerwartRoomFilter')?.value || 'Technik';
+            selectRoom(room);
+            switchTab('inventory');
+            openItemModal();
+        }
+
+        function openHandoverProtocolModal(itemId = null) {
+            const activeProf = getActiveProfile();
+            const room = document.getElementById('lagerwartRoomFilter')?.value || activeProf?.managed_room || 'Technik';
+
+            document.getElementById('hpDate').innerText = new Date().toLocaleDateString('de-DE');
+            document.getElementById('hpProtocolId').innerText = 'PRT-' + Math.floor(100000 + Math.random() * 900000);
+            document.getElementById('hpIssuerName').innerText = activeProf.full_name || 'Lagerwart';
+            document.getElementById('hpRoomName').innerText = `Raum: ${room}`;
+
+            let itemsToPrint = [];
+            if (itemId) {
+                const item = allItems.find(i => i.id === itemId);
+                if (item) itemsToPrint.push(item);
+            } else {
+                itemsToPrint = allItems.filter(i => (i.main_category === room || i.room === room)).slice(0, 5);
+            }
+
+            const rental = activeRentals.find(r => r.item_id === itemId && r.status !== 'Zurückgegeben');
+            const borrower = rental ? allProfiles.find(p => p.id === rental.user_id) : null;
+
+            document.getElementById('hpBorrowerName').innerText = borrower?.full_name || 'Muster-Ausleiher';
+            document.getElementById('hpBorrowerRole').innerText = `Rolle: ${(borrower?.role || 'user').toUpperCase()}`;
+
+            const tbody = document.getElementById('hpItemsTableBody');
+            if (tbody) {
+                tbody.innerHTML = itemsToPrint.map(i => `
+                    <tr class="border-b">
+                        <td class="p-2 font-mono">${i.id}</td>
+                        <td class="p-2 font-bold">${i.name}</td>
+                        <td class="p-2">${i.status || 'In Ordnung'}</td>
+                        <td class="p-2">${rental ? new Date(rental.end_date).toLocaleDateString('de-DE') : '30 Tage Standard'}</td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('handoverProtocolModal').classList.remove('hidden');
+        }
+
+        function closeHandoverProtocolModal() {
+            document.getElementById('handoverProtocolModal').classList.add('hidden');
+        }
+
+        function printHandoverProtocol() {
+            window.print();
+        }
+
         // INITIALISIERUNG
         window.onload = async () => {
             updateDateDisplay();
@@ -1600,6 +1924,7 @@
             // - Nav-Users & New-User-Btn: Only visible for real Admins
             // - Management Buttons (New Item, Import, Baukasten, Bulk Delete/Inventur): Visible for Admin & Raum-Manager
             document.getElementById('nav-users')?.classList.toggle('hidden', !isAdmin);
+            document.getElementById('nav-lagerwart')?.classList.toggle('hidden', !canManage);
             document.getElementById('createNewUserBtn')?.classList.toggle('hidden', !isAdmin);
             document.getElementById('addItemBtn')?.classList.toggle('hidden', !canManage);
             document.getElementById('importExcelBtn')?.classList.toggle('hidden', !canManage);
@@ -2882,7 +3207,7 @@ END:VCALENDAR`;
         }
 
         function switchTab(tabId) {
-            ['dashboard', 'inventory', 'movements', 'chat', 'users', 'help'].forEach(t => {
+            ['dashboard', 'inventory', 'movements', 'chat', 'users', 'help', 'lagerwart'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 const nav = document.getElementById(`nav-${t}`);
                 if (el) el.classList.add('hidden');
@@ -2899,12 +3224,16 @@ END:VCALENDAR`;
                 movements: 'Warenbewegungen',
                 chat: 'Team-Chat',
                 users: 'Benutzerverwaltung',
-                help: 'Hilfe & App-Standpunkt'
+                help: 'Hilfe & App-Standpunkt',
+                lagerwart: '🛡️ Lagerwart-Cockpit'
             };
             document.getElementById('pageTitle').innerText = titles[tabId] || 'Lagerverwaltung';
 
             if (tabId === 'dashboard') {
                 setTimeout(() => { if (calendar) calendar.render(); }, 100);
+            }
+            if (tabId === 'lagerwart') {
+                renderLagerwartCockpit();
             }
             if (tabId === 'inventory') {
                 if (!selectedRoom) {
