@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lagerverwaltung Pro</title>
+    <title>Lagerverwaltung Pro v9.0 (Clean Architecture)</title>
     <!-- PWA & Mobile Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#10b981">
@@ -2986,11 +2986,30 @@
 
             html5QrScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 220, height: 220 } });
             html5QrScanner.render((decodedText) => {
-                let itemVal = decodedText;
+                let itemVal = (decodedText || '').trim();
                 try {
                     const url = new URL(decodedText);
                     if (url.searchParams.get('item')) itemVal = url.searchParams.get('item');
                 } catch(e) {}
+
+                // Smart-Scan Prefix Handling: USER:<id> | ROOM:<name> | Item SKU/ID
+                if (itemVal.startsWith('USER:')) {
+                    const userId = itemVal.replace('USER:', '').trim();
+                    if (html5QrScanner) html5QrScanner.clear();
+                    closeScannerModal();
+                    openBulkReturnModal(userId);
+                    showAppAlert(`Personen-QR-Code erkannt. Sammel-Abgabe geöffnet.`, "Person-Scan", "👤");
+                    return;
+                }
+                if (itemVal.startsWith('ROOM:')) {
+                    const roomName = itemVal.replace('ROOM:', '').trim();
+                    if (html5QrScanner) html5QrScanner.clear();
+                    closeScannerModal();
+                    selectRoom(roomName);
+                    switchTab('inventory');
+                    showAppAlert(`Virtuell im Raum '${roomName}' eingecheckt. Inventar gefiltert.`, "Raum-Scan", "🚪");
+                    return;
+                }
 
                 if (isBatchScanMode) {
                     if (!batchScannedItems.includes(itemVal)) {
