@@ -904,6 +904,13 @@
                 <input type="hidden" id="returnRentalId">
                 <input type="hidden" id="returnItemId">
 
+                <!-- PUNKT 3: DUAL-MODE ABGEBENDE PERSON -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">👥 Abgebende Person (Dual-Mode)</label>
+                    <select id="singleReturnedByUserId" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold outline-none text-slate-700">
+                    </select>
+                </div>
+
                 <div class="space-y-2 border p-3 bg-slate-50 rounded-xl max-h-36 overflow-y-auto">
                     <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kofferinhalte / Zubehör</label>
                     <div id="accessoriesChecklist" class="space-y-1.5 text-xs"></div>
@@ -1611,9 +1618,13 @@
             if (container) container.classList.toggle('hidden', !canAssign);
             select.innerHTML = '';
             allProfiles.forEach(p => {
+                // Filter: Das System-Konto (System-Benachrichtigung) dient nur Benachrichtigungen und ist kein aktiver Benutzer/Ausleiher
+                if (p.id === SYSTEM_BOT_ID || p.role === 'system' || p.id === '00000000-0000-0000-0000-000000000000') return;
                 select.innerHTML += `<option value="${p.id}">${p.full_name || 'Benutzer'} (${(p.role || 'user').toUpperCase()})</option>`;
             });
-            if (currentUser) select.value = currentUser.id;
+            if (currentUser && Array.from(select.options).some(opt => opt.value === currentUser.id)) {
+                select.value = currentUser.id;
+            }
         }
 
         function populateChatRecipientSelects() {
@@ -2442,6 +2453,19 @@
             document.getElementById('returnRentalId').value = rentalId;
             document.getElementById('returnItemId').value = itemId;
 
+            // Populate Dual-Mode returnedBy dropdown
+            const sel = document.getElementById('singleReturnedByUserId');
+            if (sel) {
+                sel.innerHTML = '';
+                allProfiles.forEach(p => {
+                    if (p.id === SYSTEM_BOT_ID) return;
+                    sel.innerHTML += `<option value="${p.id}">${p.full_name || 'Benutzer'} (${(p.role || 'user').toUpperCase()})</option>`;
+                });
+                const rental = activeRentals.find(r => r.id === rentalId);
+                if (rental && rental.user_id) sel.value = rental.user_id;
+                else if (currentUser) sel.value = currentUser.id;
+            }
+
             const item = allItems.find(i => i.id === itemId);
             const checklist = document.getElementById('accessoriesChecklist');
             if (checklist) {
@@ -2655,8 +2679,13 @@
         function buildCalendarEvents() {
             const canSeeDetails = isManagerOrAdmin();
             const activeProf = getActiveProfile();
+            const hideReturned = document.getElementById('calHideReturnedToggle')?.checked;
 
-            return activeRentals.map(r => {
+            return activeRentals.filter(r => {
+                const isReturned = r.status === 'Zurückgegeben' || !!r.returned_at;
+                if (hideReturned && isReturned) return false;
+                return true;
+            }).map(r => {
                 const borrower = allProfiles.find(p => p.id === r.user_id);
                 const borrowerName = (canSeeDetails || r.user_id === activeProf?.id) 
                     ? (borrower?.full_name || 'Benutzer') 
@@ -3041,6 +3070,239 @@ END:VCALENDAR`;
             }
         }
 
+        
+        // ============================================================
+        // PUNKT 1: NOTIFICATION SYSTEM & FEED
+        // ============================================================
+        let appNotifications = [];
+
+        function addNotification(title, message, type = 'info') {
+            const notif = {
+                id: generateUniqueId(),
+                title,
+                message,
+                type,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                read: false
+            };
+            appNotifications.unshift(notif);
+            renderNotifications();
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById('notifList');
+            const badge = document.getElementById('notifBadge');
+            if (!list) return;
+
+            const unreadCount = appNotifications.filter(n => !n.read).length;
+            if (badge) {
+                badge.innerText = unreadCount;
+                badge.classList.toggle('hidden', unreadCount === 0);
+            }
+
+            if (appNotifications.length === 0) {
+                list.innerHTML = '<p class="text-slate-400 italic text-center py-4">Keine neuen Benachrichtigungen</p>';
+                return;
+            }
+
+            list.innerHTML = appNotifications.map(n => `
+                <div class="p-2.5 rounded-xl ${n.read ? 'bg-slate-50 border-transparent' : 'bg-emerald-50/80 border-emerald-200'} border transition">
+                    <div class="flex items-center justify-between font-bold text-slate-800 mb-0.5">
+                        <span class="truncate">${n.title}</span>
+                        <span class="text-[10px] font-normal text-slate-400 shrink-0 ml-1">${n.timestamp}</span>
+                    </div>
+                    <p class="text-[11px] text-slate-600">${n.message}</p>
+                </div>
+            `).join('');
+        }
+
+        function toggleNotifDropdown() {
+            const dd = document.getElementById('notifDropdown');
+            if (dd) dd.classList.toggle('hidden');
+        }
+
+        function markAllNotificationsRead() {
+            appNotifications.forEach(n => n.read = true);
+            renderNotifications();
+        }
+
+        // ============================================================
+        // PUNKT 2 & 3: SAMMEL-ABGABE (TERMINAL MODUS) & SCHNELLSUCHE
+        // ============================================================
+        function openBulkReturnModal(preselectedUserId = null) {
+            populateBulkReturnUserSelect();
+            populateBulkReturnedBySelect();
+            
+            const select = document.getElementById('bulkReturnUserSelect');
+            if (preselectedUserId && select) {
+                select.value = preselectedUserId;
+            } else if (select && select.options.length > 0) {
+                select.selectedIndex = 0;
+            }
+
+            onBulkReturnUserChange(select ? select.value : null);
+            document.getElementById('bulkReturnModal').classList.remove('hidden');
+        }
+
+        function closeBulkReturnModal() {
+            document.getElementById('bulkReturnModal').classList.add('hidden');
+        }
+
+        function populateBulkReturnUserSelect(filterQuery = '') {
+            const select = document.getElementById('bulkReturnUserSelect');
+            if (!select) return;
+            select.innerHTML = '';
+
+            const q = filterQuery.toLowerCase().trim();
+            const filtered = allProfiles.filter(p => {
+                if (p.id === SYSTEM_BOT_ID) return false;
+                if (!q) return true;
+                const name = (p.full_name || '').toLowerCase();
+                const email = (p.email || '').toLowerCase();
+                const id = (p.id || '').toLowerCase();
+                return name.includes(q) || email.includes(q) || id.includes(q);
+            });
+
+            if (filtered.length === 0) {
+                select.innerHTML = '<option value="">Keine passenden Personen gefunden</option>';
+                return;
+            }
+
+            filtered.forEach(p => {
+                select.innerHTML += `<option value="${p.id}">👤 ${p.full_name || 'Benutzer'} (${(p.role || 'user').toUpperCase()})</option>`;
+            });
+        }
+
+        function filterBulkReturnUsers() {
+            const q = document.getElementById('bulkReturnUserSearch').value;
+            populateBulkReturnUserSelect(q);
+            const select = document.getElementById('bulkReturnUserSelect');
+            if (select && select.value) {
+                onBulkReturnUserChange(select.value);
+            }
+        }
+
+        function populateBulkReturnedBySelect() {
+            const select = document.getElementById('bulkReturnedByUserId');
+            if (!select) return;
+            select.innerHTML = '';
+            allProfiles.forEach(p => {
+                if (p.id === SYSTEM_BOT_ID) return;
+                select.innerHTML += `<option value="${p.id}">${p.full_name || 'Benutzer'} (${(p.role || 'user').toUpperCase()})</option>`;
+            });
+            if (currentUser) select.value = currentUser.id;
+        }
+
+        function toggleBulkReturnedBySelect(show) {
+            const grp = document.getElementById('bulkReturnedBySelectGroup');
+            if (grp) grp.classList.toggle('hidden', !show);
+        }
+
+        function onBulkReturnUserChange(userId) {
+            const container = document.getElementById('bulkReturnItemsList');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!userId) {
+                container.innerHTML = '<p class="text-slate-400 italic text-center py-4">Bitte wählen Sie einen Ausleiher aus.</p>';
+                return;
+            }
+
+            const userRentals = activeRentals.filter(r => r.user_id === userId && !r.returned_at);
+
+            if (userRentals.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 italic text-center py-4">Diese Person hat aktuell keine ausgeliehenen Objekte.</p>';
+                return;
+            }
+
+            userRentals.forEach(r => {
+                const item = allItems.find(i => i.id === r.item_id);
+                const itemName = item ? item.name : `Artikel ID: ${r.item_id}`;
+                container.innerHTML += `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-slate-100 transition">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" value="${r.id}" checked class="bulk-return-item-check w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                            <div>
+                                <h4 class="font-bold text-xs text-slate-800">${itemName}</h4>
+                                <p class="text-[10px] text-slate-500">Ausgeliehen am: ${new Date(r.start_date).toLocaleDateString()} | Bis: ${new Date(r.end_date).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Ausgeliehen</span>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleAllBulkReturnCheckboxes() {
+            const checks = document.querySelectorAll('.bulk-return-item-check');
+            if (checks.length === 0) return;
+            const allChecked = Array.from(checks).every(c => c.checked);
+            checks.forEach(c => c.checked = !allChecked);
+        }
+
+        async function executeBulkReturn() {
+            const checkedBoxes = document.querySelectorAll('.bulk-return-item-check:checked');
+            if (checkedBoxes.length === 0) {
+                showAppAlert("Bitte wählen Sie mindestens ein Objekt zur Rückgabe aus.", "Hinweis", "ℹ️");
+                return;
+            }
+
+            const selectedRentalIds = Array.from(checkedBoxes).map(c => c.value);
+            const isThirdParty = document.querySelector('input[name="bulkReturnedByRadio"]:checked')?.value === 'third_party';
+            const returnedBy = isThirdParty ? document.getElementById('bulkReturnedByUserId').value : document.getElementById('bulkReturnUserSelect').value;
+
+            try {
+                const returnDate = new Date().toISOString();
+
+                for (const rentalId of selectedRentalIds) {
+                    const rental = activeRentals.find(r => r.id === rentalId);
+                    if (!rental) continue;
+
+                    await db.from('rentals').update({
+                        returned_at: returnDate,
+                        returned_by_user_id: returnedBy
+                    }).eq('id', rentalId);
+
+                    await db.from('items').update({ status: 'Verfügbar' }).eq('id', rental.item_id);
+                }
+
+                showAppAlert(`${selectedRentalIds.length} Objekt(e) erfolgreich im Lager zurückgegeben.`, "Sammel-Rückgabe erfolgt", "✅");
+                addNotification("Sammel-Rückgabe", `${selectedRentalIds.length} Objekt(e) zurückgegeben`, 'return');
+                closeBulkReturnModal();
+                await fetchAllData();
+            } catch (err) {
+                showAppAlert("Fehler bei der Sammel-Rückgabe:\n" + err.message, "Fehler", "❌");
+            }
+        }
+
+        // ============================================================
+        // PUNKT 6: PERSONEN QR-CODE GENERATION & SCANNER INTEGRATION
+        // ============================================================
+        function openMyUserQrModal() {
+            const activeProf = getActiveProfile();
+            if (!activeProf) return;
+
+            document.getElementById('userQrName').innerText = `${activeProf.full_name || 'Benutzer'} (${activeProf.id})`;
+            const container = document.getElementById('userQrContainer');
+            if (container) {
+                container.innerHTML = '';
+                const qrString = `USER:${activeProf.id}`;
+                new QRCode(container, {
+                    text: qrString,
+                    width: 150,
+                    height: 150,
+                    colorDark: "#0f172a",
+                    colorLight: "#f8fafc",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+            document.getElementById('userQrModal').classList.remove('hidden');
+        }
+
+        function closeUserQrModal() {
+            document.getElementById('userQrModal').classList.add('hidden');
+        }
+
         function setupRealtimeSubscriptions() {
             if (!db) return;
             try {
@@ -3119,5 +3381,88 @@ END:VCALENDAR`;
             switchTab('chat');
         }
     </script>
+
+    <!-- PUNKT 2 & 3: SAMMEL-ABGABE MODAL (LAGER TERMINAL MODUS) -->
+    <div id="bulkReturnModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div>
+                    <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                        <span>📦</span> <span>Lager-Terminal: Sammel-Abgabe</span>
+                    </h3>
+                    <p id="bulkReturnSubtitle" class="text-xs text-slate-500">Schnelle Abnahme von Objekten im Lager</p>
+                </div>
+                <button onclick="closeBulkReturnModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+            </div>
+
+            <div class="py-4 space-y-4 overflow-y-auto flex-1">
+                <!-- SCHNELLSUCHE BENUTZER -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">🔍 Ausleiher / Person wählen</label>
+                    <div class="relative">
+                        <input type="text" id="bulkReturnUserSearch" oninput="filterBulkReturnUsers()" placeholder="Name, E-Mail oder ID suchen..." class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold pl-8 outline-none focus:ring-2 focus:ring-emerald-500">
+                        <span class="absolute left-2.5 top-2.5 text-slate-400 text-xs">👤</span>
+                    </div>
+                    <select id="bulkReturnUserSelect" onchange="onBulkReturnUserChange(this.value)" class="w-full mt-2 bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold text-emerald-700 outline-none">
+                    </select>
+                </div>
+
+                <!-- DUAL MODE: RÜCKGABE DURCH DRITTPERSON -->
+                <div class="bg-amber-50/70 border border-amber-200/80 p-3.5 rounded-2xl flex flex-col gap-2">
+                    <span class="text-xs font-bold text-amber-900 flex items-center gap-1">
+                        <span>👥</span> <span>Abgebende Person (Dual-Mode Protokoll):</span>
+                    </span>
+                    <div class="flex items-center gap-4 text-xs font-semibold text-slate-700">
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" name="bulkReturnedByRadio" value="self" checked onchange="toggleBulkReturnedBySelect(false)" class="text-emerald-600 focus:ring-emerald-500">
+                            <span>Ausleiher selbst</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" name="bulkReturnedByRadio" value="third_party" onchange="toggleBulkReturnedBySelect(true)" class="text-emerald-600 focus:ring-emerald-500">
+                            <span>Andere Person / Lagerwart</span>
+                        </label>
+                    </div>
+                    <div id="bulkReturnedBySelectGroup" class="hidden mt-1">
+                        <select id="bulkReturnedByUserId" class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-semibold text-slate-700 outline-none">
+                        </select>
+                    </div>
+                </div>
+
+                <!-- LISTE DER AUSGELIEHENEN ARTIKEL -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold uppercase text-slate-500">Aktuell ausgeliehene Objekte</span>
+                        <button onclick="toggleAllBulkReturnCheckboxes()" class="text-xs text-emerald-600 hover:underline font-bold">Alle auswählen / abwählen</button>
+                    </div>
+                    <div id="bulkReturnItemsList" class="space-y-2 max-h-60 overflow-y-auto p-1">
+                        <p class="text-slate-400 italic text-center py-4">Bitte wählen Sie einen Ausleiher aus.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                <button onclick="closeBulkReturnModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50">Abbrechen</button>
+                <button onclick="executeBulkReturn()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/20 transition flex items-center gap-1.5">
+                    <span>📦</span> <span>Ausgewählte Objekte zurückgeben</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PUNKT 6: DIGITALE NUTZERKARTE (PERSONEN QR MODAL) -->
+    <div id="userQrModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100">
+            <div class="flex justify-end">
+                <button onclick="closeUserQrModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 font-extrabold text-xl flex items-center justify-center mx-auto mb-3">🪪</div>
+            <h3 class="font-bold text-base text-slate-800 mb-0.5">Digitale Nutzerkarte</h3>
+            <p id="userQrName" class="text-xs text-slate-500 mb-4">Nutzer-ID</p>
+            <div id="userQrContainer" class="flex justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-4 shadow-inner min-h-[160px] items-center"></div>
+            <p class="text-[11px] text-slate-400 mb-4">Diesen QR-Code am Lager-Terminal vorzeigen für schnelle Identifikation & Sammel-Abgabe.</p>
+            <button onclick="closeUserQrModal()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs py-2.5 rounded-xl transition">Schließen</button>
+        </div>
+    </div>
+
 </body>
 </html>
