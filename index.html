@@ -403,7 +403,7 @@
                             </div>
                             <div class="flex flex-wrap items-center gap-2">
                                 <button onclick="bulkRentModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">📅 Sammel-Ausleihe</button>
-                                <button onclick="bulkToggleInventur()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">📋 In Inventur setzen / Freigeben</button>
+                                <button id="bulkInventurBtn" onclick="bulkToggleInventur()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">📋 In Inventur setzen / Freigeben</button>
                                 <button onclick="bulkPrintQrCodes()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">🖨️ Etiketten Drucken (DIN A4)</button>
                                 <button id="bulkDeleteBtn" onclick="bulkDelete()" class="hidden bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">🗑️ Löschen</button>
                                 <button onclick="clearSelection()" class="text-xs text-slate-400 hover:text-white px-2 py-1">✖️ Auswahl aufheben</button>
@@ -496,7 +496,7 @@
                             <h3 class="font-bold text-slate-800 text-sm">Benutzerverwaltung</h3>
                             <p class="text-xs text-slate-400">Nutzerkonten, Rollen und Perspektiven verwalten</p>
                         </div>
-                        <button onclick="openNewUserModal()" class="bg-[#059669] hover:bg-[#047857] text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
+                        <button id="createNewUserBtn" onclick="openNewUserModal()" class="bg-[#059669] hover:bg-[#047857] text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
                             <span>+</span> Neuer Benutzer
                         </button>
                     </div>
@@ -1111,6 +1111,11 @@
         }
 
         function startImpersonation(userId) {
+            // SICHERHEITSPRÜFUNG: Nur echte Haupt-Administratoren dürfen Perspektiven wechseln!
+            if (!userProfile || (userProfile.role || '').toLowerCase() !== 'admin') {
+                showAppAlert("Nur Haupt-Administratoren dürfen andere Perspektiven übernehmen.", "Zugriff verweigert", "⛔");
+                return;
+            }
             const target = allProfiles.find(u => u.id === userId);
             if (!target) return;
             impersonatedUserId = userId;
@@ -1418,7 +1423,7 @@
                                 <button onclick="openRentModal('${item.id}', '${item.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 py-1 rounded font-semibold">Ausleihen</button>
                             `}
                             <button onclick="openQrModal('${item.id}')" class="text-xs border border-slate-300 text-[#1E293B] px-2 py-1 rounded hover:bg-slate-200">QR</button>
-                            ${canManage ? `
+                            ${isManagerOrAdminForRoom(item.main_category || item.room) ? `
                                 <button onclick="editItem('${item.id}')" class="text-xs text-blue-600 hover:underline">✏️ Bearbeiten</button>
                                 <button onclick="deleteItem('${item.id}')" class="text-xs text-red-600 hover:underline">🗑 Löschen</button>
                             ` : ''}
@@ -1529,17 +1534,25 @@
             document.getElementById('userAvatar').innerText = initial;
             document.getElementById('userNameDisplay').innerText = activeProf.full_name || user.email;
 
-            const canManage = isManagerOrAdmin();
-            const isAdmin = activeProf.role === 'admin';
+            const role = (activeProf?.role || 'user').toLowerCase();
+            const isAdmin = role === 'admin';
+            const isManager = role === 'raum_manager' || role === 'raummanager';
+            const canManage = isAdmin || isManager;
 
-            document.getElementById('userRoleBadge').innerText = isAdmin ? 'ADMINISTRATOR' : (canManage ? 'RAUM-MANAGER' : 'BENUTZER');
-            document.getElementById('userRoleBadge').className = canManage ? 'text-[9px] text-emerald-400 font-bold tracking-wider' : 'text-[9px] text-slate-400 font-bold tracking-wider';
+            const roomText = activeProf.managed_room ? ` (${activeProf.managed_room})` : '';
+            document.getElementById('userRoleBadge').innerText = isAdmin ? 'ADMINISTRATOR' : (isManager ? `RAUM-MANAGER${roomText.toUpperCase()}` : 'BENUTZER');
+            document.getElementById('userRoleBadge').className = isAdmin ? 'text-[9px] text-purple-400 font-bold tracking-wider' : (isManager ? 'text-[9px] text-amber-400 font-bold tracking-wider' : 'text-[9px] text-slate-400 font-bold tracking-wider');
 
-            document.getElementById('nav-users').classList.toggle('hidden', !canManage);
-            document.getElementById('addItemBtn').classList.toggle('hidden', !canManage);
-            document.getElementById('importExcelBtn').classList.toggle('hidden', !canManage);
-            document.getElementById('roomBaukastenBtn').classList.toggle('hidden', !canManage);
-            document.getElementById('bulkDeleteBtn').classList.toggle('hidden', !canManage);
+            // Role-driven UI Visibility Rules:
+            // - Nav-Users & New-User-Btn: Only visible for real Admins
+            // - Management Buttons (New Item, Import, Baukasten, Bulk Delete/Inventur): Visible for Admin & Raum-Manager
+            document.getElementById('nav-users')?.classList.toggle('hidden', !isAdmin);
+            document.getElementById('createNewUserBtn')?.classList.toggle('hidden', !isAdmin);
+            document.getElementById('addItemBtn')?.classList.toggle('hidden', !canManage);
+            document.getElementById('importExcelBtn')?.classList.toggle('hidden', !canManage);
+            document.getElementById('roomBaukastenBtn')?.classList.toggle('hidden', !canManage);
+            document.getElementById('bulkDeleteBtn')?.classList.toggle('hidden', !canManage);
+            document.getElementById('bulkInventurBtn')?.classList.toggle('hidden', !canManage);
             document.getElementById('movementsScopeBadge').innerText = canManage ? '👑 Manager/Admin-Ansicht (Alle)' : '👤 Meine Warenbewegungen';
 
             await fetchAllData();
@@ -1576,6 +1589,10 @@
         }
 
         async function toggleUserRole(userId, currentRole) {
+            if (!userProfile || (userProfile.role || '').toLowerCase() !== 'admin') {
+                showAppAlert("Nur Haupt-Administratoren dürfen Benutzerrollen ändern.", "Zugriff verweigert", "⛔");
+                return;
+            }
             const roles = ['user', 'raum_manager', 'admin'];
             const currIdx = roles.indexOf((currentRole || 'user').toLowerCase());
             const newRole = roles[(currIdx + 1) % roles.length];
@@ -1642,8 +1659,8 @@
                         </td>
                         <td class="p-4 flex items-center gap-2">
                             ${!isMe ? `
-                                <button onclick="startImpersonation('${p.id}')" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold px-2 py-1 rounded-lg">🎭 Perspektive übernehmen</button>
-                                <button onclick="toggleUserRole('${p.id}', '${p.role}')" class="text-xs text-indigo-600 hover:underline">Rolle ändern</button>
+                                ${(userProfile?.role || '').toLowerCase() === 'admin' ? `<button onclick="startImpersonation('${p.id}')" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold px-2 py-1 rounded-lg">🎭 Perspektive übernehmen</button>` : ''}
+                                ${(userProfile?.role || '').toLowerCase() === 'admin' ? `<button onclick="toggleUserRole('${p.id}', '${p.role}')" class="text-xs text-indigo-600 hover:underline">Rolle ändern</button>` : ''}
                             ` : '-'}
                         </td>
                     </tr>
@@ -2145,6 +2162,10 @@
         }
 
         function openItemModal() {
+            if (!isManagerOrAdmin()) {
+                showAppAlert("Normale Benutzer haben keine Berechtigung, neue Artikel anzulegen.", "Zugriff verweigert", "⛔");
+                return;
+            }
             document.getElementById('editItemId').value = '';
             document.getElementById('itemModalTitle').innerText = 'Neuen Artikel anlegen';
             document.getElementById('itemIdInput').value = generateUniqueId();
@@ -2194,9 +2215,13 @@
 
         async function saveItem(event) {
             event.preventDefault();
+            const mainCat = document.getElementById('itemMainCategorySelect').value;
+            if (!isManagerOrAdminForRoom(mainCat)) {
+                showAppAlert(`Keine Berechtigung zum Anlegen/Bearbeiten von Artikeln im Raum '${mainCat}'.`, "Zugriff verweigert", "⛔");
+                return;
+            }
             const id = document.getElementById('itemIdInput').value.trim();
             const editId = document.getElementById('editItemId').value;
-            const mainCat = document.getElementById('itemMainCategorySelect').value;
             const customAttrs = collectCustomAttributes();
 
             const itemData = {
