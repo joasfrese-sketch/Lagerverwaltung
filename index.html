@@ -234,52 +234,54 @@
 
         <!-- MAIN CONTENT AREA -->
         <main class="flex-1 bg-[#f8fafc] flex flex-col min-w-0">
-            <header class="h-16 md:h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-200/80 bg-white/70 backdrop-blur sticky top-0 z-20">
+                        <header class="h-16 md:h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-200/80 bg-white/70 backdrop-blur sticky top-0 z-20">
                 <div class="flex items-center gap-3">
                     <button onclick="toggleSidebar()" class="p-2 text-slate-600 hover:text-slate-900 focus:outline-none rounded-xl hover:bg-slate-100">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
                     <h1 id="pageTitle" class="text-lg md:text-2xl font-bold text-slate-800">Übersicht</h1>
                 </div>
-                <div class="flex items-center gap-2 md:gap-3">
-                    <!-- Live Sync Badge (Punkt 5) -->
-                    <span id="realtimeStatusBadge" class="hidden sm:inline-flex items-center gap-1.5 text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 shrink-0">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live Sync
-                    </span>
+                <div class="flex items-center gap-2 md:gap-3 flex-wrap justify-end">
+                    <!-- Punkt 5: Realtime Live Badge -->
+                    <div id="realtimeStatusBadge" class="hidden sm:flex items-center gap-1.5 text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2.5 py-1.5 rounded-xl">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Live Sync</span>
+                    </div>
 
-                    <!-- Mein QR Button (Punkt 6) -->
-                    <button onclick="openMyUserQrModal()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold px-2.5 md:px-3 py-2 rounded-xl flex items-center gap-1.5 transition shrink-0">
-                        🪪 <span class="hidden sm:inline">Mein QR</span>
+                    <!-- Punkt 2: Sammel-Abgabe Header Button -->
+                    <button onclick="openBulkReturnModal()" class="bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold px-2.5 py-2 rounded-xl flex items-center gap-1 transition shadow-sm">
+                        <span>📦</span> <span class="hidden md:inline">Sammel-Abgabe</span>
                     </button>
 
-                    <!-- Sammel-Abgabe Button (Punkt 2) -->
-                    <button onclick="openBulkReturnModal()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-2.5 md:px-3 py-2 rounded-xl flex items-center gap-1.5 transition shrink-0 shadow-sm">
-                        📦 <span class="hidden sm:inline">Sammel-Abgabe</span>
+                    <!-- Punkt 6: Personen QR Button -->
+                    <button onclick="openMyUserQrModal()" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-900 text-xs font-bold px-2.5 py-2 rounded-xl flex items-center gap-1 transition shadow-sm">
+                        <span>🪪</span> <span class="hidden md:inline">Mein QR</span>
                     </button>
 
-                    <!-- Scanner Button -->
-                    <button onclick="openScannerModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-2.5 md:px-3 py-2 rounded-xl flex items-center gap-1.5 transition">
-                        📷 <span class="hidden sm:inline">QR Scannen</span>
+                    <!-- QR Scanner Button -->
+                    <button onclick="openScannerModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-2.5 py-2 rounded-xl flex items-center gap-1.5 transition">
+                        📷 <span class="hidden sm:inline">Scanner</span>
                     </button>
 
-                    <!-- Notification Bell & Dropdown (Punkt 1) -->
-                    <div class="relative inline-block">
-                        <button id="notificationBellBtn" onclick="toggleNotificationDropdown()" class="relative p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition flex items-center justify-center">
+                    <!-- Punkt 1: Mitteilungen Glocke & Dropdown -->
+                    <div class="relative">
+                        <button id="notificationBellBtn" onclick="toggleNotifDropdown()" class="relative p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition focus:outline-none">
                             <span class="text-base">🔔</span>
-                            <span id="notificationBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+                            <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow">0</span>
                         </button>
-                        <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
-                            <div class="bg-slate-900 text-white p-3 flex items-center justify-between">
-                                <span class="font-bold text-xs flex items-center gap-1.5">🔔 Benachrichtigungen</span>
-                                <button onclick="markAllNotificationsRead()" class="text-[11px] text-emerald-400 hover:underline font-semibold">Alle gelesen</button>
+
+                        <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200/80 z-50 p-4 space-y-3">
+                            <div class="flex items-center justify-between border-b pb-2">
+                                <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5"><span>🔔</span> Mitteilungen & Feed</h4>
+                                <button onclick="markAllNotificationsRead()" class="text-[10px] font-bold text-emerald-600 hover:underline">Alle gelesen</button>
                             </div>
-                            <div id="notificationList" class="max-h-64 overflow-y-auto divide-y divide-slate-100 text-xs text-slate-700 p-2 space-y-1">
-                                <p class="text-slate-400 italic text-center py-4">Keine neuen Mitteilungen</p>
+                            <div id="notifList" class="space-y-2 max-h-64 overflow-y-auto pr-1 text-xs">
+                                <p class="text-slate-400 italic text-center py-4">Keine neuen Benachrichtigungen</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="text-[11px] md:text-xs font-medium text-slate-400 hidden lg:block" id="currentDateDisplay">Datum</div>
+                    <div class="text-[11px] font-medium text-slate-400 hidden lg:block ml-1" id="currentDateDisplay">Datum</div>
                 </div>
             </header>
 
@@ -299,7 +301,11 @@
                         <div class="bg-white p-4 md:p-6 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col">
                             <div class="flex justify-between items-center mb-4 pb-2 border-b">
                                 <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">📅 Belegungsplan & Reservierungen</h3>
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-3">
+                                    <label class="flex items-center gap-1.5 text-xs text-slate-600 font-semibold cursor-pointer select-none bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
+                                        <input type="checkbox" id="calHideReturnedToggle" onchange="renderDashboardCalendar()" class="w-3.5 h-3.5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                                        <span>🧹 Rückgaben ausblenden</span>
+                                    </label>
                                     <button onclick="openCalendarModal()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-lg transition flex items-center gap-1">⛶ Vollbild</button>
                                     <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded">Live</span>
                                 </div>
@@ -693,7 +699,13 @@
     <div id="calendarModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 max-w-5xl w-full h-[85vh] flex flex-col shadow-2xl">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h3 class="font-bold text-slate-800 text-base">📅 Belegungsplan (Vollansicht)</h3>
+                <div class="flex items-center gap-4">
+                    <h3 class="font-bold text-slate-800 text-base">📅 Belegungsplan (Vollansicht)</h3>
+                    <label class="flex items-center gap-1.5 text-xs text-slate-600 font-semibold cursor-pointer select-none bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200">
+                        <input type="checkbox" id="modalCalHideReturnedToggle" onchange="renderModalCalendar()" class="w-3.5 h-3.5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                        <span>🧹 Abgeschlossene Rückgaben ausblenden</span>
+                    </label>
+                </div>
                 <button onclick="closeCalendarModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
             </div>
             <div class="calendar-wrapper flex-1 overflow-y-auto">
@@ -937,6 +949,13 @@
             <form onsubmit="confirmReturn(event)" class="space-y-4">
                 <input type="hidden" id="returnRentalId">
                 <input type="hidden" id="returnItemId">
+
+                <!-- PUNKT 3: DUAL-MODE ABGEBENDE PERSON -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">👥 Abgebende Person (Dual-Mode)</label>
+                    <select id="singleReturnedByUserId" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold outline-none text-slate-700">
+                    </select>
+                </div>
 
                 <div class="space-y-2 border p-3 bg-slate-50 rounded-xl max-h-36 overflow-y-auto">
                     <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kofferinhalte / Zubehör</label>
@@ -2480,6 +2499,19 @@
             document.getElementById('returnRentalId').value = rentalId;
             document.getElementById('returnItemId').value = itemId;
 
+            // Populate Dual-Mode returnedBy dropdown
+            const sel = document.getElementById('singleReturnedByUserId');
+            if (sel) {
+                sel.innerHTML = '';
+                allProfiles.forEach(p => {
+                    if (p.id === SYSTEM_BOT_ID) return;
+                    sel.innerHTML += `<option value="${p.id}">${p.full_name || 'Benutzer'} (${(p.role || 'user').toUpperCase()})</option>`;
+                });
+                const rental = activeRentals.find(r => r.id === rentalId);
+                if (rental && rental.user_id) sel.value = rental.user_id;
+                else if (currentUser) sel.value = currentUser.id;
+            }
+
             const item = allItems.find(i => i.id === itemId);
             const checklist = document.getElementById('accessoriesChecklist');
             if (checklist) {
@@ -2693,14 +2725,13 @@
         function buildCalendarEvents() {
             const canSeeDetails = isManagerOrAdmin();
             const activeProf = getActiveProfile();
-            const hideReturned = document.getElementById('toggleHideReturnedCalEvents')?.checked;
+            const hideReturned = document.getElementById('calHideReturnedToggle')?.checked;
 
-            let filteredRentals = activeRentals;
-            if (hideReturned) {
-                filteredRentals = activeRentals.filter(r => r.status !== 'Zurückgegeben');
-            }
-
-            return filteredRentals.map(r => {
+            return activeRentals.filter(r => {
+                const isReturned = r.status === 'Zurückgegeben' || !!r.returned_at;
+                if (hideReturned && isReturned) return false;
+                return true;
+            }).map(r => {
                 const borrower = allProfiles.find(p => p.id === r.user_id);
                 const borrowerName = (canSeeDetails || r.user_id === activeProf?.id) 
                     ? (borrower?.full_name || 'Benutzer') 
@@ -3085,6 +3116,259 @@ END:VCALENDAR`;
             }
         }
 
+        
+        // ============================================================
+        // PUNKT 1: NOTIFICATION SYSTEM & FEED
+        // ============================================================
+        let appNotifications = [];
+
+        function addNotification(title, message, type = 'info') {
+            const notif = {
+                id: generateUniqueId(),
+                title,
+                message,
+                type,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                read: false
+            };
+            appNotifications.unshift(notif);
+            renderNotifications();
+        }
+
+        
+        function toggleNotifDropdown() {
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) dropdown.classList.toggle('hidden');
+        }
+
+        async function fetchAllDataSilently() {
+            if (!db) return;
+            try {
+                const { data: items } = await db.from('items').select('*');
+                if (items) allItems = items;
+                const { data: rentals } = await db.from('rentals').select('*, items(*)');
+                if (rentals) activeRentals = rentals;
+                renderCards(allItems);
+                renderMyRentals();
+                renderDashboardCalendar();
+                if (modalCalendar) renderModalCalendar();
+            } catch(e) {}
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById('notifList');
+            const badge = document.getElementById('notifBadge');
+            if (!list) return;
+
+            const unreadCount = appNotifications.filter(n => !n.read).length;
+            if (badge) {
+                badge.innerText = unreadCount;
+                badge.classList.toggle('hidden', unreadCount === 0);
+            }
+
+            if (appNotifications.length === 0) {
+                list.innerHTML = '<p class="text-slate-400 italic text-center py-4">Keine neuen Benachrichtigungen</p>';
+                return;
+            }
+
+            list.innerHTML = appNotifications.map(n => `
+                <div class="p-2.5 rounded-xl ${n.read ? 'bg-slate-50 border-transparent' : 'bg-emerald-50/80 border-emerald-200'} border transition">
+                    <div class="flex items-center justify-between font-bold text-slate-800 mb-0.5">
+                        <span class="truncate">${n.title}</span>
+                        <span class="text-[10px] font-normal text-slate-400 shrink-0 ml-1">${n.timestamp}</span>
+                    </div>
+                    <p class="text-[11px] text-slate-600">${n.message}</p>
+                </div>
+            `).join('');
+        }
+
+        function toggleNotifDropdown() {
+            const dd = document.getElementById('notifDropdown');
+            if (dd) dd.classList.toggle('hidden');
+        }
+
+        function markAllNotificationsRead() {
+            appNotifications.forEach(n => n.read = true);
+            renderNotifications();
+        }
+
+        // ============================================================
+        // PUNKT 2 & 3: SAMMEL-ABGABE (TERMINAL MODUS) & SCHNELLSUCHE
+        // ============================================================
+        function openBulkReturnModal(preselectedUserId = null) {
+            populateBulkReturnUserSelect();
+            populateBulkReturnedBySelect();
+            
+            const select = document.getElementById('bulkReturnUserSelect');
+            if (preselectedUserId && select) {
+                select.value = preselectedUserId;
+            } else if (select && select.options.length > 0) {
+                select.selectedIndex = 0;
+            }
+
+            onBulkReturnUserChange(select ? select.value : null);
+            document.getElementById('bulkReturnModal').classList.remove('hidden');
+        }
+
+        function closeBulkReturnModal() {
+            document.getElementById('bulkReturnModal').classList.add('hidden');
+        }
+
+        function populateBulkReturnUserSelect(filterQuery = '') {
+            const select = document.getElementById('bulkReturnUserSelect');
+            if (!select) return;
+            select.innerHTML = '';
+
+            const q = filterQuery.toLowerCase().trim();
+            const filtered = allProfiles.filter(p => {
+                if (p.id === SYSTEM_BOT_ID) return false;
+                if (!q) return true;
+                const name = (p.full_name || '').toLowerCase();
+                const email = (p.email || '').toLowerCase();
+                const id = (p.id || '').toLowerCase();
+                return name.includes(q) || email.includes(q) || id.includes(q);
+            });
+
+            if (filtered.length === 0) {
+                select.innerHTML = '<option value="">Keine passenden Personen gefunden</option>';
+                return;
+            }
+
+            filtered.forEach(p => {
+                select.innerHTML += `<option value="${p.id}">👤 ${p.full_name || 'Benutzer'} (${(p.role || 'user').toUpperCase()})</option>`;
+            });
+        }
+
+        function filterBulkReturnUsers() {
+            const q = document.getElementById('bulkReturnUserSearch').value;
+            populateBulkReturnUserSelect(q);
+            const select = document.getElementById('bulkReturnUserSelect');
+            if (select && select.value) {
+                onBulkReturnUserChange(select.value);
+            }
+        }
+
+        function populateBulkReturnedBySelect() {
+            const select = document.getElementById('bulkReturnedByUserId');
+            if (!select) return;
+            select.innerHTML = '';
+            allProfiles.forEach(p => {
+                if (p.id === SYSTEM_BOT_ID) return;
+                select.innerHTML += `<option value="${p.id}">${p.full_name || 'Benutzer'} (${(p.role || 'user').toUpperCase()})</option>`;
+            });
+            if (currentUser) select.value = currentUser.id;
+        }
+
+        function toggleBulkReturnedBySelect(show) {
+            const grp = document.getElementById('bulkReturnedBySelectGroup');
+            if (grp) grp.classList.toggle('hidden', !show);
+        }
+
+        function onBulkReturnUserChange(userId) {
+            const container = document.getElementById('bulkReturnItemsList');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!userId) {
+                container.innerHTML = '<p class="text-slate-400 italic text-center py-4">Bitte wählen Sie einen Ausleiher aus.</p>';
+                return;
+            }
+
+            const userRentals = activeRentals.filter(r => r.user_id === userId && !r.returned_at);
+
+            if (userRentals.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 italic text-center py-4">Diese Person hat aktuell keine ausgeliehenen Objekte.</p>';
+                return;
+            }
+
+            userRentals.forEach(r => {
+                const item = allItems.find(i => i.id === r.item_id);
+                const itemName = item ? item.name : `Artikel ID: ${r.item_id}`;
+                container.innerHTML += `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-slate-100 transition">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" value="${r.id}" checked class="bulk-return-item-check w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                            <div>
+                                <h4 class="font-bold text-xs text-slate-800">${itemName}</h4>
+                                <p class="text-[10px] text-slate-500">Ausgeliehen am: ${new Date(r.start_date).toLocaleDateString()} | Bis: ${new Date(r.end_date).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Ausgeliehen</span>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleAllBulkReturnCheckboxes() {
+            const checks = document.querySelectorAll('.bulk-return-item-check');
+            if (checks.length === 0) return;
+            const allChecked = Array.from(checks).every(c => c.checked);
+            checks.forEach(c => c.checked = !allChecked);
+        }
+
+        async function executeBulkReturn() {
+            const checkedBoxes = document.querySelectorAll('.bulk-return-item-check:checked');
+            if (checkedBoxes.length === 0) {
+                showAppAlert("Bitte wählen Sie mindestens ein Objekt zur Rückgabe aus.", "Hinweis", "ℹ️");
+                return;
+            }
+
+            const selectedRentalIds = Array.from(checkedBoxes).map(c => c.value);
+            const isThirdParty = document.querySelector('input[name="bulkReturnedByRadio"]:checked')?.value === 'third_party';
+            const returnedBy = isThirdParty ? document.getElementById('bulkReturnedByUserId').value : document.getElementById('bulkReturnUserSelect').value;
+
+            try {
+                const returnDate = new Date().toISOString();
+
+                for (const rentalId of selectedRentalIds) {
+                    const rental = activeRentals.find(r => r.id === rentalId);
+                    if (!rental) continue;
+
+                    await db.from('rentals').update({
+                        returned_at: returnDate,
+                        returned_by_user_id: returnedBy
+                    }).eq('id', rentalId);
+
+                    await db.from('items').update({ status: 'Verfügbar' }).eq('id', rental.item_id);
+                }
+
+                showAppAlert(`${selectedRentalIds.length} Objekt(e) erfolgreich im Lager zurückgegeben.`, "Sammel-Rückgabe erfolgt", "✅");
+                addNotification("Sammel-Rückgabe", `${selectedRentalIds.length} Objekt(e) zurückgegeben`, 'return');
+                closeBulkReturnModal();
+                await fetchAllData();
+            } catch (err) {
+                showAppAlert("Fehler bei der Sammel-Rückgabe:\n" + err.message, "Fehler", "❌");
+            }
+        }
+
+        // ============================================================
+        // PUNKT 6: PERSONEN QR-CODE GENERATION & SCANNER INTEGRATION
+        // ============================================================
+        function openMyUserQrModal() {
+            const activeProf = getActiveProfile();
+            if (!activeProf) return;
+
+            document.getElementById('userQrName').innerText = `${activeProf.full_name || 'Benutzer'} (${activeProf.id})`;
+            const container = document.getElementById('userQrContainer');
+            if (container) {
+                container.innerHTML = '';
+                const qrString = `USER:${activeProf.id}`;
+                new QRCode(container, {
+                    text: qrString,
+                    width: 150,
+                    height: 150,
+                    colorDark: "#0f172a",
+                    colorLight: "#f8fafc",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+            document.getElementById('userQrModal').classList.remove('hidden');
+        }
+
+        function closeUserQrModal() {
+            document.getElementById('userQrModal').classList.add('hidden');
+        }
+
         function setupRealtimeSubscriptions() {
             if (!db) return;
             try {
@@ -3101,6 +3385,12 @@ END:VCALENDAR`;
                     })
                     .subscribe();
             } catch(e) {}
+
+            if (!window.heartbeatTimer) {
+                window.heartbeatTimer = setInterval(() => {
+                    fetchAllDataSilently();
+                }, 15000);
+            }
         }
 
         // KI DIAGNOSE & REPARATUR
@@ -3162,303 +3452,87 @@ END:VCALENDAR`;
             showAppAlert("Support-Ticket erfolgreich an den System-Bot gesendet!", "Ticket gesendet", "🤖");
             switchTab('chat');
         }
-    
-        // =================================================================
-        // 6-PUNKTE PROGRAMM LOGIK IMPLEMENTIERUNG
-        // =================================================================
+    </script>
 
-        // PUNKT 1: MITTEILUNGEN & BENACHRICHTIGUNGEN
-        let appNotifications = [];
-
-        function toggleNotificationDropdown() {
-            const dropdown = document.getElementById('notificationDropdown');
-            if (dropdown) dropdown.classList.toggle('hidden');
-        }
-
-        function addAppNotification(title, message, type = 'info') {
-            const newNotif = {
-                id: generateUniqueId(),
-                title: title,
-                message: message,
-                type: type,
-                read: false,
-                timestamp: new Date()
-            };
-            appNotifications.unshift(newNotif);
-            renderNotifications();
-        }
-
-        function renderNotifications() {
-            const badge = document.getElementById('notificationBadge');
-            const list = document.getElementById('notificationList');
-            const unreadCount = appNotifications.filter(n => !n.read).length;
-
-            if (badge) {
-                if (unreadCount > 0) {
-                    badge.innerText = unreadCount;
-                    badge.classList.remove('hidden');
-                } else {
-                    badge.classList.add('hidden');
-                }
-            }
-
-            if (list) {
-                if (appNotifications.length === 0) {
-                    list.innerHTML = '<p class="text-slate-400 italic text-center py-4">Keine neuen Mitteilungen</p>';
-                } else {
-                    list.innerHTML = appNotifications.map(n => `
-                        <div class="p-2 hover:bg-slate-50 rounded-lg transition ${n.read ? 'opacity-60' : 'font-semibold bg-emerald-50/50'}">
-                            <div class="flex items-center justify-between text-[11px] text-slate-800">
-                                <span>${n.title}</span>
-                                <span class="text-[9px] text-slate-400">${new Date(n.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                            </div>
-                            <p class="text-[10px] text-slate-600 mt-0.5">${n.message}</p>
-                        </div>
-                    `).join('');
-                }
-            }
-        }
-
-        function markAllNotificationsRead() {
-            appNotifications.forEach(n => n.read = true);
-            renderNotifications();
-        }
-
-        // PUNKT 2 & 3: SAMMEL-ABGABE & SCHNELLSUCHE & DUAL-MODE
-        function openBulkReturnModal(preselectedUserId = null) {
-            populateBulkReturnUserSelect();
-            populateBulkReturnedBySelect();
-            const select = document.getElementById('bulkReturnUserSelect');
-            if (preselectedUserId && select) {
-                select.value = preselectedUserId;
-            }
-            onBulkReturnUserChange(select ? select.value : null);
-            document.getElementById('bulkReturnModal')?.classList.remove('hidden');
-        }
-
-        function closeBulkReturnModal() {
-            document.getElementById('bulkReturnModal')?.classList.add('hidden');
-        }
-
-        function populateBulkReturnUserSelect(filterQuery = '') {
-            const select = document.getElementById('bulkReturnUserSelect');
-            if (!select) return;
-            select.innerHTML = '<option value="">-- Bitte Nutzer wählen --</option>';
-            const q = filterQuery.toLowerCase().trim();
-            allProfiles.forEach(p => {
-                if (p.id === SYSTEM_BOT_ID || p.role === 'system') return;
-                const name = (p.full_name || 'Benutzer').toLowerCase();
-                const email = (p.email || '').toLowerCase();
-                if (!q || name.includes(q) || email.includes(q) || p.id.includes(q)) {
-                    select.innerHTML += `<option value="${p.id}">${p.full_name || 'Benutzer'} (${(p.role || 'user').toUpperCase()})</option>`;
-                }
-            });
-        }
-
-        function filterBulkReturnUsers() {
-            const searchInput = document.getElementById('bulkReturnUserSearch');
-            const q = searchInput ? searchInput.value : '';
-            populateBulkReturnUserSelect(q);
-            const select = document.getElementById('bulkReturnUserSelect');
-            if (select && select.options.length > 1) {
-                select.selectedIndex = 1;
-                onBulkReturnUserChange(select.value);
-            }
-        }
-
-        function populateBulkReturnedBySelect() {
-            const select = document.getElementById('bulkReturnedByUserId');
-            if (!select) return;
-            select.innerHTML = '';
-            allProfiles.forEach(p => {
-                if (p.id === SYSTEM_BOT_ID) return;
-                select.innerHTML += `<option value="${p.id}">${p.full_name || 'Benutzer'} (${(p.role || 'user').toUpperCase()})</option>`;
-            });
-            if (currentUser) select.value = currentUser.id;
-        }
-
-        function toggleBulkReturnedBySelect(showThirdParty) {
-            const grp = document.getElementById('bulkReturnedBySelectGroup');
-            if (grp) grp.classList.toggle('hidden', !showThirdParty);
-        }
-
-        function onBulkReturnUserChange(userId) {
-            const list = document.getElementById('bulkReturnItemsList');
-            if (!list) return;
-            if (!userId) {
-                list.innerHTML = '<p class="text-xs text-slate-400 italic p-3 text-center">Bitte zuerst einen Ausleiher wählen.</p>';
-                return;
-            }
-
-            const userRentals = activeRentals.filter(r => r.user_id === userId && r.status !== 'Zurückgegeben');
-            if (userRentals.length === 0) {
-                list.innerHTML = '<p class="text-xs text-slate-500 font-semibold p-3 text-center">Dieser Nutzer hat aktuell keine entliehenen Objekte.</p>';
-                return;
-            }
-
-            list.innerHTML = userRentals.map(r => {
-                const item = allItems.find(i => i.id === r.item_id);
-                const itemName = item ? item.name : r.item_id;
-                return `
-                    <label class="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-xl hover:bg-emerald-50/50 cursor-pointer transition">
-                        <div class="flex items-center gap-2.5">
-                            <input type="checkbox" value="${r.id}" class="bulk-return-checkbox w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300" checked>
-                            <div>
-                                <h5 class="text-xs font-bold text-slate-800">${itemName}</h5>
-                                <p class="text-[10px] text-slate-500">Ausgeliehen am: ${r.start_date ? new Date(r.start_date).toLocaleDateString() : '-'} | Bis: ${r.end_date ? new Date(r.end_date).toLocaleDateString() : '-'}</p>
-                            </div>
-                        </div>
-                        <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">Ausgeliehen</span>
-                    </label>
-                `;
-            }).join('');
-        }
-
-        function toggleAllBulkReturnCheckboxes() {
-            const checkboxes = document.querySelectorAll('.bulk-return-checkbox');
-            if (checkboxes.length === 0) return;
-            const anyUnchecked = Array.from(checkboxes).some(cb => !cb.checked);
-            checkboxes.forEach(cb => cb.checked = anyUnchecked);
-        }
-
-        async function executeBulkReturn() {
-            const checkboxes = document.querySelectorAll('.bulk-return-checkbox:checked');
-            if (checkboxes.length === 0) {
-                showAppAlert("Bitte wähle mindestens ein Objekt für die Rückgabe aus.", "Hinweis", "⚠️");
-                return;
-            }
-
-            const isThirdParty = document.querySelector('input[name="bulkReturnedByRadio"]:checked')?.value === 'third_party';
-            const returnedBy = isThirdParty ? document.getElementById('bulkReturnedByUserId')?.value : document.getElementById('bulkReturnUserSelect')?.value;
-
-            const rentalIds = Array.from(checkboxes).map(cb => cb.value);
-
-            if (!db) return;
-
-            let successCount = 0;
-            for (const rId of rentalIds) {
-                const rental = activeRentals.find(r => r.id === rId);
-                if (!rental) continue;
-
-                const { error: rentErr } = await db.from('rentals').update({
-                    status: 'Zurückgegeben',
-                    returned_at: new Date().toISOString(),
-                    returned_by_user_id: returnedBy
-                }).eq('id', rId);
-
-                if (!rentErr) {
-                    await db.from('items').update({ status: 'Verfügbar' }).eq('id', rental.item_id);
-                    successCount++;
-                }
-            }
-
-            addAppNotification("Sammel-Rückgabe", `${successCount} Objekt(e) erfolgreich im Lager zurückgegeben.`, 'success');
-            showAppAlert(`${successCount} Objekt(e) wurden erfolgreich zurückgegeben.`, "Erfolg", "✅");
-            closeBulkReturnModal();
-            await fetchAllData();
-        }
-
-        // PUNKT 4: KALENDER CLEAN-UP BEI BELEGUNGSPLAN
-        // (Wird direkt in buildCalendarEvents() angewendet)
-
-        // PUNKT 6: PERSONEN QR-CODE
-        function openMyUserQrModal() {
-            const activeProf = getActiveProfile();
-            if (!activeProf) return;
-            document.getElementById('userQrName').innerText = `${activeProf.full_name || 'Benutzer'} (${activeProf.id})`;
-            const container = document.getElementById('userQrContainer');
-            if (container) {
-                container.innerHTML = '';
-                new QRCode(container, {
-                    text: `USER:${activeProf.id}`,
-                    width: 180,
-                    height: 180
-                });
-            }
-            document.getElementById('userQrModal')?.classList.remove('hidden');
-        }
-
-        function closeMyUserQrModal() {
-            document.getElementById('userQrModal')?.classList.add('hidden');
-        }
-
-</script>
-
-    <!-- ================================================================= -->
-    <!-- MODALS FOR 6-PUNKTE PROGRAMM                                      -->
-    <!-- ================================================================= -->
-
-    <!-- SAMMEL-ABGABE MODAL (PUNKTE 2 & 3) -->
+    <!-- PUNKT 2 & 3: SAMMEL-ABGABE MODAL (LAGER TERMINAL MODUS) -->
     <div id="bulkReturnModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-lg w-full space-y-4 shadow-xl border border-slate-100">
-            <div class="flex items-center justify-between border-b pb-3">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div>
-                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">📦 Sammel-Abgabe im Lager</h3>
-                    <p class="text-xs text-slate-500">Schnelle Mehrfach-Rückgabe von Objekten</p>
+                    <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                        <span>📦</span> <span>Lager-Terminal: Sammel-Abgabe</span>
+                    </h3>
+                    <p id="bulkReturnSubtitle" class="text-xs text-slate-500">Schnelle Abnahme von Objekten im Lager</p>
                 </div>
                 <button onclick="closeBulkReturnModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
             </div>
 
-            <!-- SCHNELLSUCHE BENUTZER (PUNKT 3) -->
-            <div class="space-y-1">
-                <label class="block text-xs font-bold text-slate-600 uppercase">1. Ausleiher auswählen</label>
-                <input type="text" id="bulkReturnUserSearch" oninput="filterBulkReturnUsers()" placeholder="🔍 Nutzer suchen (Name, E-Mail, ID)..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-500">
-                <select id="bulkReturnUserSelect" onchange="onBulkReturnUserChange(this.value)" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold text-slate-800">
-                    <option value="">-- Bitte Nutzer wählen --</option>
-                </select>
-            </div>
-
-            <!-- DUAL MODE RÜCKGABE (PUNKT 3) -->
-            <div class="space-y-1 pt-2 border-t border-slate-100">
-                <label class="block text-xs font-bold text-slate-600 uppercase">2. Wer übergibt die Artikel?</label>
-                <div class="flex items-center gap-4 text-xs">
-                    <label class="flex items-center gap-1.5 cursor-pointer font-medium">
-                        <input type="radio" name="bulkReturnedByRadio" value="self" checked onchange="toggleBulkReturnedBySelect(false)" class="text-emerald-600 focus:ring-emerald-500">
-                        <span>Ausleiher selbst</span>
-                    </label>
-                    <label class="flex items-center gap-1.5 cursor-pointer font-medium">
-                        <input type="radio" name="bulkReturnedByRadio" value="third_party" onchange="toggleBulkReturnedBySelect(true)" class="text-emerald-600 focus:ring-emerald-500">
-                        <span>Dritte Person / Lagerwart</span>
-                    </label>
-                </div>
-                <div id="bulkReturnedBySelectGroup" class="hidden mt-2">
-                    <select id="bulkReturnedByUserId" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold text-slate-800">
-                        <!-- Populated with all profiles -->
+            <div class="py-4 space-y-4 overflow-y-auto flex-1">
+                <!-- SCHNELLSUCHE BENUTZER -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">🔍 Ausleiher / Person wählen</label>
+                    <div class="relative">
+                        <input type="text" id="bulkReturnUserSearch" oninput="filterBulkReturnUsers()" placeholder="Name, E-Mail oder ID suchen..." class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold pl-8 outline-none focus:ring-2 focus:ring-emerald-500">
+                        <span class="absolute left-2.5 top-2.5 text-slate-400 text-xs">👤</span>
+                    </div>
+                    <select id="bulkReturnUserSelect" onchange="onBulkReturnUserChange(this.value)" class="w-full mt-2 bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold text-emerald-700 outline-none">
                     </select>
                 </div>
+
+                <!-- DUAL MODE: RÜCKGABE DURCH DRITTPERSON -->
+                <div class="bg-amber-50/70 border border-amber-200/80 p-3.5 rounded-2xl flex flex-col gap-2">
+                    <span class="text-xs font-bold text-amber-900 flex items-center gap-1">
+                        <span>👥</span> <span>Abgebende Person (Dual-Mode Protokoll):</span>
+                    </span>
+                    <div class="flex items-center gap-4 text-xs font-semibold text-slate-700">
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" name="bulkReturnedByRadio" value="self" checked onchange="toggleBulkReturnedBySelect(false)" class="text-emerald-600 focus:ring-emerald-500">
+                            <span>Ausleiher selbst</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" name="bulkReturnedByRadio" value="third_party" onchange="toggleBulkReturnedBySelect(true)" class="text-emerald-600 focus:ring-emerald-500">
+                            <span>Andere Person / Lagerwart</span>
+                        </label>
+                    </div>
+                    <div id="bulkReturnedBySelectGroup" class="hidden mt-1">
+                        <select id="bulkReturnedByUserId" class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-semibold text-slate-700 outline-none">
+                        </select>
+                    </div>
+                </div>
+
+                <!-- LISTE DER AUSGELIEHENEN ARTIKEL -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold uppercase text-slate-500">Aktuell ausgeliehene Objekte</span>
+                        <button onclick="toggleAllBulkReturnCheckboxes()" class="text-xs text-emerald-600 hover:underline font-bold">Alle auswählen / abwählen</button>
+                    </div>
+                    <div id="bulkReturnItemsList" class="space-y-2 max-h-60 overflow-y-auto p-1">
+                        <p class="text-slate-400 italic text-center py-4">Bitte wählen Sie einen Ausleiher aus.</p>
+                    </div>
+                </div>
             </div>
 
-            <!-- OBJEKTLISTE FÜR SAMMEL-ABGABE (PUNKT 2) -->
-            <div class="space-y-2 pt-2 border-t border-slate-100">
-                <div class="flex items-center justify-between">
-                    <label class="block text-xs font-bold text-slate-600 uppercase">3. Rückzugebende Objekte auswählen</label>
-                    <button onclick="toggleAllBulkReturnCheckboxes()" class="text-xs text-emerald-600 hover:underline font-bold">Alle auswählen / abwählen</button>
-                </div>
-                <div id="bulkReturnItemsList" class="space-y-2 max-h-52 overflow-y-auto p-1 border border-slate-200/60 rounded-xl bg-slate-50">
-                    <p class="text-xs text-slate-400 italic p-3 text-center">Bitte zuerst einen Ausleiher wählen.</p>
-                </div>
-            </div>
-
-            <div class="flex justify-end gap-2 pt-3 border-t">
-                <button onclick="closeBulkReturnModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-100">Abbrechen</button>
-                <button onclick="executeBulkReturn()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition">📦 Ausgewählte Objekte zurückgeben</button>
+            <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                <button onclick="closeBulkReturnModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50">Abbrechen</button>
+                <button onclick="executeBulkReturn()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/20 transition flex items-center gap-1.5">
+                    <span>📦</span> <span>Ausgewählte Objekte zurückgeben</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- PERSONEN QR-CODE MODAL (PUNKT 6) -->
+    <!-- PUNKT 6: DIGITALE NUTZERKARTE (PERSONEN QR MODAL) -->
     <div id="userQrModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-xl border border-slate-100 text-center">
-            <div class="flex items-center justify-between border-b pb-2">
-                <h3 class="text-base font-bold text-slate-800 flex items-center gap-1.5">🪪 Digitaler Ausleihschein</h3>
-                <button onclick="closeMyUserQrModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100">
+            <div class="flex justify-end">
+                <button onclick="closeUserQrModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
             </div>
-            <p id="userQrName" class="text-xs font-semibold text-slate-600">Nutzer-ID</p>
-            <div class="flex justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200">
-                <div id="userQrContainer"></div>
-            </div>
-            <p class="text-[11px] text-slate-400">Zeige diesen QR-Code am Lager-Terminal vor, um dich blitzschnell auszuweisen.</p>
-            <button onclick="closeMyUserQrModal()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs py-2.5 rounded-xl transition">Schließen</button>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 font-extrabold text-xl flex items-center justify-center mx-auto mb-3">🪪</div>
+            <h3 class="font-bold text-base text-slate-800 mb-0.5">Digitale Nutzerkarte</h3>
+            <p id="userQrName" class="text-xs text-slate-500 mb-4">Nutzer-ID</p>
+            <div id="userQrContainer" class="flex justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-4 shadow-inner min-h-[160px] items-center"></div>
+            <p class="text-[11px] text-slate-400 mb-4">Diesen QR-Code am Lager-Terminal vorzeigen für schnelle Identifikation & Sammel-Abgabe.</p>
+            <button onclick="closeUserQrModal()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs py-2.5 rounded-xl transition">Schließen</button>
         </div>
     </div>
 
