@@ -3018,46 +3018,52 @@
 
             html5QrScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 220, height: 220 } });
             html5QrScanner.render((decodedText) => {
-                let itemVal = (decodedText || '').trim();
+                let itemVal = decodedText ? decodedText.trim() : '';
                 try {
                     const url = new URL(decodedText);
                     if (url.searchParams.get('item')) itemVal = url.searchParams.get('item');
                 } catch(e) {}
 
-                // Smart-Scan Prefix Handling: USER:<id> | ROOM:<name> | Item SKU/ID
-                if (itemVal.startsWith('USER:')) {
-                    const userId = itemVal.replace('USER:', '').trim();
-                    if (html5QrScanner) html5QrScanner.clear();
-                    closeScannerModal();
-                    openBulkReturnModal(userId);
-                    showAppAlert(`Personen-QR-Code erkannt. Sammel-Abgabe geöffnet.`, "Person-Scan", "👤");
-                    return;
-                }
+                if (html5QrScanner) html5QrScanner.clear();
+                closeScannerModal();
+
+                // SMART SCAN ENGINE: 1-Click Context Routing
                 if (itemVal.startsWith('ROOM:')) {
                     const roomName = itemVal.replace('ROOM:', '').trim();
-                    if (html5QrScanner) html5QrScanner.clear();
-                    closeScannerModal();
                     selectRoom(roomName);
                     switchTab('inventory');
-                    showAppAlert(`Virtuell im Raum '${roomName}' eingecheckt. Inventar gefiltert.`, "Raum-Scan", "🚪");
-                    return;
-                }
-
-                if (isBatchScanMode) {
-                    if (!batchScannedItems.includes(itemVal)) {
-                        batchScannedItems.push(itemVal);
-                        updateBatchCartUI();
-                    }
+                    showAppAlert(`Virtuell eingecheckt in Raum: ${roomName}`, "Raum-Check-in", "🚪");
+                } else if (itemVal.startsWith('USER:')) {
+                    const userId = itemVal.replace('USER:', '').trim();
+                    openBulkReturnModal(userId);
+                    showAppAlert("Nutzer-QR erkannt: Sammel-Abgabe geöffnet", "Personen-Scan", "🪪");
                 } else {
-                    if (html5QrScanner) html5QrScanner.clear();
-                    closeScannerModal();
-                    selectRoom('ALL');
-                    const searchInput = document.getElementById('searchInput');
-                    if (searchInput) {
-                        searchInput.value = itemVal;
-                        handleSearchInput();
+                    if (isBatchScanMode) {
+                        if (!batchScannedItems.includes(itemVal)) {
+                            batchScannedItems.push(itemVal);
+                            updateBatchCartUI();
+                        }
+                    } else {
+                        selectRoom('ALL');
+                        const searchInput = document.getElementById('searchInput');
+                        if (searchInput) {
+                            searchInput.value = itemVal;
+                            handleSearchInput();
+                        }
+                        switchTab('inventory');
+                        // If exact item match found, trigger modal directly
+                        const matchedItem = allItems.find(i => i.id === itemVal || i.sku === itemVal || i.name.toLowerCase() === itemVal.toLowerCase());
+                        if (matchedItem) {
+                            if (matchedItem.status === 'Verfügbar') {
+                                openRentModal(matchedItem.id, matchedItem.name);
+                            } else {
+                                const activeRental = activeRentals.find(r => r.item_id === matchedItem.id && r.status !== 'Zurückgegeben');
+                                if (activeRental) {
+                                    openReturnModal(activeRental.id, matchedItem.id, matchedItem.name);
+                                }
+                            }
+                        }
                     }
-                    switchTab('inventory');
                 }
             });
         }
