@@ -5,12 +5,12 @@ export function renderAuth(root) {
   let register = false;
   const draw = () => {
     root.innerHTML = `
-    <div class="flex min-h-screen items-center justify-center bg-slate-900 p-4">
+    <div class="flex min-h-screen items-center justify-center bg-[#0f172a] p-4">
       <div class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
-        <div class="bg-slate-900 p-8 text-center">
+        <div class="bg-[#0f172a] p-8 text-center">
           <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-500/15 text-3xl">📦</div>
           <h1 class="text-2xl font-bold text-white">Lagerverwaltung Pro</h1>
-          <p class="mt-1 text-xs text-slate-400">Sicheres Waren- und Teammanagement</p>
+          <p class="mt-1 text-xs text-[#94a3b8]">Sicheres Waren- und Teammanagement</p>
         </div>
         <form id="authForm" class="space-y-4 p-8">
           ${register ? `

@@ -1,6 +1,7 @@
 import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, toast, busy, openModal } from '../lib/ui.js';
 import { state, isAdmin, isManager } from '../state.js';
+import { getTheme, setTheme } from '../lib/theme.js';
 import { enablePush, disablePush, pushActive, pushSupported, pushConfigured } from '../lib/push.js';
 
 export async function render(el) {
@@ -23,6 +24,13 @@ export async function render(el) {
       <div class="mt-2 flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"><span class="text-sm"><b>📲 Push-Nachrichten</b><span class="block text-xs text-slate-500">${!pushSupported() ? 'Dieser Browser unterstützt kein Push (iPhone: erst zum Home-Bildschirm hinzufügen).' : !pushConfigured() ? 'Noch nicht eingerichtet (VAPID-Schlüssel fehlt).' : 'Für deine eigenen Aktivitäten (Fristen, Ausleihen durch andere für dich, Chat). Gilt für dieses Gerät.'}</span></span>
       <button id="pushBtn" class="${pushOn ? 'btn-ghost' : 'btn-primary'}" ${!pushSupported() || !pushConfigured() ? 'disabled' : ''}>${pushOn ? 'Deaktivieren' : 'Aktivieren'}</button></div></section>
 
+    <section class="card"><h2 class="mb-2 font-bold">🌓 Darstellung</h2>
+      <div id="themeSeg" class="inline-flex rounded-xl bg-slate-100 p-0.5 text-sm font-semibold">
+        <button data-theme="light" class="rounded-lg px-3 py-1.5">☀️ Hell</button>
+        <button data-theme="dark" class="rounded-lg px-3 py-1.5">🌙 Dunkel</button>
+        <button data-theme="auto" class="rounded-lg px-3 py-1.5">🖥️ Automatisch</button></div>
+      <p class="mt-1 text-xs text-slate-500">„Automatisch" folgt der Einstellung deines Geräts.</p></section>
+
     <section class="card"><h2 class="mb-2 font-bold">🎛️ App</h2><label class="label">Kalenderansicht</label>
       <select id="view" class="input !w-auto"><option value="month" selected>Monat</option><option value="week" disabled>Woche (folgt)</option><option value="list" disabled>Liste (folgt)</option></select></section>
 
@@ -43,6 +51,9 @@ export async function render(el) {
   // Einstellungen speichern
   const savePrefs = async () => unwrap(await supabase.from('user_settings').upsert({ user_id: state.user.id, prefs }));
   el.querySelectorAll('[data-pref]').forEach((c) => (c.onchange = () => busy(null, async () => { prefs[c.dataset.pref] = c.checked; await savePrefs(); toast('Gespeichert', 'success'); })));
+  const markTheme = () => el.querySelectorAll('[data-theme]').forEach((b) => { const on = b.dataset.theme === getTheme(); b.className = `rounded-lg px-3 py-1.5 ${on ? 'bg-brand-600 text-white' : 'text-slate-600'}`; });
+  markTheme();
+  el.querySelectorAll('[data-theme]').forEach((b) => (b.onclick = () => busy(null, async () => { setTheme(b.dataset.theme); prefs.theme = b.dataset.theme; markTheme(); await savePrefs(); })));
   el.querySelector('#view').onchange = (e) => busy(null, async () => { prefs.calendar_view = e.target.value; localStorage.setItem('cal_view', e.target.value); await savePrefs(); });
   el.querySelector('#pushBtn').onclick = (e) => busy(e.target, async () => {
     if (pushOn) await disablePush(); else await enablePush();

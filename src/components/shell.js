@@ -28,17 +28,17 @@ export function renderShell(root) {
   const routes = Object.entries(ALL_ROUTES).filter(([, r]) => !r.managerOnly || isManager());
   root.innerHTML = `
   <div class="flex min-h-screen">
-    <aside class="sticky top-0 hidden h-screen w-60 shrink-0 flex-col justify-between bg-slate-900 p-4 text-slate-300 md:flex">
+    <aside class="sticky top-0 hidden h-screen w-60 shrink-0 flex-col justify-between bg-[#0f172a] p-4 text-[#cbd5e1] md:flex">
       <div>
         <div class="mb-6 flex items-center gap-3 px-2"><span class="text-2xl">📦</span><span class="font-bold text-white">Lager Pro</span></div>
         <button id="scanBtn" class="mb-4 w-full rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-bold text-white hover:bg-brand-700">📷 Scannen</button>
         <nav class="space-y-1" id="sideNav">
-          ${routes.map(([k, r]) => `<a href="#/${k}" data-route="${k}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-slate-800"><span>${r.icon}</span>${esc(r.label)}${r.badge ? '<span data-badge class="ml-auto hidden rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white"></span>' : ''}</a>`).join('')}
+          ${routes.map(([k, r]) => `<a href="#/${k}" data-route="${k}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-[#1e293b]"><span>${r.icon}</span>${esc(r.label)}${r.badge ? '<span data-badge class="ml-auto hidden rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white"></span>' : ''}</a>`).join('')}
         </nav>
       </div>
-      <div class="flex items-center justify-between rounded-xl bg-slate-800/60 p-3">
-        <div class="min-w-0"><div class="truncate text-xs font-bold text-white">${esc(state.profile.full_name || state.profile.username)}</div><div class="text-[10px] uppercase tracking-wider text-slate-400">${esc(roleLabel())}</div></div>
-        <button id="logoutBtn" title="Abmelden" class="text-slate-400 hover:text-white">⎋</button>
+      <div class="flex items-center justify-between rounded-xl bg-[#1e293b] p-3">
+        <div class="min-w-0"><div class="truncate text-xs font-bold text-white">${esc(state.profile.full_name || state.profile.username)}</div><div class="text-[10px] uppercase tracking-wider text-[#94a3b8]">${esc(roleLabel())}</div></div>
+        <button id="logoutBtn" title="Abmelden" class="text-[#94a3b8] hover:text-white">⎋</button>
       </div>
     </aside>
     <main class="min-w-0 flex-1 pb-24 md:pb-8"><div id="page" class="mx-auto max-w-5xl p-4 md:p-8"></div></main>
@@ -60,7 +60,7 @@ export function renderShell(root) {
     root.querySelectorAll('[data-route]').forEach((a) => {
       const active = a.dataset.route === activeKey;
       const side = !!a.closest('#sideNav');
-      if (side) { a.classList.toggle('bg-slate-800', active); a.classList.toggle('text-white', active); }
+      if (side) { a.classList.toggle('bg-[#1e293b]', active); a.classList.toggle('text-white', active); }
       else { a.classList.toggle('text-brand-600', active); a.classList.toggle('text-slate-500', !active); }
     });
     const container = root.querySelector('#page');

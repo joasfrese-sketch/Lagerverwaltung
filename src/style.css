@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --slate-50: 248 250 252; --slate-100: 241 245 249; --slate-200: 226 232 240; --slate-300: 203 213 225;
+  --slate-400: 148 163 184; --slate-500: 100 116 139; --slate-600: 71 85 105; --slate-700: 51 65 85;
+  --slate-800: 30 41 59; --slate-900: 15 23 42; --slate-950: 2 6 23;
+  --card: 255 255 255;
+}
+.dark {
+  --slate-50: 15 23 42; --slate-100: 51 65 85; --slate-200: 51 65 85; --slate-300: 71 85 105;
+  --slate-400: 125 141 163; --slate-500: 148 163 184; --slate-600: 203 213 225; --slate-700: 226 232 240;
+  --slate-800: 241 245 249; --slate-900: 248 250 252; --slate-950: 255 255 255;
+  --card: 30 41 59;
+}
+
 body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
 
 @layer components {
@@ -14,3 +27,23 @@ body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
   .card { @apply rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm; }
   .badge { @apply inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold; }
 }
+
+/* ---------- Dunkelmodus: Flächen und Statusfarben ---------- */
+.dark .bg-white, .dark .card, .dark .input { background-color: rgb(var(--card)); }
+.dark .bg-white\/95 { background-color: rgb(var(--card) / 0.95); }
+.dark .input::placeholder { color: rgb(var(--slate-400)); }
+.dark .bg-brand-50 { background-color: rgb(16 185 129 / 0.12); }
+.dark .bg-brand-100 { background-color: rgb(16 185 129 / 0.22); }
+.dark .text-brand-700 { color: #6ee7b7; }
+.dark .bg-emerald-100 { background-color: rgb(16 185 129 / 0.2); }
+.dark .text-emerald-800, .dark .text-emerald-700 { color: #6ee7b7; }
+.dark .bg-amber-100 { background-color: rgb(245 158 11 / 0.2); }
+.dark .text-amber-800 { color: #fcd34d; }
+.dark .bg-red-50, .dark .bg-red-100 { background-color: rgb(239 68 68 / 0.18); }
+.dark .text-red-700, .dark .text-red-600 { color: #fca5a5; }
+.dark .border-red-300 { border-color: rgb(239 68 68 / 0.5); }
+.dark .bg-blue-100 { background-color: rgb(59 130 246 / 0.2); }
+.dark .text-blue-700 { color: #93c5fd; }
+.dark .bg-purple-100 { background-color: rgb(168 85 247 / 0.2); }
+.dark .text-purple-700 { color: #d8b4fe; }
+.dark .text-white.bg-red-600, .dark .bg-red-600 { color: #fff; }
