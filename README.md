@@ -41,4 +41,5 @@ Repo verbinden (Framework Vite). Environment Variables (Production + Preview):
 
 ## Stand
 Fertig: Schema+RLS+RPCs, Login (E-Mail/Benutzername), Registrierung mit Bestätigung, Passwort-Reset, Übersicht, Katalog (Räume, Suche, Ausleihe, Entnahme, Defekt/Freigabe, QR-Etikett), Kalender (Monat, Filter, Google/.ics), Chat (Gesamt/Gruppe/Direkt) + Benachrichtigungszentrale, Persönlicher Bereich (QR, Leihen, Rückgabe, eigener Kalender, Protokoll), Lagerwart-Terminal (Sammel-Abgabe, Drittperson, Protokoll), QR-Scanner, Einstellungen (Profil, Benachrichtigungen, Push, Passwort, Benutzer/Rollen/Berechtigungen), Fristen-Erinnerungen + Web-Push.
-Offen: Wochen-/Listenansicht, Excel-Import, Fotos, A4-Sammeldruck, Raum-Baukasten-UI.
+Neu: Excel/CSV-Import mit Spaltenzuordnung und Vorschau, Hell/Dunkel/Automatisch, Mehrfachscan (Ausgabe/Rücknahme) im Lagerwart-Terminal.
+Offen: Wochen-/Listenansicht, Fotos, A4-Sammeldruck, Raum-Baukasten-UI.

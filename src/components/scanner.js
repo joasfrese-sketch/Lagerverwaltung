@@ -5,21 +5,33 @@ import { rentModal, openRoom } from '../pages/catalog.js';
 import { returnModal } from '../pages/me.js';
 
 // Unterstützte Codes: ITEM:<id> | USER:<uuid> | ROOM:<id> | reine Artikel-ID | URL mit ?item=<id>
-export async function openScanner(onCode) {
-  let scanner = null;
+export async function openScanner(onCode, { continuous = false, title = '📷 Code scannen' } = {}) {
+  let scanner = null; let last = ''; let lastAt = 0;
   const stop = async () => { try { if (scanner) { await scanner.stop(); scanner.clear(); } } catch { /* ignore */ } scanner = null; };
   const { el, close } = openModal(`
-    <h3 class="mb-2 text-lg font-bold">📷 Code scannen</h3>
+    <h3 class="mb-2 text-lg font-bold">${title}</h3>
     <div id="reader" class="overflow-hidden rounded-xl bg-slate-100"></div>
-    <p id="scanHint" class="mt-2 text-xs text-slate-500">Artikel-, Personen- oder Raum-QR vor die Kamera halten.</p>
-    <form id="manual" class="mt-3 flex gap-2"><input name="code" class="input" placeholder="oder Code manuell eingeben"><button class="btn-primary">OK</button></form>
-    <button data-close class="btn-ghost mt-3 w-full">Schließen</button>`, { onClose: stop });
-  const done = async (code) => { await stop(); close(); onCode(code); };
-  el.querySelector('#manual').onsubmit = (e) => { e.preventDefault(); const v = new FormData(e.target).get('code').trim(); if (v) done(v); };
+    <p id="scanHint" class="mt-2 text-xs text-slate-500">${continuous ? 'Mehrere Codes nacheinander scannen – das Fenster bleibt offen.' : 'Artikel-, Personen- oder Raum-QR vor die Kamera halten.'}</p>
+    ${continuous ? '<div id="feed" class="mt-2 max-h-28 space-y-1 overflow-y-auto rounded-xl bg-slate-50 p-2 text-sm"></div>' : ''}
+    <form id="manual" class="mt-3 flex gap-2"><input name="code" class="input" placeholder="oder Code manuell eingeben" autocomplete="off"><button class="btn-primary">OK</button></form>
+    <button data-close class="btn-ghost mt-3 w-full">${continuous ? 'Fertig' : 'Schließen'}</button>`, { onClose: stop });
+  const feed = (msg) => {
+    const box = el.querySelector('#feed'); if (!box || !msg) return;
+    const row = document.createElement('div'); row.textContent = msg; box.prepend(row);
+  };
+  const handle = async (text) => {
+    if (!continuous) { await stop(); close(); onCode(text); return; }
+    const now = Date.now();
+    if (text === last && now - lastAt < 2500) return; // gleiche Etikette nicht doppelt lesen
+    last = text; lastAt = now;
+    try { feed(await onCode(text)); } catch (e) { feed('❌ ' + e.message); }
+    if (navigator.vibrate) navigator.vibrate(60);
+  };
+  el.querySelector('#manual').onsubmit = (e) => { e.preventDefault(); const f = e.target; const v = new FormData(f).get('code').trim(); f.reset(); if (v) { last = ''; handle(v); } };
   try {
     const { Html5Qrcode } = await import('html5-qrcode');
     scanner = new Html5Qrcode('reader');
-    await scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 220, height: 220 } }, (text) => done(text), () => {});
+    await scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 220, height: 220 } }, (text) => handle(text), () => {});
   } catch {
     el.querySelector('#scanHint').textContent = 'Kamera nicht verfügbar oder nicht erlaubt – bitte Code manuell eingeben.';
   }

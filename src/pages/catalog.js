@@ -1,5 +1,7 @@
 import { supabase, unwrap } from '../lib/supabase.js';
 import QRCode from 'qrcode';
+import { openNewItem } from '../components/newItem.js';
+import { openImportWizard } from '../components/importWizard.js';
 import { esc, toast, openModal, busy, toLocalInput, fmtDateTime } from '../lib/ui.js';
 import { state, canManageRoom, isManager } from '../state.js';
 
@@ -23,7 +25,7 @@ async function renderRooms(el) {
       ${state.rooms.map((r) => `<button data-room="${esc(r.id)}" class="card text-left transition hover:border-brand-500 hover:shadow-md">
         <div class="text-3xl">${esc(r.icon)}</div><div class="mt-2 font-bold">${esc(r.name)}</div>
         <div class="text-xs text-slate-500">${esc(r.description)}</div><div class="mt-2 text-xs font-semibold text-brand-600">${counts[r.id] || 0} Objekte →</div></button>`).join('')}
-      <button data-room="ALL" class="card bg-slate-900 text-left text-white"><div class="text-3xl">🌐</div><div class="mt-2 font-bold">Gesamtes Lager</div><div class="mt-2 text-xs text-brand-100">${items.length} Objekte →</div></button>
+      <button data-room="ALL" class="card !bg-[#0f172a] text-left text-white"><div class="text-3xl">🌐</div><div class="mt-2 font-bold">Gesamtes Lager</div><div class="mt-2 text-xs text-brand-100">${items.length} Objekte →</div></button>
     </div>`;
   el.querySelectorAll('[data-room]').forEach((b) => (b.onclick = () => { currentRoom = b.dataset.room; search = ''; render(el); }));
 }
@@ -34,12 +36,13 @@ async function renderRoom(el) {
     <div class="mb-4 flex flex-wrap items-center gap-2">
       <button id="back" class="btn-ghost">← Räume</button>
       <h1 class="text-xl font-bold">${esc(room ? room.icon + ' ' + room.name : '🌐 Gesamtes Lager')}</h1>
-      ${currentRoom !== 'ALL' && canManageRoom(currentRoom) ? '<button id="newItem" class="btn-primary ml-auto">+ Neuer Artikel</button>' : ''}
+      ${(currentRoom === 'ALL' ? isManager() : canManageRoom(currentRoom)) ? '<div class="ml-auto flex gap-2"><button id="importBtn" class="btn-ghost">📊 Excel-Import</button><button id="newItem" class="btn-primary">+ Neuer Artikel</button></div>' : ''}
     </div>
     <input id="q" class="input mb-4" placeholder="Suchen (Name, Kategorie, ID)…" value="${esc(search)}">
     <div id="list" class="grid gap-3 md:grid-cols-2"><p class="text-sm text-slate-400">Lade…</p></div>`;
   el.querySelector('#back').onclick = () => { currentRoom = null; render(el); };
-  el.querySelector('#newItem')?.addEventListener('click', () => itemModal(() => renderRoom(el)));
+  el.querySelector('#importBtn')?.addEventListener('click', () => openImportWizard({ defaultRoom: currentRoom, done: () => renderRoom(el) }));
+  el.querySelector('#newItem')?.addEventListener('click', () => openNewItem({ defaultRoom: currentRoom, done: () => renderRoom(el) }));
   let timer;
   el.querySelector('#q').oninput = (e) => { search = e.target.value; clearTimeout(timer); timer = setTimeout(() => loadItems(el), 250); };
   loadItems(el);
@@ -149,36 +152,6 @@ function consumeModal(item, reload) {
     busy(e.target.querySelector('.btn-primary'), async () => {
       const left = unwrap(await supabase.rpc('consume_item', { p_item_id: item.id, p_qty: Number(f.get('qty')), p_reason: f.get('reason') }));
       close(); toast(`Entnommen. Neuer Bestand: ${left}`, 'success'); reload();
-    });
-  };
-}
-
-function itemModal(done) {
-  const { el, close } = openModal(`
-    <h3 class="mb-3 text-lg font-bold">Neuer Artikel</h3>
-    <form id="f" class="space-y-3">
-      <div><label class="label">Bezeichnung</label><input name="name" class="input" required></div>
-      <div class="grid grid-cols-2 gap-2">
-        <div><label class="label">Raum</label><select name="room" class="input">${state.rooms.filter((r) => canManageRoom(r.id)).map((r) => `<option value="${esc(r.id)}" ${r.id === currentRoom ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></div>
-        <div><label class="label">Typ</label><select name="type" class="input"><option value="standard">Standard</option><option value="kit">Kit / Koffer</option><option value="consumable">Verbrauchsmaterial</option></select></div>
-      </div>
-      <div class="grid grid-cols-2 gap-2"><div><label class="label">Kategorie</label><input name="category" class="input"></div><div><label class="label">Bestand</label><input name="stock" type="number" min="0" value="1" class="input"></div></div>
-      <div class="grid grid-cols-2 gap-2"><div><label class="label">Regal</label><input name="shelf" class="input"></div><div><label class="label">Fach</label><input name="compartment" class="input"></div></div>
-      <div><label class="label">Zubehör (kommagetrennt)</label><input name="acc" class="input" placeholder="Akku, Ladekabel, Tasche"></div>
-      <div><label class="label">Erforderliche Berechtigung (optional)</label><input name="perm" class="input" placeholder="z. B. Kamera-Schein"></div>
-      <div class="flex justify-end gap-2 pt-2"><button type="button" data-close class="btn-ghost">Abbrechen</button><button class="btn-primary">Speichern</button></div>
-    </form>`);
-  el.querySelector('#f').onsubmit = (e) => {
-    e.preventDefault();
-    const f = new FormData(e.target);
-    busy(e.target.querySelector('.btn-primary'), async () => {
-      unwrap(await supabase.from('items').insert({
-        name: f.get('name').trim(), room_id: f.get('room'), item_type: f.get('type'), category: f.get('category').trim() || null,
-        stock_quantity: Number(f.get('stock')) || 0, shelf: f.get('shelf').trim() || null, compartment: f.get('compartment').trim() || null,
-        accessories: f.get('acc').split(',').map((s) => s.trim()).filter(Boolean),
-        required_permission: f.get('perm').trim() || null,
-      }));
-      close(); toast('Artikel angelegt', 'success'); done();
     });
   };
 }
