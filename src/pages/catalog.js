@@ -7,6 +7,7 @@ import { printLabels } from '../components/labels.js';
 import { openPhotoManager } from '../components/photoManager.js';
 import { openGallery } from '../components/gallery.js';
 import { thumbUrl } from '../lib/photos.js';
+import { mountItemCalendar } from '../components/itemCalendar.js';
 import { esc, toast, openModal, busy, toLocalInput, fmtDateTime } from '../lib/ui.js';
 import { state, canManageRoom, isManager } from '../state.js';
 
@@ -199,19 +200,47 @@ export async function rentModal(item, reload) {
   if (canManageRoom(item.room_id)) people = unwrap(await supabase.from('public_profiles').select('id, full_name, username').order('full_name'));
   const { el, close } = openModal(`
     <h3 class="mb-3 text-lg font-bold">Ausleihe: ${esc(item.name)}</h3>
-    <form id="f" class="space-y-3">
-      ${people.length ? `<div><label class="label">Ausleihen für</label><select name="borrower" class="input">${people.map((p) => `<option value="${esc(p.id)}" ${p.id === state.user.id ? 'selected' : ''}>${esc(p.full_name || p.username)} (@${esc(p.username)})</option>`).join('')}</select></div>` : ''}
-      <div><label class="label">Projekt / Einsatzort</label><input name="project" class="input" placeholder="optional"></div>
-      <div class="grid grid-cols-2 gap-2">
-        <div><label class="label">Beginn</label><input type="datetime-local" name="start" step="900" value="${toLocalInput(start)}" class="input" required></div>
-        <div><label class="label">Rückgabe</label><input type="datetime-local" name="end" step="900" value="${toLocalInput(end)}" class="input" required></div>
-      </div>
-      <div class="flex justify-end gap-2 pt-2"><button type="button" data-close class="btn-ghost">Abbrechen</button><button class="btn-primary">Verbindlich buchen</button></div>
-    </form>`);
-  el.querySelector('#f').onsubmit = (e) => {
+    <div class="grid gap-5 md:grid-cols-2">
+      <form id="f" class="space-y-3">
+        ${people.length ? `<div><label class="label">Ausleihen für</label><select name="borrower" class="input">${people.map((p) => `<option value="${esc(p.id)}" ${p.id === state.user.id ? 'selected' : ''}>${esc(p.full_name || p.username)} (@${esc(p.username)})</option>`).join('')}</select></div>` : ''}
+        <div><label class="label">Projekt / Einsatzort</label><input name="project" class="input" placeholder="optional"></div>
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="label">Beginn</label><input type="datetime-local" name="start" step="900" value="${toLocalInput(start)}" class="input" required></div>
+          <div><label class="label">Rückgabe</label><input type="datetime-local" name="end" step="900" value="${toLocalInput(end)}" class="input" required></div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2"><button type="button" data-close class="btn-ghost">Abbrechen</button><button id="book" class="btn-primary">Verbindlich buchen</button></div>
+      </form>
+      <div><h4 class="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">Belegungsplan dieses Artikels</h4><div id="cal"><p class="text-sm text-slate-400">Lade…</p></div></div>
+    </div>`, { wide: true });
+  const form = el.querySelector('#f'); const sIn = form.elements.start; const eIn = form.elements.end; const book = el.querySelector('#book');
+  const range = () => ({ start: sIn.value ? new Date(sIn.value) : null, end: eIn.value ? new Date(eIn.value) : null });
+  let picking = 'start'; let cal = null;
+  const check = () => {
+    if (!cal) return;
+    cal.refresh();
+    const r = range();
+    book.disabled = cal.overdue() || (r.start && r.end && r.end > r.start && cal.conflicts(r.start, r.end).length > 0);
+  };
+  const keepTime = (input, day) => { const t = new Date(input.value || Date.now()); const n = new Date(day); n.setHours(t.getHours(), t.getMinutes(), 0, 0); return n; };
+  const onPickDay = (day) => {
+    if (picking === 'start') {
+      const s = keepTime(sIn, day); sIn.value = toLocalInput(s);
+      if (!(new Date(eIn.value) > s)) eIn.value = toLocalInput(new Date(s.getTime() + 24 * 3600 * 1000));
+      picking = 'end';
+    } else {
+      const e = keepTime(eIn, day);
+      if (e > new Date(sIn.value)) { eIn.value = toLocalInput(e); picking = 'start'; }
+      else { sIn.value = toLocalInput(keepTime(sIn, day)); eIn.value = toLocalInput(new Date(new Date(sIn.value).getTime() + 24 * 3600 * 1000)); }
+    }
+    check();
+  };
+  sIn.oninput = check; eIn.oninput = check;
+  cal = await mountItemCalendar(el.querySelector('#cal'), item.id, { getRange: range, onPickDay });
+  check();
+  form.onsubmit = (e) => {
     e.preventDefault();
     const f = new FormData(e.target);
-    busy(e.target.querySelector('.btn-primary'), async () => {
+    busy(book, async () => {
       unwrap(await supabase.rpc('rent_item', {
         p_item_id: item.id, p_start: new Date(f.get('start')).toISOString(), p_end: new Date(f.get('end')).toISOString(),
         p_project: f.get('project'), p_borrower: f.get('borrower') || null,
