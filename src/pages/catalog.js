@@ -4,6 +4,9 @@ import { openNewItem } from '../components/newItem.js';
 import { openImportWizard } from '../components/importWizard.js';
 import { openEditItem, openBulkEdit, deleteItems } from '../components/itemEdit.js';
 import { printLabels } from '../components/labels.js';
+import { openPhotoManager } from '../components/photoManager.js';
+import { openGallery } from '../components/gallery.js';
+import { thumbUrl } from '../lib/photos.js';
 import { esc, toast, openModal, busy, toLocalInput, fmtDateTime } from '../lib/ui.js';
 import { state, canManageRoom, isManager } from '../state.js';
 
@@ -160,10 +163,10 @@ function itemCard(i, rental) {
         <button data-act="qr" data-id="${esc(i.id)}" class="btn-ghost ${small}">QR</button>
         ${manage && i.status === 'active' ? `<button data-act="status" data-status="maintenance" data-id="${esc(i.id)}" class="btn-ghost ${small}">🛠 Defekt</button>` : ''}
         ${manage && i.status !== 'active' ? `<button data-act="status" data-status="active" data-id="${esc(i.id)}" class="btn-ghost ${small}">✅ Freigeben</button>` : ''}
-        ${manage ? `<button data-act="edit" data-id="${esc(i.id)}" class="btn-ghost ${small}">✏️</button><button data-act="delete" data-id="${esc(i.id)}" class="btn-ghost ${small} !text-red-600">🗑</button>` : ''}`;
+        ${manage ? `<button data-act="photos" data-id="${esc(i.id)}" class="btn-ghost ${small}">📷</button><button data-act="edit" data-id="${esc(i.id)}" class="btn-ghost ${small}">✏️</button><button data-act="delete" data-id="${esc(i.id)}" class="btn-ghost ${small} !text-red-600">🗑</button>` : ''}`;
   return `<article data-card="${esc(i.id)}" class="card flex gap-3 ${selectMode ? 'cursor-pointer' : ''} ${sel.has(i.id) ? 'ring-2 ring-brand-500' : ''} ${selectMode && !manage ? 'opacity-50' : ''}">
     ${selectMode ? `<input type="checkbox" tabindex="-1" ${sel.has(i.id) ? 'checked' : ''} ${manage ? '' : 'disabled'} class="mt-1 h-5 w-5 shrink-0 rounded text-brand-600">` : ''}
-    ${photo ? `<img src="${esc(photo)}" alt="" class="h-16 w-16 shrink-0 rounded-xl object-cover">` : '<div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-2xl">📦</div>'}
+    ${photo ? `<div class="relative h-16 w-16 shrink-0"><img ${selectMode ? '' : `data-act="gallery" data-id="${esc(i.id)}"`} src="${esc(thumbUrl(photo))}" alt="" loading="lazy" decoding="async" class="h-16 w-16 rounded-xl object-cover ${selectMode ? '' : 'cursor-zoom-in'}">${i.photos.length > 1 ? `<span class="absolute -bottom-1 -right-1 rounded-full bg-black/70 px-1.5 text-[10px] font-bold text-white">${i.photos.length}</span>` : ''}</div>` : '<div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-2xl">📦</div>'}
     <div class="min-w-0 flex-1">
       <div class="flex flex-wrap items-center gap-1.5"><h3 class="truncate font-bold">${esc(i.name)}</h3>${i.item_type === 'kit' ? '<span class="badge bg-purple-100 text-purple-700">KIT</span>' : ''}</div>
       <p class="text-xs text-slate-500">${esc(i.id)} · ${esc(i.room_id)}${loc ? ' · ' + esc(loc) : ''}</p>
@@ -178,6 +181,8 @@ async function handleAction(btn, items, reload) {
   if (btn.dataset.act === 'consume') return consumeModal(item, reload);
   if (btn.dataset.act === 'qr') return qrModal(item);
   if (btn.dataset.act === 'edit') return openEditItem(item, reload);
+  if (btn.dataset.act === 'photos') return openPhotoManager(item, reload);
+  if (btn.dataset.act === 'gallery') return openGallery(item, 0);
   if (btn.dataset.act === 'delete') return deleteItems([item], reload);
   if (btn.dataset.act === 'status') {
     await busy(btn, async () => {

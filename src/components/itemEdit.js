@@ -1,6 +1,8 @@
 import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, toast, openModal, busy } from '../lib/ui.js';
 import { state, canManageRoom } from '../state.js';
+import { openPhotoManager } from './photoManager.js';
+import { removePhotos } from '../lib/photos.js';
 
 const chunk = (arr, n = 100) => Array.from({ length: Math.ceil(arr.length / n) }, (_, i) => arr.slice(i * n, i * n + n));
 const roomOptions = (sel) => state.rooms.filter((r) => canManageRoom(r.id)).map((r) => `<option value="${esc(r.id)}" ${r.id === sel ? 'selected' : ''}>${esc(r.name)}</option>`).join('');
@@ -10,7 +12,7 @@ const STATUS = [['active', '✅ Verfügbar'], ['maintenance', '🛠 Defekt / War
 // ---------- Einzelnen Artikel bearbeiten ----------
 export function openEditItem(item, done) {
   const { el, close } = openModal(`
-    <h3 class="mb-1 text-lg font-bold">Artikel bearbeiten</h3><p class="mb-3 font-mono text-xs text-slate-400">${esc(item.id)}</p>
+    <div class="flex items-center justify-between gap-2"><h3 class="text-lg font-bold">Artikel bearbeiten</h3><button id="ph" type="button" class="btn-ghost !py-1.5">📷 Fotos (${(item.photos || []).length}/5)</button></div><p class="mb-3 font-mono text-xs text-slate-400">${esc(item.id)}</p>
     <form id="f" class="space-y-3">
       <div><label class="label">Bezeichnung</label><input name="name" class="input" value="${esc(item.name)}" required></div>
       <div class="grid grid-cols-2 gap-2">
@@ -25,6 +27,7 @@ export function openEditItem(item, done) {
       <div class="grid grid-cols-2 gap-2"><div><label class="label">Erforderliche Berechtigung</label><input name="perm" class="input" value="${esc(item.required_permission)}"></div>
         <div><label class="label">Status</label><select name="status" class="input">${STATUS.map(([v, l]) => `<option value="${v}" ${item.status === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
       <div class="flex justify-end gap-2 pt-2"><button type="button" data-close class="btn-ghost">Abbrechen</button><button class="btn-primary">Speichern</button></div></form>`);
+  el.querySelector('#ph').onclick = () => openPhotoManager(item, () => { el.querySelector('#ph').textContent = `📷 Fotos (${(item.photos || []).length}/5)`; });
   el.querySelector('#f').onsubmit = (e) => {
     e.preventDefault(); const f = new FormData(e.target);
     busy(e.target.querySelector('.btn-primary'), async () => {
@@ -103,6 +106,7 @@ export async function deleteItems(items, done) {
     let n = 0;
     try { for (const part of chunk(deletable.map((i) => i.id))) { unwrap(await supabase.from('items').delete().in('id', part)); n += part.length; } }
     catch (err) { throw new Error(`Nach ${n} gelöschten Artikeln abgebrochen: ${err.message}`); }
+    await removePhotos(deletable.flatMap((i) => i.photos || []));
     close(); toast(`${n} Artikel gelöscht`, 'success'); done();
   });
 }

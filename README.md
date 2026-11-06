@@ -11,6 +11,9 @@ Hinweis `pg_cron`: Falls eine Notice erscheint, unter Database → Extensions `p
 ### 1b. Migration 002 (Artikel löschen & Sammel-Status)
 SQL Editor → `supabase/migrations/002_item_management.sql` ausführen (wiederholbar, löscht keine Daten).
 
+### 1c. Migration 003 (Artikelfotos)
+SQL Editor → `supabase/migrations/003_item_photos.sql` ausführen (wiederholbar). Legt den Foto-Speicher `item-photos` und die Zugriffsregeln an. **Vor dem ersten Foto-Upload ausführen.**
+
 ### 2. Auth (Supabase → Authentication)
 - Providers → Email: **Confirm email = an** (Voraussetzung dafür, dass die Admin-Zuweisung per E-Mail sicher ist)
 - URL Configuration: **Site URL** = Vercel-URL, **Redirect URLs** zusätzlich `http://localhost:5173`
@@ -44,5 +47,5 @@ Repo verbinden (Framework Vite). Environment Variables (Production + Preview):
 
 ## Stand
 Fertig: Schema+RLS+RPCs, Login (E-Mail/Benutzername), Registrierung mit Bestätigung, Passwort-Reset, Übersicht, Katalog (Räume, Suche, Ausleihe, Entnahme, Defekt/Freigabe, QR-Etikett), Kalender (Monat, Filter, Google/.ics), Chat (Gesamt/Gruppe/Direkt) + Benachrichtigungszentrale, Persönlicher Bereich (QR, Leihen, Rückgabe, eigener Kalender, Protokoll), Lagerwart-Terminal (Sammel-Abgabe, Drittperson, Protokoll), QR-Scanner, Einstellungen (Profil, Benachrichtigungen, Push, Passwort, Benutzer/Rollen/Berechtigungen), Fristen-Erinnerungen + Web-Push.
-Neu: Auswahlmodus im Katalog (Alle auswählen, Bearbeiten, Status ändern, A4-Etiketten, Löschen mit Schutz für ausgeliehene Artikel), Excel/CSV-Import mit Spaltenzuordnung und Vorschau, Hell/Dunkel/Automatisch, Mehrfachscan (Ausgabe/Rücknahme) im Lagerwart-Terminal.
-Offen: Wochen-/Listenansicht, Fotos, A4-Sammeldruck, Raum-Baukasten-UI.
+Neu: Artikelfotos (bis 5 pro Artikel, Titelbild, Galerie, automatische Verkleinerung), Auswahlmodus im Katalog (Alle auswählen, Bearbeiten, Status ändern, A4-Etiketten, Löschen mit Schutz für ausgeliehene Artikel), Excel/CSV-Import mit Spaltenzuordnung und Vorschau, Hell/Dunkel/Automatisch, Mehrfachscan (Ausgabe/Rücknahme) im Lagerwart-Terminal.
+Offen: Wochen-/Listenansicht, Schadensfotos bei Rückgabe, A4-Sammeldruck, Raum-Baukasten-UI.
