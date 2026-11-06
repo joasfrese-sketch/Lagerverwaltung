@@ -8,6 +8,9 @@ Vite + Vanilla JS + Tailwind · Supabase (Auth, Postgres+RLS, Realtime, Edge Fun
 SQL Editor → `supabase/migrations/001_schema.sql` komplett ausführen (**löscht das alte Schema**).
 Hinweis `pg_cron`: Falls eine Notice erscheint, unter Database → Extensions `pg_cron` aktivieren und den Block „Zeitgesteuerte Erinnerungen" am Dateiende nochmals ausführen.
 
+### 1b. Migration 002 (Artikel löschen & Sammel-Status)
+SQL Editor → `supabase/migrations/002_item_management.sql` ausführen (wiederholbar, löscht keine Daten).
+
 ### 2. Auth (Supabase → Authentication)
 - Providers → Email: **Confirm email = an** (Voraussetzung dafür, dass die Admin-Zuweisung per E-Mail sicher ist)
 - URL Configuration: **Site URL** = Vercel-URL, **Redirect URLs** zusätzlich `http://localhost:5173`
@@ -41,5 +44,5 @@ Repo verbinden (Framework Vite). Environment Variables (Production + Preview):
 
 ## Stand
 Fertig: Schema+RLS+RPCs, Login (E-Mail/Benutzername), Registrierung mit Bestätigung, Passwort-Reset, Übersicht, Katalog (Räume, Suche, Ausleihe, Entnahme, Defekt/Freigabe, QR-Etikett), Kalender (Monat, Filter, Google/.ics), Chat (Gesamt/Gruppe/Direkt) + Benachrichtigungszentrale, Persönlicher Bereich (QR, Leihen, Rückgabe, eigener Kalender, Protokoll), Lagerwart-Terminal (Sammel-Abgabe, Drittperson, Protokoll), QR-Scanner, Einstellungen (Profil, Benachrichtigungen, Push, Passwort, Benutzer/Rollen/Berechtigungen), Fristen-Erinnerungen + Web-Push.
-Neu: Excel/CSV-Import mit Spaltenzuordnung und Vorschau, Hell/Dunkel/Automatisch, Mehrfachscan (Ausgabe/Rücknahme) im Lagerwart-Terminal.
+Neu: Auswahlmodus im Katalog (Alle auswählen, Bearbeiten, Status ändern, A4-Etiketten, Löschen mit Schutz für ausgeliehene Artikel), Excel/CSV-Import mit Spaltenzuordnung und Vorschau, Hell/Dunkel/Automatisch, Mehrfachscan (Ausgabe/Rücknahme) im Lagerwart-Terminal.
 Offen: Wochen-/Listenansicht, Fotos, A4-Sammeldruck, Raum-Baukasten-UI.
