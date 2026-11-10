@@ -1,3 +1,4 @@
+import { displayName } from '../lib/format.js';
 import { supabase, unwrap } from '../lib/supabase.js';
 import QRCode from 'qrcode';
 import { openNewItem } from '../components/newItem.js';
@@ -7,6 +8,8 @@ import { printLabels } from '../components/labels.js';
 import { openPhotoManager } from '../components/photoManager.js';
 import { openGallery } from '../components/gallery.js';
 import { thumbUrl } from '../lib/photos.js';
+import { openExport } from '../components/exportDialog.js';
+import { fetchAll } from '../lib/export.js';
 import { mountItemCalendar } from '../components/itemCalendar.js';
 import { esc, toast, openModal, busy, toLocalInput, fmtDateTime } from '../lib/ui.js';
 import { state, canManageRoom, isManager } from '../state.js';
@@ -50,7 +53,7 @@ async function renderRoom(el) {
     <div class="mb-4 flex flex-wrap items-center gap-2">
       <button id="back" class="btn-ghost">← Räume</button>
       <h1 class="text-xl font-bold">${esc(room ? room.icon + ' ' + room.name : '🌐 Gesamtes Lager')}</h1>
-      ${canManageHere ? '<div class="ml-auto flex flex-wrap gap-2"><button id="selToggle" class="btn-ghost">☑️ Auswählen</button><button id="importBtn" class="btn-ghost">📊 Excel-Import</button><button id="newItem" class="btn-primary">+ Neuer Artikel</button></div>' : ''}
+      ${canManageHere ? '<div class="ml-auto flex flex-wrap gap-2"><button id="exportBtn" class="btn-ghost">⬇️ Export</button><button id="selToggle" class="btn-ghost">☑️ Auswählen</button><button id="importBtn" class="btn-ghost">📊 Excel-Import</button><button id="newItem" class="btn-primary">+ Neuer Artikel</button></div>' : ''}
     </div>
     <input id="q" class="input mb-4" placeholder="Suchen (Name, Kategorie, ID)…" value="${esc(search)}">
     <div id="bulkBar"></div>
@@ -58,6 +61,11 @@ async function renderRoom(el) {
   el.querySelector('#back').onclick = () => { currentRoom = null; resetSelection(); render(el); };
   el.querySelector('#importBtn')?.addEventListener('click', () => openImportWizard({ defaultRoom: currentRoom, done: () => renderRoom(el) }));
   el.querySelector('#newItem')?.addEventListener('click', () => openNewItem({ defaultRoom: currentRoom, done: () => renderRoom(el) }));
+  el.querySelector('#exportBtn')?.addEventListener('click', () => openExport({ title: 'Artikel exportieren', filename: room ? `artikel-${room.id}` : 'artikel-alle', load: async () => {
+    const rows = await fetchAll(() => filtered(supabase.from('items').select('*')).order('id'));
+    return { columns: [['id', 'ID'], ['name', 'Bezeichnung'], ['room_id', 'Raum'], ['category', 'Kategorie'], ['item_type', 'Typ'], ['status', 'Status'], ['stock_quantity', 'Bestand'], ['min_stock', 'Mindestbestand'], ['shelf', 'Regal'], ['compartment', 'Fach'], ['acc', 'Zubehör'], ['required_permission', 'Berechtigung']].map(([key, label]) => ({ key, label })),
+      rows: rows.map((i) => ({ ...i, acc: (i.accessories || []).join(', ') })) };
+  } }));
   const toggleBtn = el.querySelector('#selToggle');
   const markToggle = () => { if (toggleBtn) toggleBtn.className = selectMode ? 'btn-primary' : 'btn-ghost'; };
   if (toggleBtn) toggleBtn.onclick = () => { selectMode = !selectMode; if (!selectMode) sel.clear(); markToggle(); paint(el); };
@@ -202,7 +210,7 @@ export async function rentModal(item, reload) {
     <h3 class="mb-3 text-lg font-bold">Ausleihe: ${esc(item.name)}</h3>
     <div class="grid gap-5 md:grid-cols-2">
       <form id="f" class="space-y-3">
-        ${people.length ? `<div><label class="label">Ausleihen für</label><select name="borrower" class="input">${people.map((p) => `<option value="${esc(p.id)}" ${p.id === state.user.id ? 'selected' : ''}>${esc(p.full_name || p.username)} (@${esc(p.username)})</option>`).join('')}</select></div>` : ''}
+        ${people.length ? `<div><label class="label">Ausleihen für</label><select name="borrower" class="input">${people.map((p) => `<option value="${esc(p.id)}" ${p.id === state.user.id ? 'selected' : ''}>${esc(displayName(p))} (@${esc(p.username)})</option>`).join('')}</select></div>` : ''}
         <div><label class="label">Projekt / Einsatzort</label><input name="project" class="input" placeholder="optional"></div>
         <div class="grid grid-cols-2 gap-2">
           <div><label class="label">Beginn</label><input type="datetime-local" name="start" step="900" value="${toLocalInput(start)}" class="input" required></div>

@@ -17,8 +17,8 @@ export async function render(el, opts = {}) {
   el.innerHTML = `
     <div class="mb-4 flex flex-wrap items-center gap-2">
       ${cal.mine ? '<span class="mr-auto"></span>' : '<h1 class="mr-auto text-2xl font-bold">Kalender</h1>'}
-      <select id="fRoom" class="input !w-auto"><option value="">Alle Räume</option>${state.rooms.map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('')}</select>
-      <select id="fItem" class="input !w-auto max-w-[14rem]"></select>
+      ${cal.mine ? '' : `<select id="fRoom" class="input !w-auto"><option value="">Alle Räume</option>${state.rooms.map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('')}</select>
+      <select id="fItem" class="input !w-auto max-w-[14rem]"></select>`}
       <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600"><input type="checkbox" id="fRet"> Rückgaben zeigen</label>
     </div>
     <div class="card !p-3">
@@ -37,13 +37,14 @@ export async function render(el, opts = {}) {
 
   const fillItems = () => {
     const opts = cal.items.filter((i) => !cal.room || i.room_id === cal.room);
-    el.querySelector('#fItem').innerHTML = `<option value="">Alle Artikel</option>${opts.map((i) => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('')}`;
-    el.querySelector('#fItem').value = cal.item;
+    const sel = el.querySelector('#fItem'); if (!sel) return;
+    sel.innerHTML = `<option value="">Alle Artikel</option>${opts.map((i) => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('')}`;
+    sel.value = cal.item;
   };
   fillItems();
   const reload = () => load(el);
-  el.querySelector('#fRoom').onchange = (e) => { cal.room = e.target.value; cal.item = ''; fillItems(); reload(); };
-  el.querySelector('#fItem').onchange = (e) => { cal.item = e.target.value; reload(); };
+  const fRoom = el.querySelector('#fRoom'); if (fRoom) fRoom.onchange = (e) => { cal.room = e.target.value; cal.item = ''; fillItems(); reload(); };
+  const fItem = el.querySelector('#fItem'); if (fItem) fItem.onchange = (e) => { cal.item = e.target.value; reload(); };
   el.querySelector('#fRet').onchange = (e) => { cal.showReturned = e.target.checked; reload(); };
   const shift = (d) => { cal.month += d; if (cal.month < 0) { cal.month = 11; cal.year--; } if (cal.month > 11) { cal.month = 0; cal.year++; } reload(); };
   el.querySelector('#prev').onclick = () => shift(-1);

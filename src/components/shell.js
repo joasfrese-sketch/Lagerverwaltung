@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase.js';
-import { esc } from '../lib/ui.js';
+import { esc, openModal } from '../lib/ui.js';
+import { icon } from '../lib/icons.js';
+import { roleName, displayName } from '../lib/format.js';
 import { state, isManager } from '../state.js';
 import { signOut } from '../auth.js';
 import { openScanner, routeScan } from './scanner.js';
@@ -10,15 +12,18 @@ import * as chat from '../pages/chat.js';
 import * as me from '../pages/me.js';
 import * as settings from '../pages/settings.js';
 import * as terminal from '../pages/terminal.js';
+import * as protocol from '../pages/protocol.js';
 
+// main: erscheint in der unteren Leiste (Handy); der Rest liegt unter "Mehr"
 const ALL_ROUTES = {
-  uebersicht: { label: 'Übersicht', short: 'Start', icon: '🏠', page: overview },
-  katalog: { label: 'Katalog', short: 'Katalog', icon: '📦', page: catalog },
-  kalender: { label: 'Kalender', short: 'Kalender', icon: '📅', page: calendar },
-  chat: { label: 'Chat & Mitteilungen', short: 'Chat', icon: '💬', page: chat, badge: true },
-  ich: { label: 'Mein Bereich', short: 'Ich', icon: '👤', page: me },
-  terminal: { label: 'Lagerwart-Terminal', short: 'Lagerwart', icon: '🛡️', page: terminal, managerOnly: true },
-  einstellungen: { label: 'Einstellungen', short: 'Mehr', icon: '⚙️', page: settings },
+  uebersicht: { label: 'Übersicht', short: 'Start', icon: 'home', page: overview, main: true },
+  katalog: { label: 'Katalog', short: 'Katalog', icon: 'package', page: catalog, main: true },
+  kalender: { label: 'Kalender', short: 'Kalender', icon: 'calendar', page: calendar, main: true },
+  chat: { label: 'Chat & Mitteilungen', short: 'Chat', icon: 'chat', page: chat, main: true, badge: true },
+  ich: { label: 'Mein Bereich', short: 'Ich', icon: 'user', page: me, main: true },
+  terminal: { label: 'Lagerwart-Terminal', short: 'Lagerwart', icon: 'shield', page: terminal, managerOnly: true },
+  protokoll: { label: 'Protokoll', short: 'Protokoll', icon: 'file', page: protocol, managerOnly: true },
+  einstellungen: { label: 'Einstellungen', short: 'Einstellungen', icon: 'settings', page: settings },
 };
 
 let hashHandler = null;
@@ -26,31 +31,43 @@ let unmount = null;
 
 export function renderShell(root) {
   const routes = Object.entries(ALL_ROUTES).filter(([, r]) => !r.managerOnly || isManager());
+  const mainRoutes = routes.filter(([, r]) => r.main);
+  const moreRoutes = routes.filter(([, r]) => !r.main);
+  const badge = (cls) => `<span data-badge class="hidden rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white ${cls}"></span>`;
+
   root.innerHTML = `
   <div class="flex min-h-screen">
     <aside class="sticky top-0 hidden h-screen w-60 shrink-0 flex-col justify-between bg-[#0f172a] p-4 text-[#cbd5e1] md:flex">
       <div>
-        <div class="mb-6 flex items-center gap-3 px-2"><span class="text-2xl">📦</span><span class="font-bold text-white">Lager Pro</span></div>
-        <button id="scanBtn" class="mb-4 w-full rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-bold text-white hover:bg-brand-700">📷 Scannen</button>
+        <div class="mb-6 flex items-center gap-3 px-2 text-white">${icon('package', 'h-6 w-6 text-brand-500')}<span class="font-bold">Lager Pro</span></div>
+        <button id="scanBtn" class="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-bold text-white hover:bg-brand-700">${icon('camera', 'h-4 w-4')} Scannen</button>
         <nav class="space-y-1" id="sideNav">
-          ${routes.map(([k, r]) => `<a href="#/${k}" data-route="${k}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-[#1e293b]"><span>${r.icon}</span>${esc(r.label)}${r.badge ? '<span data-badge class="ml-auto hidden rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white"></span>' : ''}</a>`).join('')}
+          ${routes.map(([k, r]) => `<a href="#/${k}" data-route="${k}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-[#1e293b]">${icon(r.icon, 'h-5 w-5 shrink-0')}<span class="truncate">${esc(r.label)}</span>${r.badge ? badge('ml-auto') : ''}</a>`).join('')}
         </nav>
       </div>
-      <div class="flex items-center justify-between rounded-xl bg-[#1e293b] p-3">
-        <div class="min-w-0"><div class="truncate text-xs font-bold text-white">${esc(state.profile.full_name || state.profile.username)}</div><div class="text-[10px] uppercase tracking-wider text-[#94a3b8]">${esc(roleLabel())}</div></div>
-        <button id="logoutBtn" title="Abmelden" class="text-[#94a3b8] hover:text-white">⎋</button>
+      <div class="rounded-xl bg-[#1e293b] p-3">
+        <div class="truncate text-xs font-bold text-white">${esc(displayName(state.profile))}</div>
+        <div class="mb-2 text-[10px] uppercase tracking-wider text-[#94a3b8]">${esc(roleName(state.profile.role))}${state.profile.managed_room ? ' · ' + esc(state.profile.managed_room) : ''}</div>
+        <button id="logoutBtn" class="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f172a] px-2 py-1.5 text-xs font-semibold text-[#cbd5e1] hover:text-white">${icon('logout', 'h-4 w-4')} Abmelden</button>
       </div>
     </aside>
     <main class="min-w-0 flex-1 pb-24 md:pb-8"><div id="page" class="mx-auto max-w-5xl p-4 md:p-8"></div></main>
-    <button id="scanFab" class="fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-xl text-white shadow-lg md:hidden" title="Scannen">📷</button>
-    <nav class="fixed inset-x-0 bottom-0 z-40 grid border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" id="tabBar" style="grid-template-columns:repeat(${routes.length},minmax(0,1fr))">
-      ${routes.map(([k, r]) => `<a href="#/${k}" data-route="${k}" class="relative flex flex-col items-center py-2 text-[10px] font-semibold text-slate-500"><span class="text-lg">${r.icon}</span>${esc(r.short)}${r.badge ? '<span data-badge class="absolute right-2 top-1 hidden rounded-full bg-red-500 px-1.5 text-[9px] font-bold text-white"></span>' : ''}</a>`).join('')}
+    <button id="scanFab" class="fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg md:hidden" title="Scannen">${icon('camera', 'h-6 w-6')}</button>
+    <nav class="fixed inset-x-0 bottom-0 z-40 grid border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" id="tabBar" style="grid-template-columns:repeat(${mainRoutes.length + 1},minmax(0,1fr))">
+      ${mainRoutes.map(([k, r]) => `<a href="#/${k}" data-route="${k}" class="relative flex flex-col items-center py-2 text-[10px] font-semibold text-slate-500">${icon(r.icon, 'h-5 w-5')}${esc(r.short)}${r.badge ? badge('absolute right-2 top-1 !px-1 text-[9px]') : ''}</a>`).join('')}
+      <button id="moreBtn" class="flex flex-col items-center py-2 text-[10px] font-semibold text-slate-500">${icon('settings', 'h-5 w-5')}Mehr</button>
     </nav>
   </div>`;
   root.querySelector('#logoutBtn').onclick = signOut;
   const scan = () => openScanner(routeScan);
   root.querySelector('#scanBtn').onclick = scan;
   root.querySelector('#scanFab').onclick = scan;
+  root.querySelector('#moreBtn').onclick = () => {
+    const { el } = openModal(`<h3 class="mb-3 text-lg font-bold">Mehr</h3><div class="space-y-1">
+      ${moreRoutes.map(([k, r]) => `<a href="#/${k}" data-close class="flex items-center gap-3 rounded-xl p-3 font-semibold hover:bg-slate-100">${icon(r.icon, 'h-5 w-5')}${esc(r.label)}</a>`).join('')}
+      <button id="mLogout" class="flex w-full items-center gap-3 rounded-xl p-3 text-left font-semibold text-red-600 hover:bg-slate-100">${icon('logout', 'h-5 w-5')}Abmelden</button></div>`);
+    el.querySelector('#mLogout').onclick = signOut;
+  };
 
   const go = async () => {
     if (unmount) { try { unmount(); } catch { /* ignore */ } unmount = null; }
@@ -78,13 +95,6 @@ export function renderShell(root) {
   window.addEventListener('hashchange', go);
   go();
   watchNotifications(root);
-}
-
-function roleLabel() {
-  const p = state.profile;
-  if (p.role === 'admin') return 'Administrator';
-  if (p.role === 'raum_manager') return `Raum-Manager${p.managed_room ? ' · ' + p.managed_room : ''}`;
-  return 'Benutzer';
 }
 
 // Badge ungelesener Mitteilungen (Realtime)

@@ -1,6 +1,8 @@
+import { displayName } from '../lib/format.js';
 import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, toast, openModal, busy } from '../lib/ui.js';
 import { state, GLOBAL_CHAT_ID } from '../state.js';
+import { timeAgo } from '../lib/format.js';
 
 const S = { tab: 'chats', chats: [], names: {}, unread: new Set(), current: null, channel: null, root: null };
 const ICONS = { overdue: '⏰', due_soon: '⏳', rental: '📦', return: '✅', damage: '🛠️', stock: '📉', chat: '💬', info: 'ℹ️', system: '⚙️' };
@@ -47,7 +49,7 @@ async function loadList() {
     S.chats = unwrap(await supabase.from('chats').select('*'));
     const members = unwrap(await supabase.from('chat_members').select('chat_id, user_id'));
     const ids = [...new Set(members.map((m) => m.user_id))];
-    unwrap(await supabase.from('public_profiles').select('id, full_name, username').in('id', ids)).forEach((p) => (S.names[p.id] = p.full_name || p.username));
+    unwrap(await supabase.from('public_profiles').select('id, full_name, username').in('id', ids)).forEach((p) => (S.names[p.id] = displayName(p)));
     const un = unwrap(await supabase.from('notifications').select('link').eq('type', 'chat').is('read_at', null));
     S.unread = new Set(un.map((n) => (n.link || '').replace('chat:', '')));
     S.chats.forEach((c) => {
@@ -101,7 +103,7 @@ async function loadMessages() {
   try {
     const msgs = unwrap(await supabase.from('chat_messages').select('*').eq('chat_id', S.current).order('created_at', { ascending: false }).limit(200));
     const unknown = [...new Set(msgs.map((m) => m.sender_id))].filter((id) => !S.names[id]);
-    if (unknown.length) unwrap(await supabase.from('public_profiles').select('id, full_name, username').in('id', unknown)).forEach((p) => (S.names[p.id] = p.full_name || p.username));
+    if (unknown.length) unwrap(await supabase.from('public_profiles').select('id, full_name, username').in('id', unknown)).forEach((p) => (S.names[p.id] = displayName(p)));
     box.innerHTML = msgs.reverse().map((m) => {
       const mine = m.sender_id === state.user.id;
       const t = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
@@ -123,7 +125,7 @@ async function newChatModal() {
   const { el, close } = openModal(`
     <h3 class="mb-1 text-lg font-bold">Neuer Chat</h3><p class="mb-3 text-xs text-slate-500">Eine Person wählen = Direktchat. Mehrere Personen + Name = Gruppe.</p>
     <form id="f" class="space-y-3"><input name="name" class="input" placeholder="Gruppenname (nur bei Gruppen)">
-      <div class="max-h-56 space-y-1 overflow-y-auto rounded-xl bg-slate-50 p-2 text-sm">${people.map((p) => `<label class="flex items-center gap-2"><input type="checkbox" name="u" value="${esc(p.id)}"> ${esc(p.full_name || p.username)} <span class="text-xs text-slate-400">@${esc(p.username)}</span></label>`).join('') || '<i class="text-slate-400">Keine weiteren Nutzer.</i>'}</div>
+      <div class="max-h-56 space-y-1 overflow-y-auto rounded-xl bg-slate-50 p-2 text-sm">${people.map((p) => `<label class="flex items-center gap-2"><input type="checkbox" name="u" value="${esc(p.id)}"> ${esc(displayName(p))} <span class="text-xs text-slate-400">@${esc(p.username)}</span></label>`).join('') || '<i class="text-slate-400">Keine weiteren Nutzer.</i>'}</div>
       <div class="flex justify-end gap-2"><button type="button" data-close class="btn-ghost">Abbrechen</button><button class="btn-primary">Erstellen</button></div></form>`);
   el.querySelector('#f').onsubmit = (e) => {
     e.preventDefault();
@@ -146,7 +148,7 @@ async function drawNotifs() {
     body.innerHTML = `<div class="mb-2 flex justify-end"><button id="allRead" class="btn-ghost !py-1 !text-xs">Alle als gelesen markieren</button></div>
       <div class="space-y-2">${list.map((n) => `<button data-n="${esc(n.id)}" class="card flex w-full gap-3 !p-3 text-left ${n.read_at ? 'opacity-60' : 'border-brand-500/40 bg-brand-50/50'}">
         <span class="text-xl">${ICONS[n.type] || 'ℹ️'}</span><span class="min-w-0 flex-1"><b class="block text-sm">${esc(n.title)}</b><span class="block text-xs text-slate-600">${esc(n.body)}</span>
-        <span class="text-[10px] text-slate-400">${new Date(n.created_at).toLocaleString('de-DE')}</span></span></button>`).join('') || '<p class="card py-10 text-center text-sm italic text-slate-400">Keine Mitteilungen.</p>'}</div>`;
+        <span class="text-[10px] text-slate-400">${timeAgo(n.created_at)}</span></span></button>`).join('') || '<p class="card py-10 text-center text-sm italic text-slate-400">Keine Mitteilungen.</p>'}</div>`;
     body.querySelector('#allRead').onclick = async () => {
       await supabase.from('notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
       window.dispatchEvent(new Event('notifications-changed')); drawNotifs();

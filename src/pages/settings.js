@@ -1,7 +1,12 @@
+import { displayName } from '../lib/format.js';
 import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, toast, busy, openModal } from '../lib/ui.js';
 import { state, isAdmin, isManager } from '../state.js';
 import { getTheme, setTheme } from '../lib/theme.js';
+import { roleName } from '../lib/format.js';
+import { fetchAll } from '../lib/export.js';
+import { openExport } from '../components/exportDialog.js';
+import { fmtDateTime } from '../lib/ui.js';
 import { enablePush, disablePush, pushActive, pushSupported, pushConfigured } from '../lib/push.js';
 
 export async function render(el) {
@@ -35,8 +40,11 @@ export async function render(el) {
       <select id="view" class="input !w-auto"><option value="month" selected>Monat</option><option value="week" disabled>Woche (folgt)</option><option value="list" disabled>Liste (folgt)</option></select></section>
 
     <section class="card"><h2 class="mb-2 font-bold">🔒 Sicherheit</h2>
+      <div id="mfaBox" class="mb-4 rounded-xl bg-slate-50 p-3 text-sm"></div>
       <form id="pw" class="flex flex-wrap gap-2"><input name="pw" type="password" minlength="8" required class="input !w-auto flex-1" placeholder="Neues Passwort (min. 8 Zeichen)" autocomplete="new-password"><button class="btn-primary">Ändern</button></form></section>
 
+    ${isManager() ? '<section class="card"><h2 class="mb-2 font-bold">⬇️ Daten & Export</h2><p class="mb-3 text-xs text-slate-500">Sicherung als Excel oder CSV.</p><div class="flex flex-wrap gap-2"><button id="exItems" class="btn-ghost">Artikel</button><button id="exRentals" class="btn-ghost">Ausleihen (inkl. Historie)</button></div></section>' : ''}
+    ${isAdmin() ? '<section class="card"><div class="mb-3 flex items-center justify-between"><h2 class="font-bold">🎟️ Einladungs-Codes</h2><button id="newInvite" class="btn-primary !py-1.5">+ Code</button></div><p class="mb-2 text-xs text-slate-500">Nur wer einen gültigen Code hat, kann sich registrieren.</p><div id="invites" class="space-y-2"></div></section>' : ''}
     ${isManager() ? '<section class="card"><div class="mb-3 flex items-center justify-between"><h2 class="font-bold">🛡️ Benutzer & Berechtigungen</h2>' + (isAdmin() ? '<button id="newUser" class="btn-primary !py-1.5">+ Benutzer</button>' : '') + '</div><div id="users" class="space-y-2"><p class="text-sm text-slate-400">Lade…</p></div></section>' : ''}
   </div>`;
 
@@ -64,7 +72,23 @@ export async function render(el) {
       const { error } = await supabase.auth.updateUser({ password: new FormData(e.target).get('pw') });
       if (error) throw new Error(error.message); e.target.reset(); toast('Passwort geändert', 'success');
     }); };
-  if (isManager()) loadUsers(el);
+  mfaSection(el);
+  if (isAdmin()) { loadInvites(el); el.querySelector('#newInvite').onclick = () => inviteModal(() => loadInvites(el)); }
+  if (isManager()) {
+    el.querySelector('#exItems').onclick = () => openExport({ title: 'Artikel exportieren', filename: 'artikel', load: async () => {
+      const rows = await fetchAll(() => supabase.from('items').select('*').order('id'));
+      return { columns: [['id', 'ID'], ['name', 'Bezeichnung'], ['room_id', 'Raum'], ['category', 'Kategorie'], ['item_type', 'Typ'], ['status', 'Status'], ['stock_quantity', 'Bestand'], ['min_stock', 'Mindestbestand'], ['shelf', 'Regal'], ['compartment', 'Fach'], ['acc', 'Zubehör'], ['required_permission', 'Berechtigung'], ['fotos', 'Fotos']].map(([key, label]) => ({ key, label })),
+        rows: rows.map((i) => ({ ...i, acc: (i.accessories || []).join(', '), fotos: (i.photos || []).length })) };
+    } });
+    el.querySelector('#exRentals').onclick = () => openExport({ title: 'Ausleihen exportieren', filename: 'ausleihen', load: async () => {
+      const people = unwrap(await supabase.from('public_profiles').select('id, full_name, username'));
+      const name = Object.fromEntries(people.map((x) => [x.id, displayName(x)]));
+      const rows = await fetchAll(() => supabase.from('rentals').select('*, items(name)').order('start_at', { ascending: false }));
+      return { columns: [['item_id', 'Artikel-ID'], ['artikel', 'Artikel'], ['borrower', 'Ausleiher'], ['start', 'Beginn'], ['end', 'Rückgabe fällig'], ['status', 'Status'], ['returned', 'Zurückgegeben am'], ['project', 'Projekt'], ['note', 'Notiz'], ['damage', 'Schaden']].map(([key, label]) => ({ key, label })),
+        rows: rows.map((r) => ({ item_id: r.item_id, artikel: r.items?.name, borrower: name[r.borrower_id] || '', start: fmtDateTime(r.start_at), end: fmtDateTime(r.end_at), status: r.status, returned: r.returned_at ? fmtDateTime(r.returned_at) : '', project: r.project, note: r.return_note, damage: r.damage_report })) };
+    } });
+    loadUsers(el);
+  }
   el.querySelector('#newUser')?.addEventListener('click', () => newUserModal(() => loadUsers(el)));
 }
 
@@ -76,9 +100,9 @@ async function loadUsers(el) {
     const known = [...new Set([...perms.map((x) => x.permission_name), ...unwrap(await supabase.from('items').select('required_permission').not('required_permission', 'is', null)).map((i) => i.required_permission)])];
     box.innerHTML = `<datalist id="pl">${known.map((k) => `<option value="${esc(k)}">`).join('')}</datalist>` + users.map((u) => {
       const mine = perms.filter((x) => x.user_id === u.id);
-      return `<div class="rounded-xl border p-3" data-u="${esc(u.id)}"><div class="flex flex-wrap items-center gap-2"><div class="mr-auto min-w-0"><b class="text-sm">${esc(u.full_name || u.username)}</b><div class="truncate text-xs text-slate-500">@${esc(u.username)} · ${esc(u.email)}</div></div>
+      return `<div class="rounded-xl border p-3" data-u="${esc(u.id)}"><div class="flex flex-wrap items-center gap-2"><div class="mr-auto min-w-0"><b class="text-sm">${esc(displayName(u))}</b><div class="truncate text-xs text-slate-500">@${esc(u.username)} · ${esc(u.email)}</div></div>
         ${isAdmin() && u.id !== state.user.id ? `<select data-role class="input !w-auto !py-1.5 text-xs"><option value="user" ${u.role === 'user' ? 'selected' : ''}>Benutzer</option><option value="raum_manager" ${u.role === 'raum_manager' ? 'selected' : ''}>Raum-Manager</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrator</option></select>
-        <select data-room class="input !w-auto !py-1.5 text-xs ${u.role === 'raum_manager' ? '' : 'hidden'}"><option value="">Alle Räume</option>${state.rooms.map((r) => `<option value="${esc(r.id)}" ${u.managed_room === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select>` : `<span class="badge bg-slate-100 text-slate-600">${esc(u.role)}</span>`}</div>
+        <select data-room class="input !w-auto !py-1.5 text-xs ${u.role === 'raum_manager' ? '' : 'hidden'}"><option value="">Alle Räume</option>${state.rooms.map((r) => `<option value="${esc(r.id)}" ${u.managed_room === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select>` : `<span class="badge bg-slate-100 text-slate-600">${esc(roleName(u.role))}</span>`}</div>
         <div class="mt-2 flex flex-wrap items-center gap-1.5">${mine.map((x) => `<span class="badge bg-brand-100 text-brand-700">${esc(x.permission_name)} <button data-delperm="${esc(x.permission_name)}" class="ml-1">✕</button></span>`).join('')}
         <form data-addperm class="flex gap-1"><input list="pl" name="p" class="input !w-36 !py-1 text-xs" placeholder="+ Berechtigung" required><button class="btn-ghost !px-2 !py-1 !text-xs">+</button></form></div></div>`;
     }).join('');
@@ -107,5 +131,79 @@ function newUserModal(done) {
       const { data, error } = await supabase.functions.invoke('admin-create-user', { body });
       if (error || data?.error) throw new Error(data?.error || error.message);
       close(); toast('Benutzer angelegt', 'success'); done();
+    }); };
+}
+
+// ----- Zwei-Faktor-Anmeldung (Authenticator-App) -----
+async function mfaSection(el) {
+  const box = el.querySelector('#mfaBox');
+  const draw = async () => {
+    const { data, error } = await supabase.auth.mfa.listFactors();
+    if (error) { box.textContent = 'Zwei-Faktor-Status konnte nicht geladen werden.'; return; }
+    const verified = (data.totp || []).filter((f) => f.status === 'verified');
+    box.innerHTML = verified.length
+      ? `<div class="flex items-center justify-between gap-2"><span>✅ <b>Zwei-Faktor-Anmeldung ist aktiv.</b></span><button id="mfaOff" class="btn-ghost !py-1 !text-xs">Deaktivieren</button></div>`
+      : `<div class="flex items-center justify-between gap-2"><span><b>Zwei-Faktor-Anmeldung</b> (Authenticator-App)${isAdmin() ? '<br><span class="text-xs text-amber-700">Für Administratoren dringend empfohlen.</span>' : ''}</span><button id="mfaOn" class="btn-primary !py-1 !text-xs">Aktivieren</button></div>`;
+    box.querySelector('#mfaOff')?.addEventListener('click', (e) => busy(e.target, async () => {
+      for (const f of verified) { const { error: ue } = await supabase.auth.mfa.unenroll({ factorId: f.id }); if (ue) throw new Error(ue.message); }
+      toast('2FA deaktiviert', 'success'); draw();
+    }));
+    box.querySelector('#mfaOn')?.addEventListener('click', (e) => busy(e.target, async () => {
+      for (const f of (data.totp || []).filter((x) => x.status !== 'verified')) await supabase.auth.mfa.unenroll({ factorId: f.id });
+      const { data: en, error: ee } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: `Lager Pro ${new Date().toISOString().slice(0, 16)}` });
+      if (ee) throw new Error(ee.message);
+      const { el: m, close } = openModal(`<h3 class="mb-2 text-lg font-bold">2FA einrichten</h3>
+        <ol class="mb-3 list-decimal space-y-1 pl-5 text-sm"><li>Authenticator-App öffnen (z. B. Google/Microsoft Authenticator).</li><li>QR-Code scannen oder den Schlüssel eingeben.</li><li>6-stelligen Code unten eintragen.</li></ol>
+        <img src="${esc(en.totp.qr_code)}" alt="QR-Code" class="mx-auto h-44 w-44 rounded-xl bg-white p-2">
+        <p class="mt-2 break-all text-center font-mono text-xs text-slate-500">${esc(en.totp.secret)}</p>
+        <form id="f" class="mt-3 space-y-3"><input name="code" class="input text-center font-mono text-xl tracking-[0.3em]" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required placeholder="123456">
+        <div class="flex justify-end gap-2"><button type="button" id="cancel" class="btn-ghost">Abbrechen</button><button class="btn-primary">Bestätigen</button></div></form>`);
+      m.querySelector('#cancel').onclick = async () => { await supabase.auth.mfa.unenroll({ factorId: en.id }); close(); };
+      m.querySelector('#f').onsubmit = (ev) => { ev.preventDefault();
+        busy(ev.target.querySelector('.btn-primary'), async () => {
+          const { data: ch, error: ce } = await supabase.auth.mfa.challenge({ factorId: en.id });
+          if (ce) throw new Error(ce.message);
+          const { error: ve } = await supabase.auth.mfa.verify({ factorId: en.id, challengeId: ch.id, code: new FormData(ev.target).get('code').trim() });
+          if (ve) throw new Error('Code falsch – bitte erneut versuchen.');
+          close(); toast('2FA aktiviert', 'success'); draw();
+        }); };
+    }));
+  };
+  draw();
+}
+
+// ----- Einladungs-Codes (nur Admin) -----
+async function loadInvites(el) {
+  const box = el.querySelector('#invites');
+  try {
+    const rows = unwrap(await supabase.from('invite_codes').select('*').order('created_at', { ascending: false }));
+    box.innerHTML = rows.length ? rows.map((c) => {
+      const expired = c.expires_at && new Date(c.expires_at) < new Date(); const full = c.max_uses && c.uses >= c.max_uses;
+      const live = c.active && !expired && !full;
+      return `<div class="flex flex-wrap items-center gap-2 rounded-xl border p-2.5 text-sm ${live ? '' : 'opacity-60'}"><span class="font-mono text-base font-bold tracking-widest">${esc(c.code)}</span>
+        <span class="badge ${live ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">${live ? 'aktiv' : expired ? 'abgelaufen' : full ? 'aufgebraucht' : 'deaktiviert'}</span>
+        <span class="text-xs text-slate-500">${c.uses}${c.max_uses ? '/' + c.max_uses : ''} genutzt${c.expires_at ? ' · bis ' + new Date(c.expires_at).toLocaleDateString('de-DE') : ''}${c.note ? ' · ' + esc(c.note) : ''}</span>
+        <span class="ml-auto flex gap-1"><button data-copy="${esc(c.code)}" class="btn-ghost !px-2 !py-1 !text-xs">Link kopieren</button><button data-tog="${esc(c.code)}" data-on="${c.active}" class="btn-ghost !px-2 !py-1 !text-xs">${c.active ? 'Deaktivieren' : 'Aktivieren'}</button><button data-del="${esc(c.code)}" class="btn-ghost !px-2 !py-1 !text-xs !text-red-600">Löschen</button></span></div>`;
+    }).join('') : '<p class="text-sm italic text-slate-400">Noch keine Codes.</p>';
+    box.querySelectorAll('[data-copy]').forEach((b) => (b.onclick = async () => {
+      const link = `${location.origin}/?invite=${b.dataset.copy}`;
+      try { await navigator.clipboard.writeText(link); toast('Einladungslink kopiert', 'success'); } catch { prompt('Einladungslink:', link); }
+    }));
+    box.querySelectorAll('[data-tog]').forEach((b) => (b.onclick = () => busy(b, async () => { unwrap(await supabase.from('invite_codes').update({ active: b.dataset.on !== 'true' }).eq('code', b.dataset.tog)); loadInvites(el); })));
+    box.querySelectorAll('[data-del]').forEach((b) => (b.onclick = () => { if (confirm(`Code ${b.dataset.del} löschen?`)) busy(b, async () => { unwrap(await supabase.from('invite_codes').delete().eq('code', b.dataset.del)); loadInvites(el); }); }));
+  } catch (e) { box.innerHTML = `<p class="text-red-600">${esc(e.message)}</p>`; }
+}
+
+function inviteModal(done) {
+  const { el, close } = openModal(`<h3 class="mb-3 text-lg font-bold">Neuer Einladungs-Code</h3>
+    <form id="f" class="space-y-3"><div><label class="label">Notiz (optional)</label><input name="note" class="input" placeholder="z. B. Jugendgruppe 2026"></div>
+    <div class="grid grid-cols-2 gap-2"><div><label class="label">Max. Nutzungen</label><input name="max" type="number" min="1" class="input" placeholder="unbegrenzt"></div>
+    <div><label class="label">Gültig (Tage)</label><input name="days" type="number" min="0" class="input" value="14"></div></div>
+    <p class="text-xs text-slate-500">0 Tage = unbegrenzt gültig.</p>
+    <div class="flex justify-end gap-2"><button type="button" data-close class="btn-ghost">Abbrechen</button><button class="btn-primary">Code erstellen</button></div></form>`);
+  el.querySelector('#f').onsubmit = (e) => { e.preventDefault(); const f = new FormData(e.target);
+    busy(e.target.querySelector('.btn-primary'), async () => {
+      const code = unwrap(await supabase.rpc('create_invite', { p_max_uses: f.get('max') ? Number(f.get('max')) : null, p_days: Number(f.get('days')) || 0, p_note: f.get('note') }));
+      close(); toast(`Code ${code} erstellt`, 'success'); done();
     }); };
 }

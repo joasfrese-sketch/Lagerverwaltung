@@ -2,7 +2,8 @@ import { supabase, unwrap } from './lib/supabase.js';
 import { esc, toast, busy, openModal } from './lib/ui.js';
 
 export function renderAuth(root) {
-  let register = false;
+  const inviteParam = (new URLSearchParams(location.search).get('invite') || '').toUpperCase();
+  let register = !!inviteParam;
   const draw = () => {
     root.innerHTML = `
     <div class="flex min-h-screen items-center justify-center bg-[#0f172a] p-4">
@@ -16,7 +17,8 @@ export function renderAuth(root) {
           ${register ? `
           <div><label class="label">Vollständiger Name</label><input id="fullName" class="input" required autocomplete="name"></div>
           <div><label class="label">Benutzername</label><input id="username" class="input" required minlength="3" maxlength="30" pattern="[a-zA-Z0-9._-]+" autocomplete="username" placeholder="max.mustermann"></div>
-          <div><label class="label">E-Mail</label><input id="email" type="email" class="input" required autocomplete="email"></div>` : `
+          <div><label class="label">E-Mail</label><input id="email" type="email" class="input" required autocomplete="email"></div>
+          <div><label class="label">Einladungs-Code</label><input id="invite" class="input font-mono uppercase tracking-widest" required maxlength="20" value="${esc(inviteParam)}" placeholder="z. B. 7F3A9C21" autocomplete="off"></div>` : `
           <div><label class="label">Benutzername oder E-Mail</label><input id="identifier" class="input" required autocomplete="username"></div>`}
           <div><label class="label">Passwort</label><input id="password" type="password" class="input" required minlength="8" autocomplete="${register ? 'new-password' : 'current-password'}"></div>
           <button class="btn-primary w-full py-3" id="submitBtn">${register ? 'Konto erstellen' : 'Anmelden'} →</button>
@@ -61,7 +63,11 @@ async function doRegister(root) {
   const username = root.querySelector('#username').value.trim().toLowerCase();
   const email = root.querySelector('#email').value.trim().toLowerCase();
   const password = root.querySelector('#password').value;
-  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name, username } } });
+  const invite_code = root.querySelector('#invite').value.trim().toUpperCase();
+  const { data: valid, error: invErr } = await supabase.rpc('check_invite', { p_code: invite_code });
+  if (invErr) throw new Error('Der Code konnte nicht geprüft werden. Bitte später erneut versuchen.');
+  if (!valid) throw new Error('Einladungs-Code ungültig, abgelaufen oder bereits aufgebraucht.');
+  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name, username, invite_code } } });
   if (error) throw new Error(error.message);
   if (!data.session) toast('Konto erstellt. Bitte bestätige deine E-Mail-Adresse und melde dich danach an.', 'success');
 }
@@ -90,6 +96,39 @@ export function showPasswordReset() {
       const { error } = await supabase.auth.updateUser({ password: el.querySelector('#np').value });
       if (error) throw new Error(error.message);
       close(); toast('Passwort geändert', 'success');
+    });
+  };
+}
+
+// ----- Zwei-Faktor-Anmeldung beim Login -----
+export async function mfaRequired() {
+  const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  return !!data && data.nextLevel === 'aal2' && data.currentLevel !== 'aal2';
+}
+
+export function showMfaPrompt(root, onDone) {
+  root.innerHTML = `
+  <div class="flex min-h-screen items-center justify-center bg-[#0f172a] p-4">
+    <form id="mfa" class="w-full max-w-sm space-y-4 rounded-3xl bg-white p-8 shadow-2xl">
+      <h1 class="text-xl font-bold">Zwei-Faktor-Code</h1>
+      <p class="text-sm text-slate-500">Gib den 6-stelligen Code aus deiner Authenticator-App ein.</p>
+      <input id="code" class="input text-center font-mono text-2xl tracking-[0.4em]" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" required autofocus>
+      <button class="btn-primary w-full py-3">Bestätigen</button>
+      <button type="button" id="out" class="w-full text-center text-xs text-slate-500 hover:underline">Abmelden</button>
+    </form></div>`;
+  root.querySelector('#out').onclick = signOut;
+  root.querySelector('#mfa').onsubmit = (e) => {
+    e.preventDefault();
+    busy(e.target.querySelector('button'), async () => {
+      const { data: f, error: fe } = await supabase.auth.mfa.listFactors();
+      if (fe) throw new Error(fe.message);
+      const factor = (f.totp || []).find((x) => x.status === 'verified');
+      if (!factor) throw new Error('Kein Authenticator hinterlegt.');
+      const { data: ch, error: ce } = await supabase.auth.mfa.challenge({ factorId: factor.id });
+      if (ce) throw new Error(ce.message);
+      const { error: ve } = await supabase.auth.mfa.verify({ factorId: factor.id, challengeId: ch.id, code: root.querySelector('#code').value.trim() });
+      if (ve) throw new Error('Code falsch oder abgelaufen.');
+      onDone();
     });
   };
 }

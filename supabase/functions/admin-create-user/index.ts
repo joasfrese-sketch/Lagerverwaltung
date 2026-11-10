@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
 
     const { email, password, full_name, username, role = 'user', managed_room = null } = await req.json();
     const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name, username } });
+    const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name, username }, app_metadata: { admin_created: true } });
     if (error) throw error;
     // Rolle setzen (Trigger erlaubt service_role)
     await admin.from('profiles').update({ role, managed_room: role === 'raum_manager' ? managed_room : null }).eq('id', data.user.id);

@@ -1,3 +1,4 @@
+import { displayName } from '../lib/format.js';
 import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, toast, busy, openModal, fmtDateTime, fmtDate, toLocalInput } from '../lib/ui.js';
 import { state, isManager } from '../state.js';
@@ -6,8 +7,8 @@ import { openScanner, routeScan } from '../components/scanner.js';
 export async function render(el) {
   if (!isManager()) { el.innerHTML = '<div class="card text-center text-slate-500">Nur für Raum-Manager und Administratoren.</div>'; return; }
   const people = unwrap(await supabase.from('public_profiles').select('id, full_name, username').order('full_name'));
-  const nameOf = (id) => { const p = people.find((x) => x.id === id); return p ? p.full_name || p.username : 'Unbekannt'; };
-  const label = (p) => `${p.full_name || p.username} (@${p.username})`;
+  const nameOf = (id) => { const p = people.find((x) => x.id === id); return p ? displayName(p) : 'Unbekannt'; };
+  const label = (p) => `${displayName(p)} (@${p.username})`;
   const preset = new URLSearchParams(location.hash.split('?')[1] || '').get('user');
   const start = new Date(); start.setMinutes(0, 0, 0);
   const end = new Date(start.getTime() + 24 * 3600 * 1000);
@@ -50,7 +51,7 @@ export async function render(el) {
     const t = term.toLowerCase();
     const f = people.filter((p) => !t || label(p).toLowerCase().includes(t));
     const keep = who.value;
-    who.innerHTML = f.map((p) => `<option value="${esc(p.id)}">${esc(label(p))}</option>`).join('') || '<option value="">Keine Treffer</option>';
+    who.innerHTML = '<option value="">— Person wählen —</option>' + f.map((p) => `<option value="${esc(p.id)}">${esc(label(p))}</option>`).join('');
     if (preset && f.some((p) => p.id === preset) && !keep) who.value = preset;
     else if (f.some((p) => p.id === keep)) who.value = keep;
   };

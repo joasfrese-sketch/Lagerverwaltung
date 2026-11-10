@@ -1,3 +1,4 @@
+import { displayName } from '../lib/format.js';
 import QRCode from 'qrcode';
 import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, fmtDateTime, toast, busy, openModal } from '../lib/ui.js';
@@ -10,7 +11,7 @@ export async function render(el) {
     <h1 class="mb-4 text-2xl font-bold">Mein Bereich</h1>
     <div class="grid gap-4 md:grid-cols-3">
       <section class="card text-center">
-        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-xl font-bold text-white">${esc((p.full_name || p.username)[0]?.toUpperCase())}</div>
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-xl font-bold text-white">${esc((displayName(p))[0]?.toUpperCase())}</div>
         <div class="mt-2 font-bold">${esc(p.full_name)}</div><div class="text-xs text-slate-500">@${esc(p.username)} · ${esc(p.email)}</div>
         <img id="qr" alt="Benutzer-QR" class="mx-auto mt-3 h-40 w-40 rounded-xl border"><div class="mt-1 text-[11px] text-slate-400">Am Lagerterminal vorzeigen</div>
       </section>

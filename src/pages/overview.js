@@ -1,3 +1,4 @@
+import { displayName } from '../lib/format.js';
 import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, fmtDateTime } from '../lib/ui.js';
 import { state, GLOBAL_CHAT_ID } from '../state.js';
@@ -13,10 +14,13 @@ export async function render(el) {
   ]);
   const my = unwrap(rentals), nf = unwrap(notifs), up = unwrap(upcoming), ms = unwrap(msgs);
   const ids = [...new Set(ms.map((m) => m.sender_id))];
-  const names = Object.fromEntries((ids.length ? unwrap(await supabase.from('public_profiles').select('id, full_name, username').in('id', ids)) : []).map((p) => [p.id, p.full_name || p.username]));
+  const names = Object.fromEntries((ids.length ? unwrap(await supabase.from('public_profiles').select('id, full_name, username').in('id', ids)) : []).map((p) => [p.id, displayName(p)]));
+  let mfaHint = false;
+  if (state.profile.role === 'admin') { const { data: fa } = await supabase.auth.mfa.listFactors(); mfaHint = !(fa?.totp || []).some((f) => f.status === 'verified'); }
   const overdue = my.filter((r) => new Date(r.end_at) < new Date()).length;
 
   el.querySelector('#ov').innerHTML = `
+    ${mfaHint ? '<a href="#/einstellungen" class="card md:col-span-2 !border-amber-300 !bg-amber-50 text-sm font-semibold text-amber-800">🔐 Empfehlung: Aktiviere die Zwei-Faktor-Anmeldung für dein Administrator-Konto (Einstellungen → Sicherheit).</a>' : ''}
     <section class="card grid grid-cols-3 gap-3 text-center md:col-span-2">
       <div><div class="text-2xl font-black">${my.length}</div><div class="text-xs text-slate-500">Aktive Leihen</div></div>
       <div><div class="text-2xl font-black ${overdue ? 'text-red-600' : ''}">${overdue}</div><div class="text-xs text-slate-500">Überfällig</div></div>
