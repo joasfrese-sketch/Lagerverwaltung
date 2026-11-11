@@ -37,7 +37,7 @@ export async function render(el) {
   const detail = (d = {}) => [
     d.project && `Projekt: ${d.project}`, d.note && `Notiz: ${d.note}`, d.damage && `Schaden: ${d.damage}`,
     d.status && `Status: ${d.status}`, d.qty != null && `Menge: ${d.qty}${d.remaining != null ? ` (Rest ${d.remaining})` : ''}`, d.reason && `Grund: ${d.reason}`,
-    d.returned_by && `abgegeben durch ${name[d.returned_by] || '?'}`, d.room && `Raum: ${d.room}`,
+    d.returned_by && `abgegeben durch ${name[d.returned_by] || '?'}`, d.new_end && `neues Ende ${fmtDateTime(d.new_end)}`, d.room && `Raum: ${d.room}`,
   ].filter(Boolean).join(' · ');
 
   async function load() {

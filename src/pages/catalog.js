@@ -1,5 +1,5 @@
 import { displayName } from '../lib/format.js';
-import { supabase, unwrap } from '../lib/supabase.js';
+import { supabase, unwrap, safeData } from '../lib/supabase.js';
 import QRCode from 'qrcode';
 import { openNewItem } from '../components/newItem.js';
 import { openImportWizard } from '../components/importWizard.js';
@@ -43,6 +43,8 @@ let selectMode = false;
 const sel = new Set();
 let lastItems = [];
 let lastRented = {};
+let lastWait = new Set();
+const isBorrowable = (i) => i.item_type !== 'consumable' && i.status === 'active';
 
 const resetSelection = () => { selectMode = false; sel.clear(); };
 
@@ -53,7 +55,7 @@ async function renderRoom(el) {
     <div class="mb-4 flex flex-wrap items-center gap-2">
       <button id="back" class="btn-ghost">← Räume</button>
       <h1 class="text-xl font-bold">${esc(room ? room.icon + ' ' + room.name : '🌐 Gesamtes Lager')}</h1>
-      ${canManageHere ? '<div class="ml-auto flex flex-wrap gap-2"><button id="exportBtn" class="btn-ghost">⬇️ Export</button><button id="selToggle" class="btn-ghost">☑️ Auswählen</button><button id="importBtn" class="btn-ghost">📊 Excel-Import</button><button id="newItem" class="btn-primary">+ Neuer Artikel</button></div>' : ''}
+      <div class="ml-auto flex flex-wrap gap-2">${canManageHere ? '<button id="exportBtn" class="btn-ghost">⬇️ Export</button>' : ''}<button id="selToggle" class="btn-ghost">${canManageHere ? '☑️ Auswählen' : '☑️ Mehrere ausleihen'}</button>${canManageHere ? '<button id="importBtn" class="btn-ghost">📊 Excel-Import</button><button id="newItem" class="btn-primary">+ Neuer Artikel</button>' : ''}</div>
     </div>
     <input id="q" class="input mb-4" placeholder="Suchen (Name, Kategorie, ID)…" value="${esc(search)}">
     <div id="bulkBar"></div>
@@ -90,6 +92,7 @@ async function loadItems(el) {
     const ids = items.map((i) => i.id);
     const busyRows = ids.length ? unwrap(await supabase.from('rental_calendar').select('item_id, end_at, borrower_name, start_at')
       .in('item_id', ids).eq('status', 'active').lte('start_at', new Date().toISOString())) : [];
+    lastWait = new Set((await safeData(supabase.from('waitlist').select('item_id'))).map((w) => w.item_id));
     lastItems = items;
     lastRented = Object.fromEntries(busyRows.map((r) => [r.item_id, r]));
     paint(el);
@@ -110,7 +113,7 @@ function paint(el) {
 
 function toggleSel(id, el) {
   const it = lastItems.find((i) => i.id === id);
-  if (!it || !canManageRoom(it.room_id)) return;
+  if (!it || !(canManageRoom(it.room_id) || isBorrowable(it))) return;
   if (sel.has(id)) sel.delete(id); else sel.add(id);
   paint(el);
 }
@@ -125,32 +128,101 @@ function drawBulk(el) {
   const bar = el.querySelector('#bulkBar');
   if (!bar) return;
   if (!selectMode) { bar.innerHTML = ''; return; }
+  const mgr = isManager();
   const none = sel.size ? '' : 'disabled';
   bar.innerHTML = `<div class="sticky top-2 z-30 mb-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-lg"><div class="flex flex-wrap items-center gap-2">
     <b class="text-sm">${sel.size} ausgewählt</b>
-    <button id="bAll" class="btn-ghost !py-1.5 !text-xs">Alle auswählen</button>
+    <button id="bAll" class="btn-ghost !py-1.5 !text-xs">${mgr ? 'Alle auswählen' : 'Alle verfügbaren auswählen'}</button>
     <button id="bNone" class="btn-ghost !py-1.5 !text-xs" ${none}>Auswahl aufheben</button>
-    <button id="bEdit" class="btn-ghost !py-1.5 !text-xs" ${none}>✏️ Bearbeiten</button>
+    <button id="bRent" class="btn-primary !py-1.5 !text-xs" ${none}>📤 Ausleihen</button>
+    ${mgr ? `<button id="bEdit" class="btn-ghost !py-1.5 !text-xs" ${none}>✏️ Bearbeiten</button>
     <select id="bStatus" class="input !w-auto !py-1.5 text-xs" ${none}><option value="">Status ändern…</option><option value="maintenance">🛠 Defekt / Wartung</option><option value="inventory">📋 In Inventur</option><option value="active">✅ Freigeben</option></select>
     <button id="bQr" class="btn-ghost !py-1.5 !text-xs" ${none}>🏷️ Etiketten (A4)</button>
-    <button id="bDel" class="btn-danger !py-1.5 !text-xs" ${none}>🗑 Löschen</button>
+    <button id="bDel" class="btn-danger !py-1.5 !text-xs" ${none}>🗑 Löschen</button>` : ''}
     <button id="bEnd" class="btn-ghost ml-auto !py-1.5 !text-xs">✖ Beenden</button></div></div>`;
   const reload = () => loadItems(el);
+  // Verwaltungsaktionen nur für Artikel, für die man zuständig ist
+  const managed = async () => {
+    const all = await itemsByIds([...sel]); const ok = all.filter((i) => canManageRoom(i.room_id));
+    if (ok.length < all.length) toast(`${all.length - ok.length} Artikel ohne Berechtigung werden übersprungen.`, 'info');
+    return ok;
+  };
   bar.querySelector('#bAll').onclick = (e) => busy(e.target, async () => {
-    const rows = unwrap(await filtered(supabase.from('items').select('id, room_id').order('id').range(0, 4999)));
-    rows.filter((r) => canManageRoom(r.room_id)).forEach((r) => sel.add(r.id));
+    const rows = unwrap(await filtered(supabase.from('items').select('id, room_id, item_type, status').order('id').range(0, 4999)));
+    rows.filter((r) => (mgr ? canManageRoom(r.room_id) : isBorrowable(r))).forEach((r) => sel.add(r.id));
     toast(`${sel.size} Artikel ausgewählt`, 'success'); paint(el);
   });
   bar.querySelector('#bNone').onclick = () => { sel.clear(); paint(el); };
   bar.querySelector('#bEnd').onclick = () => { resetSelection(); const t = el.querySelector('#selToggle'); if (t) t.className = 'btn-ghost'; paint(el); };
-  bar.querySelector('#bEdit').onclick = (e) => busy(e.target, async () => openBulkEdit(await itemsByIds([...sel]), () => { reload(); }));
-  bar.querySelector('#bDel').onclick = (e) => busy(e.target, async () => deleteItems(await itemsByIds([...sel]), () => { sel.clear(); reload(); }));
-  bar.querySelector('#bQr').onclick = () => printLabels([...sel]);
-  bar.querySelector('#bStatus').onchange = (e) => { const status = e.target.value; if (!status) return;
+  bar.querySelector('#bRent').onclick = (e) => busy(e.target, async () => {
+    const all = await itemsByIds([...sel]); const items = all.filter(isBorrowable);
+    if (!items.length) throw new Error('Keiner der gewählten Artikel ist ausleihbar.');
+    if (items.length > 50) throw new Error('Höchstens 50 Artikel auf einmal.');
+    if (items.length < all.length) toast(`${all.length - items.length} nicht ausleihbare Artikel wurden ausgelassen.`, 'info');
+    bulkRentModal(items, (booked) => { booked.forEach((id) => sel.delete(id)); reload(); });
+  });
+  bar.querySelector('#bEdit')?.addEventListener('click', (e) => busy(e.target, async () => { const items = await managed(); if (items.length) openBulkEdit(items, reload); }));
+  bar.querySelector('#bDel')?.addEventListener('click', (e) => busy(e.target, async () => { const items = await managed(); if (items.length) deleteItems(items, () => { sel.clear(); reload(); }); }));
+  bar.querySelector('#bQr')?.addEventListener('click', (e) => busy(e.target, async () => { const items = await managed(); if (items.length) printLabels(items.map((i) => i.id)); }));
+  bar.querySelector('#bStatus')?.addEventListener('change', (e) => { const status = e.target.value; if (!status) return;
     busy(e.target, async () => {
-      const n = unwrap(await supabase.rpc('bulk_set_item_status', { p_ids: [...sel], p_status: status }));
+      const items = await managed(); if (!items.length) return;
+      const n = unwrap(await supabase.rpc('bulk_set_item_status', { p_ids: items.map((i) => i.id), p_status: status }));
       toast(`${n} Artikel aktualisiert`, 'success'); reload();
-    }); };
+    }); });
+}
+
+// Sammel-Ausleihe: mehrere Artikel mit gemeinsamem Zeitraum buchen (freie werden gebucht, belegte gemeldet)
+async function bulkRentModal(items, onDone) {
+  const start = new Date(); start.setMinutes(0, 0, 0);
+  const end = new Date(start.getTime() + 24 * 3600 * 1000);
+  const mgr = isManager();
+  const people = mgr ? unwrap(await supabase.from('public_profiles').select('id, full_name, username').order('full_name')) : [];
+  const ids = items.map((i) => i.id);
+  const from = new Date(); from.setDate(from.getDate() - 35);
+  const bookings = (await safeData(supabase.from('rental_calendar').select('item_id, start_at, end_at').in('item_id', ids).eq('status', 'active').gte('end_at', from.toISOString())))
+    .map((b) => ({ id: b.item_id, s: new Date(b.start_at), e: new Date(b.end_at) }));
+  const { el, close } = openModal(`
+    <h3 class="mb-3 text-lg font-bold">${items.length} Artikel ausleihen</h3>
+    <div class="grid gap-5 md:grid-cols-2">
+      <form id="f" class="space-y-3">
+        ${mgr ? `<div><label class="label">Ausleihen für</label><select name="borrower" class="input">${people.map((p) => `<option value="${esc(p.id)}" ${p.id === state.user.id ? 'selected' : ''}>${esc(displayName(p))} (@${esc(p.username)})</option>`).join('')}</select></div>` : ''}
+        <div><label class="label">Projekt / Einsatzort</label><input name="project" class="input" placeholder="optional"></div>
+        <div class="grid grid-cols-2 gap-2"><div><label class="label">Beginn</label><input type="datetime-local" name="start" step="900" value="${toLocalInput(start)}" class="input" required></div>
+          <div><label class="label">Rückgabe</label><input type="datetime-local" name="end" step="900" value="${toLocalInput(end)}" class="input" required></div></div>
+        <div class="flex justify-end gap-2 pt-2"><button type="button" data-close class="btn-ghost">Abbrechen</button><button id="book" class="btn-primary">Buchen</button></div>
+      </form>
+      <div><h4 class="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">Verfügbarkeit im Zeitraum</h4><div id="list" class="max-h-72 space-y-1.5 overflow-y-auto"></div></div>
+    </div>`, { wide: true });
+  const form = el.querySelector('#f'); const book = el.querySelector('#book');
+  let free = [];
+  const check = () => {
+    const s = new Date(form.elements.start.value); const e = new Date(form.elements.end.value);
+    const valid = e > s;
+    free = [];
+    el.querySelector('#list').innerHTML = items.map((i) => {
+      const bs = bookings.filter((b) => b.id === i.id);
+      const late = bs.some((b) => b.e < new Date());
+      const clash = valid ? bs.filter((b) => s < b.e && e > b.s) : [];
+      const ok = valid && !late && !clash.length;
+      if (ok) free.push(i.id);
+      return `<div class="rounded-xl p-2 text-sm ${ok ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}">${ok ? '✅' : '❌'} <b>${esc(i.name)}</b><span class="block text-xs">${ok ? 'frei' : late ? 'überfällig, noch nicht zurückgegeben' : !valid ? 'Zeitraum ungültig' : 'belegt: ' + clash.map((b) => fmtDateTime(b.s) + ' – ' + fmtDateTime(b.e)).join('; ')}</span></div>`;
+    }).join('');
+    book.textContent = free.length === items.length ? `${free.length} Artikel buchen` : `${free.length} von ${items.length} buchen`;
+    book.disabled = !free.length;
+  };
+  form.elements.start.oninput = check; form.elements.end.oninput = check; check();
+  form.onsubmit = (ev) => {
+    ev.preventDefault(); const f = new FormData(ev.target);
+    busy(book, async () => {
+      const res = unwrap(await supabase.rpc('rent_items', { p_item_ids: free, p_start: new Date(f.get('start')).toISOString(), p_end: new Date(f.get('end')).toISOString(), p_project: f.get('project'), p_borrower: f.get('borrower') || null }));
+      const okIds = res.filter((r) => r.ok).map((r) => r.item_id); const bad = res.filter((r) => !r.ok);
+      close();
+      if (okIds.length) toast(`${okIds.length} Artikel gebucht`, 'success');
+      if (bad.length) openModal(`<h3 class="mb-2 text-lg font-bold text-red-600">Nicht alle gebucht</h3><ul class="mb-3 space-y-1 text-sm">${bad.map((r) => `<li class="rounded-xl bg-red-50 p-2 text-red-700"><b>${esc(items.find((i) => i.id === r.item_id)?.name || r.item_id)}</b>: ${esc(r.error)}</li>`).join('')}</ul><button data-close class="btn-primary w-full">OK</button>`);
+      onDone(okIds);
+    });
+  };
 }
 
 function statusBadge(i, rental) {
@@ -164,17 +236,19 @@ function statusBadge(i, rental) {
 function itemCard(i, rental) {
   const photo = Array.isArray(i.photos) && i.photos[0];
   const manage = canManageRoom(i.room_id);
+  const selectable = manage || isBorrowable(i);
   const loc = [i.shelf, i.compartment].filter(Boolean).join(' · ');
   const small = '!px-2.5 !py-1 !text-xs';
   const actions = `
         ${i.item_type === 'consumable' ? `<button data-act="consume" data-id="${esc(i.id)}" class="btn-primary ${small}">Entnehmen</button>`
           : i.status === 'active' ? `<button data-act="rent" data-id="${esc(i.id)}" class="btn-primary ${small}">Ausleihen</button>` : ''}
+        ${i.item_type !== 'consumable' && (rental || i.status !== 'active') ? `<button data-act="wait" data-id="${esc(i.id)}" class="btn-ghost ${small}">${lastWait.has(i.id) ? '🔔 Benachrichtigung aktiv ✓' : '🔔 Benachrichtigen'}</button>` : ''}
         <button data-act="qr" data-id="${esc(i.id)}" class="btn-ghost ${small}">QR</button>
         ${manage && i.status === 'active' ? `<button data-act="status" data-status="maintenance" data-id="${esc(i.id)}" class="btn-ghost ${small}">🛠 Defekt</button>` : ''}
         ${manage && i.status !== 'active' ? `<button data-act="status" data-status="active" data-id="${esc(i.id)}" class="btn-ghost ${small}">✅ Freigeben</button>` : ''}
         ${manage ? `<button data-act="photos" data-id="${esc(i.id)}" class="btn-ghost ${small}">📷</button><button data-act="edit" data-id="${esc(i.id)}" class="btn-ghost ${small}">✏️</button><button data-act="delete" data-id="${esc(i.id)}" class="btn-ghost ${small} !text-red-600">🗑</button>` : ''}`;
-  return `<article data-card="${esc(i.id)}" class="card flex gap-3 ${selectMode ? 'cursor-pointer' : ''} ${sel.has(i.id) ? 'ring-2 ring-brand-500' : ''} ${selectMode && !manage ? 'opacity-50' : ''}">
-    ${selectMode ? `<input type="checkbox" tabindex="-1" ${sel.has(i.id) ? 'checked' : ''} ${manage ? '' : 'disabled'} class="mt-1 h-5 w-5 shrink-0 rounded text-brand-600">` : ''}
+  return `<article data-card="${esc(i.id)}" class="card flex gap-3 ${selectMode ? 'cursor-pointer' : ''} ${sel.has(i.id) ? 'ring-2 ring-brand-500' : ''} ${selectMode && !selectable ? 'opacity-50' : ''}">
+    ${selectMode ? `<input type="checkbox" tabindex="-1" ${sel.has(i.id) ? 'checked' : ''} ${selectable ? '' : 'disabled'} class="mt-1 h-5 w-5 shrink-0 rounded text-brand-600">` : ''}
     ${photo ? `<div class="relative h-16 w-16 shrink-0"><img ${selectMode ? '' : `data-act="gallery" data-id="${esc(i.id)}"`} src="${esc(thumbUrl(photo))}" alt="" loading="lazy" decoding="async" class="h-16 w-16 rounded-xl object-cover ${selectMode ? '' : 'cursor-zoom-in'}">${i.photos.length > 1 ? `<span class="absolute -bottom-1 -right-1 rounded-full bg-black/70 px-1.5 text-[10px] font-bold text-white">${i.photos.length}</span>` : ''}</div>` : '<div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-2xl">📦</div>'}
     <div class="min-w-0 flex-1">
       <div class="flex flex-wrap items-center gap-1.5"><h3 class="truncate font-bold">${esc(i.name)}</h3>${i.item_type === 'kit' ? '<span class="badge bg-purple-100 text-purple-700">KIT</span>' : ''}</div>
@@ -189,6 +263,13 @@ async function handleAction(btn, items, reload) {
   if (btn.dataset.act === 'rent') return rentModal(item, reload);
   if (btn.dataset.act === 'consume') return consumeModal(item, reload);
   if (btn.dataset.act === 'qr') return qrModal(item);
+  if (btn.dataset.act === 'wait') {
+    return busy(btn, async () => {
+      const on = lastWait.has(item.id);
+      unwrap(await supabase.rpc(on ? 'leave_waitlist' : 'join_waitlist', { p_item_id: item.id }));
+      toast(on ? 'Benachrichtigung abbestellt' : 'Du wirst benachrichtigt, sobald der Artikel frei ist', 'success'); reload();
+    });
+  }
   if (btn.dataset.act === 'edit') return openEditItem(item, reload);
   if (btn.dataset.act === 'photos') return openPhotoManager(item, reload);
   if (btn.dataset.act === 'gallery') return openGallery(item, 0);

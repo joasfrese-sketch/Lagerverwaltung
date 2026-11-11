@@ -16,6 +16,7 @@ export async function render(el) {
   el.innerHTML = `
     <div class="mb-4 flex flex-wrap items-center gap-2"><h1 class="mr-auto text-2xl font-bold">🛡️ Lagerwart-Terminal</h1>
       <button id="scanUser" class="btn-ghost">🪪 Personen-QR scannen</button></div>
+    <div id="reqBox" class="mb-4"></div>
 
     <div class="card mb-4 space-y-2"><h2 class="font-bold">Person (Ausleiher)</h2>
       <input id="q" class="input" placeholder="Name oder Benutzername suchen…"><select id="who" class="input"></select></div>
@@ -169,6 +170,25 @@ export async function render(el) {
     loadRentals();
   });
   loadRentals();
+
+  // ================= Verlängerungsanträge =================
+  async function loadRequests() {
+    const box = el.querySelector('#reqBox');
+    try {
+      const rows = unwrap(await supabase.from('extension_requests').select('id, new_end_at, reason, requested_by, rentals(item_id, end_at, items(name))').eq('status', 'pending').order('created_at'));
+      box.innerHTML = rows.length ? `<div class="card space-y-2 !border-amber-300"><h2 class="font-bold">⏳ Offene Verlängerungsanträge (${rows.length})</h2>${rows.map((q) => `
+        <div class="rounded-xl bg-slate-50 p-3 text-sm"><b>${esc(q.rentals?.items?.name)}</b> <span class="text-slate-500">von ${esc(nameOf(q.requested_by))}</span>
+          <div class="text-xs text-slate-600">Frist ${fmtDateTime(q.rentals?.end_at)} → <b>${fmtDateTime(q.new_end_at)}</b></div>
+          ${q.reason ? `<div class="mt-1 text-xs italic">„${esc(q.reason)}"</div>` : ''}
+          <div class="mt-2 flex gap-2"><button data-ok="${esc(q.id)}" class="btn-primary !px-2.5 !py-1 !text-xs">Genehmigen</button><button data-no="${esc(q.id)}" class="btn-ghost !px-2.5 !py-1 !text-xs">Ablehnen</button></div></div>`).join('')}</div>` : '';
+      box.querySelectorAll('[data-ok]').forEach((b) => (b.onclick = () => busy(b, async () => { unwrap(await supabase.rpc('decide_extension', { p_request_id: b.dataset.ok, p_approve: true })); toast('Verlängerung genehmigt', 'success'); loadRequests(); loadRentals(); })));
+      box.querySelectorAll('[data-no]').forEach((b) => (b.onclick = () => {
+        const note = prompt('Grund für die Ablehnung (optional):'); if (note === null) return;
+        busy(b, async () => { unwrap(await supabase.rpc('decide_extension', { p_request_id: b.dataset.no, p_approve: false, p_note: note })); toast('Antrag abgelehnt', 'success'); loadRequests(); });
+      }));
+    } catch (e) { box.innerHTML = `<p class="text-red-600">${esc(e.message)}</p>`; }
+  }
+  loadRequests();
 }
 
 function failList(failed) {

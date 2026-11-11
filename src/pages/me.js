@@ -1,9 +1,10 @@
 import { displayName } from '../lib/format.js';
 import QRCode from 'qrcode';
-import { supabase, unwrap } from '../lib/supabase.js';
+import { supabase, unwrap, safeData } from '../lib/supabase.js';
 import { esc, fmtDateTime, toast, busy, openModal } from '../lib/ui.js';
 import { state } from '../state.js';
 import * as calendar from './calendar.js';
+import { openExtend } from '../components/extendModal.js';
 
 export async function render(el) {
   const p = state.profile;
@@ -18,6 +19,7 @@ export async function render(el) {
       <div class="space-y-4 md:col-span-2">
         <section class="card"><h2 class="mb-2 text-sm font-bold">📦 Aktuelle Leihen</h2><div id="rentals" class="space-y-2 text-sm"><p class="text-slate-400">Lade…</p></div></section>
         <section class="card"><h2 class="mb-2 text-sm font-bold">📅 Mein Kalender</h2><div id="myCal"></div></section>
+        <section class="card"><h2 class="mb-2 text-sm font-bold">🔔 Meine Warteliste</h2><div id="wait" class="space-y-2 text-sm"></div></section>
         <section class="card"><h2 class="mb-2 text-sm font-bold">🧾 Protokoll</h2><div id="log" class="space-y-1.5 text-xs"><p class="text-slate-400">Lade…</p></div></section>
       </div>
     </div>`;
@@ -28,15 +30,28 @@ export async function render(el) {
 
 async function load(el) {
   try {
-    const rentals = unwrap(await supabase.from('rentals').select('id, item_id, start_at, end_at, project, items(name, accessories)')
+    const rentals = unwrap(await supabase.from('rentals').select('id, item_id, start_at, end_at, project, items(name, accessories, room_id)')
       .eq('borrower_id', state.user.id).eq('status', 'active').order('end_at'));
+    const pending = await safeData(supabase.from('extension_requests').select('id, rental_id, new_end_at').eq('requested_by', state.user.id).eq('status', 'pending'));
+    const pend = Object.fromEntries(pending.map((p) => [p.rental_id, p]));
+    const small = '!px-2.5 !py-1 !text-xs';
     el.querySelector('#rentals').innerHTML = rentals.length ? rentals.map((r) => {
-      const late = new Date(r.end_at) < new Date();
-      return `<div class="flex items-center justify-between rounded-xl border p-2.5 ${late ? 'border-red-300 bg-red-50' : 'bg-slate-50'}">
-        <div><b>${esc(r.items?.name)}</b>${late ? ' <span class="badge bg-red-600 text-white">Überfällig</span>' : ''}<div class="text-xs text-slate-500">${fmtDateTime(r.start_at)} – ${fmtDateTime(r.end_at)}${r.project ? ' · ' + esc(r.project) : ''}</div></div>
-        <button data-ret="${esc(r.id)}" class="btn-primary !px-2.5 !py-1 !text-xs">Zurückgeben</button></div>`;
+      const late = new Date(r.end_at) < new Date(); const p = pend[r.id];
+      return `<div class="rounded-xl border p-2.5 ${late ? 'border-red-300 bg-red-50' : 'bg-slate-50'}">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div><b>${esc(r.items?.name)}</b>${late ? ' <span class="badge bg-red-600 text-white">Überfällig</span>' : ''}<div class="text-xs text-slate-500">${fmtDateTime(r.start_at)} – ${fmtDateTime(r.end_at)}${r.project ? ' · ' + esc(r.project) : ''}</div></div>
+          <div class="flex flex-wrap items-center gap-1.5">
+            ${p ? `<span class="badge bg-amber-100 text-amber-800">Antrag offen bis ${fmtDateTime(p.new_end_at)}</span><button data-cancel="${esc(p.id)}" class="btn-ghost ${small}">Zurückziehen</button>` : `<button data-ext="${esc(r.id)}" class="btn-ghost ${small}">Verlängern</button>`}
+            <button data-ret="${esc(r.id)}" class="btn-primary ${small}">Zurückgeben</button></div></div></div>`;
     }).join('') : '<p class="italic text-slate-400">Keine aktiven Ausleihen.</p>';
     el.querySelectorAll('[data-ret]').forEach((b) => (b.onclick = () => returnModal(rentals.find((r) => r.id === b.dataset.ret), () => load(el))));
+    el.querySelectorAll('[data-ext]').forEach((b) => (b.onclick = () => openExtend(rentals.find((r) => r.id === b.dataset.ext), () => load(el))));
+    el.querySelectorAll('[data-cancel]').forEach((b) => (b.onclick = () => busy(b, async () => { unwrap(await supabase.rpc('cancel_extension_request', { p_request_id: b.dataset.cancel })); toast('Antrag zurückgezogen', 'success'); load(el); })));
+
+    const wait = await safeData(supabase.from('waitlist').select('item_id, items(name)').order('created_at'));
+    el.querySelector('#wait').innerHTML = wait.length ? wait.map((w) => `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2.5"><span><b>${esc(w.items?.name)}</b> <span class="font-mono text-xs text-slate-400">${esc(w.item_id)}</span></span><button data-leave="${esc(w.item_id)}" class="btn-ghost ${small}">Abbestellen</button></div>`).join('')
+      : '<p class="italic text-slate-400">Keine Benachrichtigungen aktiv. Im Katalog kannst du dich bei belegten Artikeln benachrichtigen lassen.</p>';
+    el.querySelectorAll('[data-leave]').forEach((b) => (b.onclick = () => busy(b, async () => { unwrap(await supabase.rpc('leave_waitlist', { p_item_id: b.dataset.leave })); load(el); })));
 
     const log = unwrap(await supabase.from('activity_log').select('*').or(`actor_id.eq.${state.user.id},subject_id.eq.${state.user.id}`)
       .order('created_at', { ascending: false }).limit(30));

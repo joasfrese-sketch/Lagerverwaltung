@@ -1,7 +1,7 @@
 import { displayName } from '../lib/format.js';
 import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, toast, openModal, busy } from '../lib/ui.js';
-import { state, GLOBAL_CHAT_ID } from '../state.js';
+import { state, GLOBAL_CHAT_ID, isManager } from '../state.js';
 import { timeAgo } from '../lib/format.js';
 
 const S = { tab: 'chats', chats: [], names: {}, unread: new Set(), current: null, channel: null, root: null };
@@ -160,6 +160,7 @@ async function drawNotifs() {
       const link = n.link || '';
       if (link.startsWith('chat:')) { S.tab = 'chats'; S.current = link.slice(5); draw(); }
       else if (link.startsWith('rental:')) location.hash = '#/ich';
+      else if (link.startsWith('ext:')) location.hash = isManager() ? '#/terminal' : '#/ich';
       else if (link.startsWith('item:')) location.hash = '#/katalog';
       else drawNotifs();
     }));

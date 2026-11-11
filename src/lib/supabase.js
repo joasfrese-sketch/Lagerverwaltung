@@ -11,3 +11,9 @@ export function unwrap({ data, error }) {
   if (error) throw new Error(error.message || 'Unbekannter Fehler');
   return data;
 }
+
+// Liefert bei Fehlern (z. B. Tabelle noch nicht migriert) einen Ersatzwert statt abzubrechen
+export async function safeData(query, fallback = []) {
+  const { data, error } = await query;
+  return error ? fallback : data;
+}

@@ -9,6 +9,7 @@ const urlFor = (link?: string | null) => {
   if (!link) return '/#/chat';
   if (link.startsWith('chat:')) return '/#/chat';
   if (link.startsWith('rental:')) return '/#/ich';
+  if (link.startsWith('ext:')) return '/#/terminal';
   return '/#/katalog';
 };
 
