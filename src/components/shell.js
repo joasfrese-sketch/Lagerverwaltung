@@ -5,6 +5,7 @@ import { roleName, displayName } from '../lib/format.js';
 import { state, isManager } from '../state.js';
 import { signOut } from '../auth.js';
 import { openScanner, routeScan } from './scanner.js';
+import { openGlobalSearch } from './globalSearch.js';
 import * as overview from '../pages/overview.js';
 import * as catalog from '../pages/catalog.js';
 import * as calendar from '../pages/calendar.js';
@@ -40,6 +41,7 @@ export function renderShell(root) {
     <aside class="sticky top-0 hidden h-screen w-60 shrink-0 flex-col justify-between bg-[#0f172a] p-4 text-[#cbd5e1] md:flex">
       <div>
         <div class="mb-6 flex items-center gap-3 px-2 text-white">${icon('package', 'h-6 w-6 text-brand-500')}<span class="font-bold">Lager Pro</span></div>
+        <button id="searchBtn" class="mb-2 flex w-full items-center gap-2 rounded-xl bg-[#1e293b] px-3 py-2 text-sm text-[#94a3b8] hover:text-white">${icon('search', 'h-4 w-4')}<span>Suchen</span><kbd class="ml-auto rounded bg-[#0f172a] px-1.5 text-[10px]">Strg K</kbd></button>
         <button id="scanBtn" class="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-bold text-white hover:bg-brand-700">${icon('camera', 'h-4 w-4')} Scannen</button>
         <nav class="space-y-1" id="sideNav">
           ${routes.map(([k, r]) => `<a href="#/${k}" data-route="${k}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-[#1e293b]">${icon(r.icon, 'h-5 w-5 shrink-0')}<span class="truncate">${esc(r.label)}</span>${r.badge ? badge('ml-auto') : ''}</a>`).join('')}
@@ -52,6 +54,7 @@ export function renderShell(root) {
       </div>
     </aside>
     <main class="min-w-0 flex-1 pb-24 md:pb-8"><div id="page" class="mx-auto max-w-5xl p-4 md:p-8"></div></main>
+    <button id="searchFab" class="fixed bottom-36 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-slate-700 text-white shadow-lg md:hidden" title="Suchen">${icon('search', 'h-6 w-6')}</button>
     <button id="scanFab" class="fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg md:hidden" title="Scannen">${icon('camera', 'h-6 w-6')}</button>
     <nav class="fixed inset-x-0 bottom-0 z-40 grid border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" id="tabBar" style="grid-template-columns:repeat(${mainRoutes.length + 1},minmax(0,1fr))">
       ${mainRoutes.map(([k, r]) => `<a href="#/${k}" data-route="${k}" class="relative flex flex-col items-center py-2 text-[10px] font-semibold text-slate-500">${icon(r.icon, 'h-5 w-5')}${esc(r.short)}${r.badge ? badge('absolute right-2 top-1 !px-1 text-[9px]') : ''}</a>`).join('')}
@@ -62,6 +65,14 @@ export function renderShell(root) {
   const scan = () => openScanner(routeScan);
   root.querySelector('#scanBtn').onclick = scan;
   root.querySelector('#scanFab').onclick = scan;
+  root.querySelector('#searchBtn').onclick = openGlobalSearch;
+  root.querySelector('#searchFab').onclick = openGlobalSearch;
+  if (!window.__searchKey) {
+    window.__searchKey = true;
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openGlobalSearch(); }
+    });
+  }
   root.querySelector('#moreBtn').onclick = () => {
     const { el } = openModal(`<h3 class="mb-3 text-lg font-bold">Mehr</h3><div class="space-y-1">
       ${moreRoutes.map(([k, r]) => `<a href="#/${k}" data-close class="flex items-center gap-3 rounded-xl p-3 font-semibold hover:bg-slate-100">${icon(r.icon, 'h-5 w-5')}${esc(r.label)}</a>`).join('')}

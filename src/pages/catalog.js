@@ -17,7 +17,12 @@ import { state, canManageRoom, isManager } from '../state.js';
 let currentRoom = null;
 let search = '';
 
-export const openRoom = (id) => { currentRoom = id; search = ''; selectMode = false; sel.clear(); };
+const F = { status: 'ALL', category: '', type: '', sort: 'name' };
+const SORTS = { name: ['name', true], name_desc: ['name', false], new: ['created_at', false], stock: ['stock_quantity', true] };
+let lastCats = [];
+let lastCount = '';
+const resetFilters = () => Object.assign(F, { status: 'ALL', category: '', type: '', sort: 'name' });
+export const openRoom = (id, term = '') => { currentRoom = id; search = term; resetFilters(); selectMode = false; sel.clear(); };
 
 export async function render(el) {
   try { await (currentRoom ? renderRoom(el) : renderRooms(el)); }
@@ -58,13 +63,14 @@ async function renderRoom(el) {
       <div class="ml-auto flex flex-wrap gap-2">${canManageHere ? '<button id="exportBtn" class="btn-ghost">⬇️ Export</button>' : ''}<button id="selToggle" class="btn-ghost">${canManageHere ? '☑️ Auswählen' : '☑️ Mehrere ausleihen'}</button>${canManageHere ? '<button id="importBtn" class="btn-ghost">📊 Excel-Import</button><button id="newItem" class="btn-primary">+ Neuer Artikel</button>' : ''}</div>
     </div>
     <input id="q" class="input mb-4" placeholder="Suchen (Name, Kategorie, ID)…" value="${esc(search)}">
+    <div id="filters" class="mb-3 flex flex-wrap items-center gap-2"></div>
     <div id="bulkBar"></div>
     <div id="list" class="grid gap-3 md:grid-cols-2"><p class="text-sm text-slate-400">Lade…</p></div>`;
-  el.querySelector('#back').onclick = () => { currentRoom = null; resetSelection(); render(el); };
+  el.querySelector('#back').onclick = () => { currentRoom = null; resetSelection(); resetFilters(); render(el); };
   el.querySelector('#importBtn')?.addEventListener('click', () => openImportWizard({ defaultRoom: currentRoom, done: () => renderRoom(el) }));
   el.querySelector('#newItem')?.addEventListener('click', () => openNewItem({ defaultRoom: currentRoom, done: () => renderRoom(el) }));
   el.querySelector('#exportBtn')?.addEventListener('click', () => openExport({ title: 'Artikel exportieren', filename: room ? `artikel-${room.id}` : 'artikel-alle', load: async () => {
-    const rows = await fetchAll(() => filtered(supabase.from('items').select('*')).order('id'));
+    const rows = await fetchAll(() => filtered(supabase.from('catalog_items').select('*')).order('id'));
     return { columns: [['id', 'ID'], ['name', 'Bezeichnung'], ['room_id', 'Raum'], ['category', 'Kategorie'], ['item_type', 'Typ'], ['status', 'Status'], ['stock_quantity', 'Bestand'], ['min_stock', 'Mindestbestand'], ['shelf', 'Regal'], ['compartment', 'Fach'], ['acc', 'Zubehör'], ['required_permission', 'Berechtigung']].map(([key, label]) => ({ key, label })),
       rows: rows.map((i) => ({ ...i, acc: (i.accessories || []).join(', ') })) };
   } }));
@@ -74,6 +80,8 @@ async function renderRoom(el) {
   markToggle();
   let timer;
   el.querySelector('#q').oninput = (e) => { search = e.target.value; clearTimeout(timer); timer = setTimeout(() => loadItems(el), 250); };
+  drawFilters(el);
+  loadCats(el);
   loadItems(el);
 }
 
@@ -82,19 +90,52 @@ function filtered(q) {
   if (currentRoom !== 'ALL') q = q.eq('room_id', currentRoom);
   const term = search.trim().replace(/[%,()]/g, ' ');
   if (term) q = q.or(`name.ilike.%${term}%,category.ilike.%${term}%,id.ilike.%${term}%`);
+  if (F.status === 'avail') q = q.eq('status', 'active').or('and(item_type.neq.consumable,rented_now.eq.false),and(item_type.eq.consumable,stock_quantity.gt.0)');
+  else if (F.status === 'rented') q = q.eq('rented_now', true);
+  else if (F.status === 'maintenance') q = q.eq('status', 'maintenance');
+  else if (F.status === 'inventory') q = q.eq('status', 'inventory');
+  else if (F.status === 'low') q = q.eq('low_stock', true);
+  if (F.category) q = q.eq('category', F.category);
+  if (F.type) q = q.eq('item_type', F.type);
   return q;
+}
+
+async function loadCats(el) {
+  let q = supabase.from('items').select('category').limit(5000);
+  if (currentRoom !== 'ALL') q = q.eq('room_id', currentRoom);
+  lastCats = [...new Set((await safeData(q)).map((r) => r.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'de'));
+  drawFilters(el);
+}
+
+function drawFilters(el) {
+  const box = el.querySelector('#filters');
+  if (!box) return;
+  const chips = [['ALL', 'Alle'], ['avail', '✅ Verfügbar'], ['rented', 'Ausgeliehen'], ['maintenance', '🛠 Defekt'], ['inventory', '📋 Inventur'], ['low', '📉 Bestand niedrig']];
+  const opt = (v, l, cur) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${l}</option>`;
+  box.innerHTML = chips.map(([v, l]) => `<button data-st="${v}" class="rounded-full px-3 py-1 text-xs font-semibold ${F.status === v ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">${l}</button>`).join('')
+    + `<select id="fCat" class="input !w-auto !py-1 text-xs"><option value="">Alle Kategorien</option>${lastCats.map((c) => opt(esc(c), esc(c), esc(F.category))).join('')}</select>`
+    + `<select id="fType" class="input !w-auto !py-1 text-xs">${opt('', 'Alle Typen', F.type)}${opt('standard', 'Standard', F.type)}${opt('kit', 'Kit / Koffer', F.type)}${opt('consumable', 'Verbrauchsmaterial', F.type)}</select>`
+    + `<select id="fSort" class="input !w-auto !py-1 text-xs">${opt('name', 'Name A–Z', F.sort)}${opt('name_desc', 'Name Z–A', F.sort)}${opt('new', 'Neueste zuerst', F.sort)}${opt('stock', 'Bestand (niedrig zuerst)', F.sort)}</select>`
+    + `<span id="count" class="ml-auto text-xs text-slate-400">${lastCount}</span>`;
+  const changed = () => { drawFilters(el); loadItems(el); };
+  box.querySelectorAll('[data-st]').forEach((b) => (b.onclick = () => { F.status = b.dataset.st; changed(); }));
+  box.querySelector('#fCat').onchange = (e) => { F.category = e.target.value; changed(); };
+  box.querySelector('#fType').onchange = (e) => { F.type = e.target.value; changed(); };
+  box.querySelector('#fSort').onchange = (e) => { F.sort = e.target.value; changed(); };
 }
 
 async function loadItems(el) {
   const list = el.querySelector('#list');
   try {
-    const items = unwrap(await filtered(supabase.from('items').select('*').order('name').limit(200)));
-    const ids = items.map((i) => i.id);
-    const busyRows = ids.length ? unwrap(await supabase.from('rental_calendar').select('item_id, end_at, borrower_name, start_at')
-      .in('item_id', ids).eq('status', 'active').lte('start_at', new Date().toISOString())) : [];
+    const [col, asc] = SORTS[F.sort] || SORTS.name;
+    const { data, count, error } = await filtered(supabase.from('catalog_items').select('*', { count: 'exact' }))
+      .order(col, { ascending: asc }).order('name').limit(200);
+    if (error) throw new Error(error.message);
     lastWait = new Set((await safeData(supabase.from('waitlist').select('item_id'))).map((w) => w.item_id));
-    lastItems = items;
-    lastRented = Object.fromEntries(busyRows.map((r) => [r.item_id, r]));
+    lastItems = data;
+    lastRented = Object.fromEntries(data.filter((i) => i.rented_now).map((i) => [i.id, { end_at: i.rented_until }]));
+    lastCount = `${count} Treffer${count > data.length ? ` (erste ${data.length} angezeigt)` : ''}`;
+    const c = el.querySelector('#count'); if (c) c.textContent = lastCount;
     paint(el);
   } catch (e) { list.innerHTML = `<p class="text-red-600">${esc(e.message)}</p>`; }
 }
@@ -148,7 +189,7 @@ function drawBulk(el) {
     return ok;
   };
   bar.querySelector('#bAll').onclick = (e) => busy(e.target, async () => {
-    const rows = unwrap(await filtered(supabase.from('items').select('id, room_id, item_type, status').order('id').range(0, 4999)));
+    const rows = unwrap(await filtered(supabase.from('catalog_items').select('id, room_id, item_type, status').order('id').range(0, 4999)));
     rows.filter((r) => (mgr ? canManageRoom(r.room_id) : isBorrowable(r))).forEach((r) => sel.add(r.id));
     toast(`${sel.size} Artikel ausgewählt`, 'success'); paint(el);
   });

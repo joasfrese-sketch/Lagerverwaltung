@@ -21,6 +21,9 @@ Ersten Code erstellst du in der App: Einstellungen → Einladungs-Codes → „+
 ### 1e. Migration 005 (Frist verlängern, Warteliste, Sammel-Ausleihe)
 SQL Editor → `supabase/migrations/005_extend_waitlist_bulk.sql` ausführen (wiederholbar, löscht keine Daten). Danach `supabase functions deploy send-push --no-verify-jwt` erneut ausführen (Link für Anträge).
 
+### 1f. Migration 006 (Katalog-Sicht)
+SQL Editor → `supabase/migrations/006_catalog_view.sql` ausführen (wiederholbar). **Vor dem Einspielen der neuen App ausführen**, denn Katalog, Filter und Suche lesen daraus.
+
 ### 2. Auth (Supabase → Authentication)
 - Providers → Email: **Confirm email = an**; Multi-Factor (TOTP) muss aktiviert sein (Standard) (Voraussetzung dafür, dass die Admin-Zuweisung per E-Mail sicher ist)
 - URL Configuration: **Site URL** = Vercel-URL, **Redirect URLs** zusätzlich `http://localhost:5173`
@@ -54,5 +57,5 @@ Repo verbinden (Framework Vite). Environment Variables (Production + Preview):
 
 ## Stand
 Fertig: Schema+RLS+RPCs, Login (E-Mail/Benutzername), Registrierung mit Bestätigung, Passwort-Reset, Übersicht, Katalog (Räume, Suche, Ausleihe, Entnahme, Defekt/Freigabe, QR-Etikett), Kalender (Monat, Filter, Google/.ics), Chat (Gesamt/Gruppe/Direkt) + Benachrichtigungszentrale, Persönlicher Bereich (QR, Leihen, Rückgabe, eigener Kalender, Protokoll), Lagerwart-Terminal (Sammel-Abgabe, Drittperson, Protokoll), QR-Scanner, Einstellungen (Profil, Benachrichtigungen, Push, Passwort, Benutzer/Rollen/Berechtigungen), Fristen-Erinnerungen + Web-Push.
-Paket 2: Frist verlängern (selbst bis 3 Tage, darüber Antrag mit Genehmigung), Warteliste („Benachrichtigen“), Sammel-Ausleihe für alle Nutzer. Paket 1: Registrierung per Einladungs-Code, Export (Excel/CSV), Protokoll-Seite mit Filtern, Zwei-Faktor-Anmeldung (2FA), einheitliche Icons, Profil-Einrichtung, Feinschliff. Davor: Artikelfotos (bis 5 pro Artikel, Titelbild, Galerie, automatische Verkleinerung), Auswahlmodus im Katalog (Alle auswählen, Bearbeiten, Status ändern, A4-Etiketten, Löschen mit Schutz für ausgeliehene Artikel), Excel/CSV-Import mit Spaltenzuordnung und Vorschau, Hell/Dunkel/Automatisch, Mehrfachscan (Ausgabe/Rücknahme) im Lagerwart-Terminal.
+Paket 3: Manager-Dashboard auf der Übersicht, Katalogfilter und Sortierung, globale Suche (Strg+K). Paket 2: Frist verlängern (selbst bis 3 Tage, darüber Antrag mit Genehmigung), Warteliste („Benachrichtigen“), Sammel-Ausleihe für alle Nutzer. Paket 1: Registrierung per Einladungs-Code, Export (Excel/CSV), Protokoll-Seite mit Filtern, Zwei-Faktor-Anmeldung (2FA), einheitliche Icons, Profil-Einrichtung, Feinschliff. Davor: Artikelfotos (bis 5 pro Artikel, Titelbild, Galerie, automatische Verkleinerung), Auswahlmodus im Katalog (Alle auswählen, Bearbeiten, Status ändern, A4-Etiketten, Löschen mit Schutz für ausgeliehene Artikel), Excel/CSV-Import mit Spaltenzuordnung und Vorschau, Hell/Dunkel/Automatisch, Mehrfachscan (Ausgabe/Rücknahme) im Lagerwart-Terminal.
 Offen: Wochen-/Listenansicht, Schadensfotos bei Rückgabe, A4-Sammeldruck, Raum-Baukasten-UI.
