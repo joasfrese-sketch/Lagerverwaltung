@@ -4,12 +4,12 @@
 //   wird nach 6 Sekunden der zuletzt geladene Stand angezeigt
 // - Änderungen (POST/PATCH/DELETE) werden nie zwischengespeichert – offline sind sie nicht möglich
 // - Beim Abmelden löscht die App den Datenzwischenspeicher (lager-api)
-const SHELL = 'lager-shell-v2';
+const SHELL = 'lager-shell-v3';
 const ASSETS = 'lager-assets-v1';
 const API = 'lager-api';
 const IMG = 'lager-img-v1';
 const KEEP = [SHELL, ASSETS, API, IMG];
-const SHELL_FILES = ['/', '/index.html', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
+const SHELL_FILES = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(SHELL).then((c) => c.addAll(SHELL_FILES)).catch(() => {}).then(() => self.skipWaiting()));
@@ -71,8 +71,8 @@ self.addEventListener('fetch', (event) => {
 // ---------- Web-Push ----------
 self.addEventListener('push', (event) => {
   let d = {};
-  try { d = event.data ? event.data.json() : {}; } catch { d = { title: 'Lagerverwaltung', body: event.data && event.data.text() }; }
-  event.waitUntil(self.registration.showNotification(d.title || 'Lagerverwaltung', {
+  try { d = event.data ? event.data.json() : {}; } catch { d = { title: 'MBG Lemgo – Lager', body: event.data && event.data.text() }; }
+  event.waitUntil(self.registration.showNotification(d.title || 'MBG Lemgo – Lager', {
     body: d.body || '', icon: '/icon-192.png', badge: '/icon-192.png', data: { url: d.url || '/#/chat' },
   }));
 });

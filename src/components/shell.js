@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase.js';
 import { esc, openModal } from '../lib/ui.js';
 import { icon } from '../lib/icons.js';
+import { logoMark } from '../lib/logo.js';
 import { roleName, displayName } from '../lib/format.js';
 import { state, isManager } from '../state.js';
 import { signOut } from '../auth.js';
@@ -44,7 +45,7 @@ export function renderShell(root) {
   <div class="flex min-h-screen">
     <aside class="sticky top-0 hidden h-screen w-60 shrink-0 flex-col justify-between bg-[#0f172a] p-4 text-[#cbd5e1] md:flex">
       <div>
-        <div class="mb-6 flex items-center gap-3 px-2 text-white">${icon('package', 'h-6 w-6 text-brand-500')}<span class="font-bold">Lager Pro</span></div>
+        <div class="mb-6 flex items-center gap-3 px-2 text-white">${logoMark('h-8 w-auto shrink-0')}<span class="leading-tight"><span class="block font-bold">MBG Lemgo</span><span class="block text-[11px] font-medium text-[#94a3b8]">Lagerverwaltung</span></span></div>
         <button id="searchBtn" class="mb-2 flex w-full items-center gap-2 rounded-xl bg-[#1e293b] px-3 py-2 text-sm text-[#94a3b8] hover:text-white">${icon('search', 'h-4 w-4')}<span>Suchen</span><kbd class="ml-auto rounded bg-[#0f172a] px-1.5 text-[10px]">Strg K</kbd></button>
         <button id="scanBtn" class="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-bold text-white hover:bg-brand-700">${icon('camera', 'h-4 w-4')} Scannen</button>
         <nav class="space-y-1" id="sideNav">

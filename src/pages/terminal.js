@@ -200,7 +200,7 @@ function printProtocol({ title, borrower, by, rows, note }) {
   if (!w) return toast('Pop-up blockiert – Protokoll konnte nicht geöffnet werden.', 'error');
   const multi = rows.some((r) => r.borrower);
   w.document.write(`<html><head><title>${esc(title)}</title><style>body{font-family:sans-serif;padding:24px;color:#0f172a}h1{margin:0}table{width:100%;border-collapse:collapse;margin:16px 0}td,th{border:1px solid #cbd5e1;padding:6px;text-align:left;font-size:13px}.s{display:flex;gap:40px;margin-top:70px}.s div{flex:1;border-top:1px solid #64748b;padding-top:6px;font-size:12px;text-align:center}</style></head><body>
-  <h1>${esc(title)}</h1><p>Lagerverwaltung Pro · ${fmtDate(new Date().toISOString())} · ID PRT-${Date.now().toString().slice(-6)}</p>
+  <h1>${esc(title)}</h1><p>MBG Lemgo · Lagerverwaltung · ${fmtDate(new Date().toISOString())} · ID PRT-${Date.now().toString().slice(-6)}</p>
   <p><b>Ausleiher:</b> ${esc(borrower)}${by ? `<br><b>Abgegeben durch:</b> ${esc(by)}` : ''}<br><b>Bearbeitet von:</b> ${esc(state.profile.full_name || state.profile.username)}</p>
   <table><tr><th>ID</th><th>Bezeichnung</th>${multi ? '<th>Ausleiher</th>' : ''}<th>Frist</th></tr>${rows.map((r) => `<tr><td>${esc(r.id)}</td><td>${esc(r.name)}</td>${multi ? `<td>${esc(r.borrower || '')}</td>` : ''}<td>${fmtDateTime(r.end)}</td></tr>`).join('')}</table>
   ${note ? `<p><b>Vermerk:</b> ${esc(note)}</p>` : ''}

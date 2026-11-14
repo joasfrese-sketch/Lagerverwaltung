@@ -1,6 +1,7 @@
 import { supabase, unwrap } from './lib/supabase.js';
 import { esc, toast, busy, openModal } from './lib/ui.js';
 import { clearOfflineData } from './components/offline.js';
+import { logoFull } from './lib/logo.js';
 
 export function renderAuth(root) {
   const inviteParam = (new URLSearchParams(location.search).get('invite') || '').toUpperCase();
@@ -10,8 +11,8 @@ export function renderAuth(root) {
     <div class="flex min-h-screen items-center justify-center bg-[#0f172a] p-4">
       <div class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
         <div class="bg-[#0f172a] p-8 text-center">
-          <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-500/15 text-3xl">📦</div>
-          <h1 class="text-2xl font-bold text-white">Lagerverwaltung Pro</h1>
+          <div class="mx-auto mb-2 flex justify-center">${logoFull({ cls: 'h-28 w-auto', dark: true })}</div>
+          <h1 class="text-xl font-bold text-white">Lagerverwaltung</h1>
           <p class="mt-1 text-xs text-[#94a3b8]">Sicheres Waren- und Teammanagement</p>
         </div>
         <form id="authForm" class="space-y-4 p-8">
