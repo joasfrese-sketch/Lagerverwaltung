@@ -6,8 +6,10 @@ import { openProfileSetup } from './components/profileSetup.js';
 import { renderShell } from './components/shell.js';
 import { registerServiceWorker } from './lib/push.js';
 import { applyTheme, getTheme, setTheme } from './lib/theme.js';
+import { captureInstallPrompt } from './components/installHint.js';
 
 applyTheme();
+captureInstallPrompt();
 
 const root = document.getElementById('app');
 let booted = false;

@@ -3,6 +3,7 @@ import { esc, toast, openModal, busy } from '../lib/ui.js';
 import { state, canManageRoom } from '../state.js';
 import { openPhotoManager } from './photoManager.js';
 import { removePhotos } from '../lib/photos.js';
+import { intervalSelect, inspectionState } from './inspection.js';
 
 const chunk = (arr, n = 100) => Array.from({ length: Math.ceil(arr.length / n) }, (_, i) => arr.slice(i * n, i * n + n));
 const roomOptions = (sel) => state.rooms.filter((r) => canManageRoom(r.id)).map((r) => `<option value="${esc(r.id)}" ${r.id === sel ? 'selected' : ''}>${esc(r.name)}</option>`).join('');
@@ -26,6 +27,8 @@ export function openEditItem(item, done) {
       <div><label class="label">Zubehör (kommagetrennt)</label><input name="acc" class="input" value="${esc((item.accessories || []).join(', '))}"></div>
       <div class="grid grid-cols-2 gap-2"><div><label class="label">Erforderliche Berechtigung</label><input name="perm" class="input" value="${esc(item.required_permission)}"></div>
         <div><label class="label">Status</label><select name="status" class="input">${STATUS.map(([v, l]) => `<option value="${v}" ${item.status === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+      <div><label class="label">Wartung / Prüfintervall</label>${intervalSelect(item.inspection_interval_months)}
+        ${inspectionState(item) ? `<p class="mt-1 text-xs text-slate-500">${esc(inspectionState(item).text)}${item.last_inspection_at ? '' : ' (gerechnet ab Anlagedatum, bis zur ersten Prüfung)'}</p>` : ''}</div>
       <div class="flex justify-end gap-2 pt-2"><button type="button" data-close class="btn-ghost">Abbrechen</button><button class="btn-primary">Speichern</button></div></form>`);
   el.querySelector('#ph').onclick = () => openPhotoManager(item, () => { el.querySelector('#ph').textContent = `📷 Fotos (${(item.photos || []).length}/5)`; });
   el.querySelector('#f').onsubmit = (e) => {
@@ -34,8 +37,11 @@ export function openEditItem(item, done) {
       unwrap(await supabase.from('items').update({
         name: f.get('name').trim(), room_id: f.get('room'), item_type: f.get('type'), category: f.get('category').trim() || null,
         stock_quantity: Number(f.get('stock')) || 0, min_stock: Number(f.get('min')) || 0, shelf: f.get('shelf').trim() || null, compartment: f.get('compartment').trim() || null,
-        accessories: f.get('acc').split(',').map((s) => s.trim()).filter(Boolean), required_permission: f.get('perm').trim() || null, status: f.get('status'),
+        accessories: f.get('acc').split(',').map((s) => s.trim()).filter(Boolean), required_permission: f.get('perm').trim() || null,
+        inspection_interval_months: f.get('interval') ? Number(f.get('interval')) : null,
       }).eq('id', item.id));
+      // Status über die Funktion, damit der Wechsel protokolliert wird und die Warteliste greift
+      if (f.get('status') !== item.status) unwrap(await supabase.rpc('set_item_status', { p_item_id: item.id, p_status: f.get('status') }));
       close(); toast('Gespeichert', 'success'); done();
     });
   };
@@ -51,6 +57,7 @@ export function openBulkEdit(items, done) {
     ['compartment', 'Fach', '<input name="compartment" class="input" placeholder="leer = entfernen">'],
     ['perm', 'Berechtigung', '<input name="perm" class="input" placeholder="leer = keine Berechtigung nötig">'],
     ['min', 'Mindestbestand', '<input name="min" type="number" min="0" class="input" value="0">'],
+    ['interval', 'Prüfintervall', intervalSelect(12)],
     ['status', 'Status', `<select name="status" class="input">${STATUS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`],
   ];
   const { el, close } = openModal(`
@@ -70,6 +77,7 @@ export function openBulkEdit(items, done) {
     if (on('compartment')) patch.compartment = f.get('compartment').trim() || null;
     if (on('perm')) patch.required_permission = f.get('perm').trim() || null;
     if (on('min')) patch.min_stock = Number(f.get('min')) || 0;
+    if (on('interval')) patch.inspection_interval_months = f.get('interval') ? Number(f.get('interval')) : null;
     const status = on('status') ? f.get('status') : null;
     if (!Object.keys(patch).length && !status) return toast('Kein Feld zum Ändern ausgewählt.', 'error');
     busy(e.target.querySelector('.btn-primary'), async () => {

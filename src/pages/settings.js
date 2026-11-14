@@ -4,7 +4,8 @@ import { esc, toast, busy, openModal } from '../lib/ui.js';
 import { state, isAdmin, isManager } from '../state.js';
 import { getTheme, setTheme } from '../lib/theme.js';
 import { roleName } from '../lib/format.js';
-import { fetchAll } from '../lib/export.js';
+import { fetchAll, exportWorkbook } from '../lib/export.js';
+import { getView, openSubscribe } from './calendar.js';
 import { openExport } from '../components/exportDialog.js';
 import { fmtDateTime } from '../lib/ui.js';
 import { enablePush, disablePush, pushActive, pushSupported, pushConfigured } from '../lib/push.js';
@@ -37,13 +38,14 @@ export async function render(el) {
       <p class="mt-1 text-xs text-slate-500">„Automatisch" folgt der Einstellung deines Geräts.</p></section>
 
     <section class="card"><h2 class="mb-2 font-bold">🎛️ App</h2><label class="label">Kalenderansicht</label>
-      <select id="view" class="input !w-auto"><option value="month" selected>Monat</option><option value="week" disabled>Woche (folgt)</option><option value="list" disabled>Liste (folgt)</option></select></section>
+      <select id="view" class="input !w-auto">${[['month', 'Monat'], ['week', 'Woche'], ['list', 'Liste']].map(([v, l]) => `<option value="${v}" ${getView() === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+      <div class="mt-3"><button id="calSub" class="btn-ghost">🔗 Kalender abonnieren (Google/Outlook)</button></div></section>
 
     <section class="card"><h2 class="mb-2 font-bold">🔒 Sicherheit</h2>
       <div id="mfaBox" class="mb-4 rounded-xl bg-slate-50 p-3 text-sm"></div>
       <form id="pw" class="flex flex-wrap gap-2"><input name="pw" type="password" minlength="8" required class="input !w-auto flex-1" placeholder="Neues Passwort (min. 8 Zeichen)" autocomplete="new-password"><button class="btn-primary">Ändern</button></form></section>
 
-    ${isManager() ? '<section class="card"><h2 class="mb-2 font-bold">⬇️ Daten & Export</h2><p class="mb-3 text-xs text-slate-500">Sicherung als Excel oder CSV.</p><div class="flex flex-wrap gap-2"><button id="exItems" class="btn-ghost">Artikel</button><button id="exRentals" class="btn-ghost">Ausleihen (inkl. Historie)</button></div></section>' : ''}
+    ${isManager() ? `<section class="card"><h2 class="mb-2 font-bold">⬇️ Daten & Export</h2><p class="mb-3 text-xs text-slate-500">Sicherung als Excel oder CSV.</p><div class="flex flex-wrap gap-2"><button id="exItems" class="btn-ghost">Artikel</button><button id="exRentals" class="btn-ghost">Ausleihen (inkl. Historie)</button>${isAdmin() ? '<button id="backup" class="btn-primary">🗄️ Vollständige Sicherung (Excel)</button>' : ''}</div>${isAdmin() ? '<p class="mt-2 text-xs text-slate-500">Die Vollsicherung enthält Räume, Artikel, Ausleihen, Protokoll, Benutzer, Berechtigungen, Inventuren und Verlängerungsanträge in einer Datei mit mehreren Blättern. Empfehlung: einmal im Monat herunterladen und sicher ablegen.</p>' : ''}</section>` : ''}
     ${isAdmin() ? '<section class="card"><div class="mb-3 flex items-center justify-between"><h2 class="font-bold">🎟️ Einladungs-Codes</h2><button id="newInvite" class="btn-primary !py-1.5">+ Code</button></div><p class="mb-2 text-xs text-slate-500">Nur wer einen gültigen Code hat, kann sich registrieren.</p><div id="invites" class="space-y-2"></div></section>' : ''}
     ${isManager() ? '<section class="card"><div class="mb-3 flex items-center justify-between"><h2 class="font-bold">🛡️ Benutzer & Berechtigungen</h2>' + (isAdmin() ? '<button id="newUser" class="btn-primary !py-1.5">+ Benutzer</button>' : '') + '</div><div id="users" class="space-y-2"><p class="text-sm text-slate-400">Lade…</p></div></section>' : ''}
   </div>`;
@@ -62,7 +64,9 @@ export async function render(el) {
   const markTheme = () => el.querySelectorAll('[data-theme]').forEach((b) => { const on = b.dataset.theme === getTheme(); b.className = `rounded-lg px-3 py-1.5 ${on ? 'bg-brand-600 text-white' : 'text-slate-600'}`; });
   markTheme();
   el.querySelectorAll('[data-theme]').forEach((b) => (b.onclick = () => busy(null, async () => { setTheme(b.dataset.theme); prefs.theme = b.dataset.theme; markTheme(); await savePrefs(); })));
-  el.querySelector('#view').onchange = (e) => busy(null, async () => { prefs.calendar_view = e.target.value; localStorage.setItem('cal_view', e.target.value); await savePrefs(); });
+  el.querySelector('#view').onchange = (e) => busy(null, async () => { prefs.calendar_view = e.target.value; localStorage.setItem('cal_view', e.target.value); await savePrefs(); toast('Gespeichert', 'success'); });
+  el.querySelector('#calSub').onclick = openSubscribe;
+  el.querySelector('#backup')?.addEventListener('click', (e) => busy(e.target, fullBackup));
   el.querySelector('#pushBtn').onclick = (e) => busy(e.target, async () => {
     if (pushOn) await disablePush(); else await enablePush();
     toast(pushOn ? 'Push deaktiviert' : 'Push aktiviert', 'success'); render(el);
@@ -206,4 +210,25 @@ function inviteModal(done) {
       const code = unwrap(await supabase.rpc('create_invite', { p_max_uses: f.get('max') ? Number(f.get('max')) : null, p_days: Number(f.get('days')) || 0, p_note: f.get('note') }));
       close(); toast(`Code ${code} erstellt`, 'success'); done();
     }); };
+}
+
+// ----- Vollständige Sicherung (nur Admin): alle wichtigen Tabellen, ein Blatt pro Tabelle -----
+async function fullBackup() {
+  toast('Sicherung wird erstellt…');
+  const all = (table, order) => fetchAll(() => supabase.from(table).select('*').order(order), 500000);
+  const safe = async (table, order) => { try { return await all(table, order); } catch { return []; } };
+  const json = (v) => (v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : v);
+  const sheet = (name, rows) => {
+    const keys = [...new Set(rows.flatMap((r) => Object.keys(r)))];
+    return { name, columns: keys.map((k) => ({ key: k, label: k })), rows: rows.map((r) => Object.fromEntries(keys.map((k) => [k, json(r[k])]))) };
+  };
+  const [rooms, items, rentals, log, profiles, perms, inv, ext] = await Promise.all([
+    all('rooms', 'sort_order'), all('items', 'id'), all('rentals', 'start_at'), all('activity_log', 'created_at'),
+    all('profiles', 'username'), safe('permissions', 'user_id'), safe('inventory_counts', 'created_at'), safe('extension_requests', 'created_at'),
+  ]);
+  await exportWorkbook('lager-sicherung', [
+    sheet('Räume', rooms), sheet('Artikel', items), sheet('Ausleihen', rentals), sheet('Protokoll', log),
+    sheet('Benutzer', profiles), sheet('Berechtigungen', perms), sheet('Inventuren', inv), sheet('Verlängerungen', ext),
+  ]);
+  toast(`Sicherung gespeichert (${items.length} Artikel, ${rentals.length} Ausleihen)`, 'success');
 }

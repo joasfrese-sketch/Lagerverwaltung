@@ -7,7 +7,9 @@ import { openExport } from '../components/exportDialog.js';
 import { icon } from '../lib/icons.js';
 
 const PAGE = 50;
-const ACTIONS = ['AUSLEIHE', 'RÜCKGABE', 'DEFEKT', 'STATUS', 'ENTNAHME', 'GELÖSCHT', 'VERLÄNGERUNG'];
+const ACTIONS = ['AUSLEIHE', 'RÜCKGABE', 'DEFEKT', 'STATUS', 'ENTNAHME', 'ANGELEGT', 'GEÄNDERT', 'GELÖSCHT', 'VERLÄNGERUNG', 'ANTRAG', 'PRÜFUNG', 'INVENTUR'];
+const FIELD = { name: 'Bezeichnung', room_id: 'Raum', category: 'Kategorie', item_type: 'Typ', shelf: 'Regal', compartment: 'Fach', accessories: 'Zubehör', stock_quantity: 'Bestand', min_stock: 'Mindestbestand', required_permission: 'Berechtigung', inspection_interval_months: 'Prüfintervall (Monate)', photos: 'Fotos' };
+const val = (v) => (v == null || v === '' ? '–' : Array.isArray(v) ? v.join(', ') || '–' : String(v));
 const F = { from: '', to: '', action: '', who: '', q: '', page: 0 };
 
 export async function render(el) {
@@ -38,15 +40,26 @@ export async function render(el) {
     d.project && `Projekt: ${d.project}`, d.note && `Notiz: ${d.note}`, d.damage && `Schaden: ${d.damage}`,
     d.status && `Status: ${d.status}`, d.qty != null && `Menge: ${d.qty}${d.remaining != null ? ` (Rest ${d.remaining})` : ''}`, d.reason && `Grund: ${d.reason}`,
     d.returned_by && `abgegeben durch ${name[d.returned_by] || '?'}`, d.new_end && `neues Ende ${fmtDateTime(d.new_end)}`, d.room && `Raum: ${d.room}`,
+    d.result && `Ergebnis: ${d.result}`, d.next && `nächste Prüfung ${fmtDateTime(d.next).slice(0, 10)}`,
+    d.expected != null && `Soll ${d.expected} · Ist ${d.found} · fehlt ${d.missing} · fremd ${d.unexpected}${d.marked ? ' · Fehlende gesperrt' : ''}`,
+    d.changes && Object.entries(d.changes).map(([k, c]) => `${FIELD[k] || k}: ${val(c.alt)} → ${val(c.neu)}`).join('; '),
   ].filter(Boolean).join(' · ');
 
   async function load() {
     try {
       const { data, count, error } = await query(supabase.from('activity_log').select('*', { count: 'exact' })).order('created_at', { ascending: false }).range(F.page * PAGE, F.page * PAGE + PAGE - 1);
       if (error) throw new Error(error.message);
+      // Schadensfotos der betroffenen Rückgaben nachladen
+      const rids = [...new Set(data.filter((l) => ['DEFEKT', 'RÜCKGABE'].includes(l.action) && l.details?.rental_id).map((l) => l.details.rental_id))];
+      const photos = {};
+      if (rids.length) {
+        const { data: rr } = await supabase.from('rentals').select('id, damage_photos').in('id', rids);
+        (rr || []).forEach((r) => { if ((r.damage_photos || []).length) photos[r.id] = r.damage_photos; });
+      }
+      const pics = (l) => (photos[l.details?.rental_id] || []).map((u, i) => `<a href="${esc(u)}" target="_blank" rel="noopener" class="mr-1 inline-block"><img src="${esc(u)}" alt="Schadensfoto ${i + 1}" loading="lazy" class="mt-1 inline h-10 w-10 rounded-lg object-cover"></a>`).join('');
       el.querySelector('#rows').innerHTML = data.length ? data.map((l) => `<tr class="border-t"><td class="whitespace-nowrap p-3 text-slate-500">${fmtDateTime(l.created_at)}</td><td class="p-3"><span class="badge bg-slate-100 text-slate-700">${esc(l.action)}</span></td>
         <td class="p-3"><b>${esc(l.item_name || '–')}</b><div class="font-mono text-[10px] text-slate-400">${esc(l.item_id || '')}</div></td>
-        <td class="p-3">${esc(name[l.actor_id] || '–')}${l.subject_id && l.subject_id !== l.actor_id ? ` <span class="text-slate-400">→</span> ${esc(name[l.subject_id] || '?')}` : ''}</td><td class="p-3 text-slate-600">${esc(detail(l.details))}</td></tr>`).join('')
+        <td class="p-3">${esc(name[l.actor_id] || '–')}${l.subject_id && l.subject_id !== l.actor_id ? ` <span class="text-slate-400">→</span> ${esc(name[l.subject_id] || '?')}` : ''}</td><td class="p-3 text-slate-600">${esc(detail(l.details))}${pics(l) ? `<div>${pics(l)}</div>` : ''}</td></tr>`).join('')
         : '<tr><td colspan="5" class="p-6 text-center italic text-slate-400">Keine Einträge.</td></tr>';
       const pages = Math.max(1, Math.ceil((count || 0) / PAGE));
       el.querySelector('#pg').textContent = `Seite ${F.page + 1} von ${pages} · ${count || 0} Einträge`;

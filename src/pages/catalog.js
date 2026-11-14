@@ -11,6 +11,7 @@ import { thumbUrl } from '../lib/photos.js';
 import { openExport } from '../components/exportDialog.js';
 import { fetchAll } from '../lib/export.js';
 import { mountItemCalendar } from '../components/itemCalendar.js';
+import { openInspection, inspectionState } from '../components/inspection.js';
 import { esc, toast, openModal, busy, toLocalInput, fmtDateTime } from '../lib/ui.js';
 import { state, canManageRoom, isManager } from '../state.js';
 
@@ -18,7 +19,7 @@ let currentRoom = null;
 let search = '';
 
 const F = { status: 'ALL', category: '', type: '', sort: 'name' };
-const SORTS = { name: ['name', true], name_desc: ['name', false], new: ['created_at', false], stock: ['stock_quantity', true] };
+const SORTS = { name: ['name', true], name_desc: ['name', false], new: ['created_at', false], stock: ['stock_quantity', true], inspection: ['next_inspection_at', true] };
 let lastCats = [];
 let lastCount = '';
 const resetFilters = () => Object.assign(F, { status: 'ALL', category: '', type: '', sort: 'name' });
@@ -71,8 +72,8 @@ async function renderRoom(el) {
   el.querySelector('#newItem')?.addEventListener('click', () => openNewItem({ defaultRoom: currentRoom, done: () => renderRoom(el) }));
   el.querySelector('#exportBtn')?.addEventListener('click', () => openExport({ title: 'Artikel exportieren', filename: room ? `artikel-${room.id}` : 'artikel-alle', load: async () => {
     const rows = await fetchAll(() => filtered(supabase.from('catalog_items').select('*')).order('id'));
-    return { columns: [['id', 'ID'], ['name', 'Bezeichnung'], ['room_id', 'Raum'], ['category', 'Kategorie'], ['item_type', 'Typ'], ['status', 'Status'], ['stock_quantity', 'Bestand'], ['min_stock', 'Mindestbestand'], ['shelf', 'Regal'], ['compartment', 'Fach'], ['acc', 'Zubehör'], ['required_permission', 'Berechtigung']].map(([key, label]) => ({ key, label })),
-      rows: rows.map((i) => ({ ...i, acc: (i.accessories || []).join(', ') })) };
+    return { columns: [['id', 'ID'], ['name', 'Bezeichnung'], ['room_id', 'Raum'], ['category', 'Kategorie'], ['item_type', 'Typ'], ['status', 'Status'], ['stock_quantity', 'Bestand'], ['min_stock', 'Mindestbestand'], ['shelf', 'Regal'], ['compartment', 'Fach'], ['acc', 'Zubehör'], ['required_permission', 'Berechtigung'], ['inspection_interval_months', 'Prüfintervall (Monate)'], ['last_insp', 'Letzte Prüfung'], ['next_insp', 'Nächste Prüfung']].map(([key, label]) => ({ key, label })),
+      rows: rows.map((i) => ({ ...i, acc: (i.accessories || []).join(', '), last_insp: i.last_inspection_at ? fmtDateTime(i.last_inspection_at) : '', next_insp: i.next_inspection_at ? fmtDateTime(i.next_inspection_at) : '' })) };
   } }));
   const toggleBtn = el.querySelector('#selToggle');
   const markToggle = () => { if (toggleBtn) toggleBtn.className = selectMode ? 'btn-primary' : 'btn-ghost'; };
@@ -95,6 +96,7 @@ function filtered(q) {
   else if (F.status === 'maintenance') q = q.eq('status', 'maintenance');
   else if (F.status === 'inventory') q = q.eq('status', 'inventory');
   else if (F.status === 'low') q = q.eq('low_stock', true);
+  else if (F.status === 'inspection') q = q.eq('inspection_due', true);
   if (F.category) q = q.eq('category', F.category);
   if (F.type) q = q.eq('item_type', F.type);
   return q;
@@ -110,12 +112,12 @@ async function loadCats(el) {
 function drawFilters(el) {
   const box = el.querySelector('#filters');
   if (!box) return;
-  const chips = [['ALL', 'Alle'], ['avail', '✅ Verfügbar'], ['rented', 'Ausgeliehen'], ['maintenance', '🛠 Defekt'], ['inventory', '📋 Inventur'], ['low', '📉 Bestand niedrig']];
+  const chips = [['ALL', 'Alle'], ['avail', '✅ Verfügbar'], ['rented', 'Ausgeliehen'], ['maintenance', '🛠 Defekt'], ['inventory', '📋 Inventur'], ['low', '📉 Bestand niedrig'], ['inspection', '🔧 Prüfung fällig']];
   const opt = (v, l, cur) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${l}</option>`;
   box.innerHTML = chips.map(([v, l]) => `<button data-st="${v}" class="rounded-full px-3 py-1 text-xs font-semibold ${F.status === v ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">${l}</button>`).join('')
     + `<select id="fCat" class="input !w-auto !py-1 text-xs"><option value="">Alle Kategorien</option>${lastCats.map((c) => opt(esc(c), esc(c), esc(F.category))).join('')}</select>`
     + `<select id="fType" class="input !w-auto !py-1 text-xs">${opt('', 'Alle Typen', F.type)}${opt('standard', 'Standard', F.type)}${opt('kit', 'Kit / Koffer', F.type)}${opt('consumable', 'Verbrauchsmaterial', F.type)}</select>`
-    + `<select id="fSort" class="input !w-auto !py-1 text-xs">${opt('name', 'Name A–Z', F.sort)}${opt('name_desc', 'Name Z–A', F.sort)}${opt('new', 'Neueste zuerst', F.sort)}${opt('stock', 'Bestand (niedrig zuerst)', F.sort)}</select>`
+    + `<select id="fSort" class="input !w-auto !py-1 text-xs">${opt('name', 'Name A–Z', F.sort)}${opt('name_desc', 'Name Z–A', F.sort)}${opt('new', 'Neueste zuerst', F.sort)}${opt('stock', 'Bestand (niedrig zuerst)', F.sort)}${opt('inspection', 'Nächste Prüfung', F.sort)}</select>`
     + `<span id="count" class="ml-auto text-xs text-slate-400">${lastCount}</span>`;
   const changed = () => { drawFilters(el); loadItems(el); };
   box.querySelectorAll('[data-st]').forEach((b) => (b.onclick = () => { F.status = b.dataset.st; changed(); }));
@@ -279,6 +281,7 @@ function itemCard(i, rental) {
   const manage = canManageRoom(i.room_id);
   const selectable = manage || isBorrowable(i);
   const loc = [i.shelf, i.compartment].filter(Boolean).join(' · ');
+  const insp = inspectionState(i);
   const small = '!px-2.5 !py-1 !text-xs';
   const actions = `
         ${i.item_type === 'consumable' ? `<button data-act="consume" data-id="${esc(i.id)}" class="btn-primary ${small}">Entnehmen</button>`
@@ -287,6 +290,7 @@ function itemCard(i, rental) {
         <button data-act="qr" data-id="${esc(i.id)}" class="btn-ghost ${small}">QR</button>
         ${manage && i.status === 'active' ? `<button data-act="status" data-status="maintenance" data-id="${esc(i.id)}" class="btn-ghost ${small}">🛠 Defekt</button>` : ''}
         ${manage && i.status !== 'active' ? `<button data-act="status" data-status="active" data-id="${esc(i.id)}" class="btn-ghost ${small}">✅ Freigeben</button>` : ''}
+        ${manage && i.inspection_interval_months ? `<button data-act="inspect" data-id="${esc(i.id)}" class="btn-ghost ${small}">🔧 Prüfung</button>` : ''}
         ${manage ? `<button data-act="photos" data-id="${esc(i.id)}" class="btn-ghost ${small}">📷</button><button data-act="edit" data-id="${esc(i.id)}" class="btn-ghost ${small}">✏️</button><button data-act="delete" data-id="${esc(i.id)}" class="btn-ghost ${small} !text-red-600">🗑</button>` : ''}`;
   return `<article data-card="${esc(i.id)}" class="card flex gap-3 ${selectMode ? 'cursor-pointer' : ''} ${sel.has(i.id) ? 'ring-2 ring-brand-500' : ''} ${selectMode && !selectable ? 'opacity-50' : ''}">
     ${selectMode ? `<input type="checkbox" tabindex="-1" ${sel.has(i.id) ? 'checked' : ''} ${selectable ? '' : 'disabled'} class="mt-1 h-5 w-5 shrink-0 rounded text-brand-600">` : ''}
@@ -294,7 +298,7 @@ function itemCard(i, rental) {
     <div class="min-w-0 flex-1">
       <div class="flex flex-wrap items-center gap-1.5"><h3 class="truncate font-bold">${esc(i.name)}</h3>${i.item_type === 'kit' ? '<span class="badge bg-purple-100 text-purple-700">KIT</span>' : ''}</div>
       <p class="text-xs text-slate-500">${esc(i.id)} · ${esc(i.room_id)}${loc ? ' · ' + esc(loc) : ''}</p>
-      <div class="mt-1 flex items-center gap-2">${statusBadge(i, rental)}${rental ? `<span class="text-[11px] text-slate-500">bis ${fmtDateTime(rental.end_at)}</span>` : ''}</div>
+      <div class="mt-1 flex flex-wrap items-center gap-2">${statusBadge(i, rental)}${rental ? `<span class="text-[11px] text-slate-500">bis ${fmtDateTime(rental.end_at)}</span>` : ''}${insp && insp.level !== 'ok' ? `<span class="badge ${insp.level === 'due' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'}">🔧 ${esc(insp.text)}</span>` : ''}</div>
       ${selectMode ? '' : `<div class="mt-2 flex flex-wrap gap-2">${actions}</div>`}
     </div></article>`;
 }
@@ -311,6 +315,7 @@ async function handleAction(btn, items, reload) {
       toast(on ? 'Benachrichtigung abbestellt' : 'Du wirst benachrichtigt, sobald der Artikel frei ist', 'success'); reload();
     });
   }
+  if (btn.dataset.act === 'inspect') return openInspection(item, reload);
   if (btn.dataset.act === 'edit') return openEditItem(item, reload);
   if (btn.dataset.act === 'photos') return openPhotoManager(item, reload);
   if (btn.dataset.act === 'gallery') return openGallery(item, 0);

@@ -14,6 +14,8 @@ import * as me from '../pages/me.js';
 import * as settings from '../pages/settings.js';
 import * as terminal from '../pages/terminal.js';
 import * as protocol from '../pages/protocol.js';
+import * as inventory from '../pages/inventory.js';
+import { mountOfflineBanner } from './offline.js';
 
 // main: erscheint in der unteren Leiste (Handy); der Rest liegt unter "Mehr"
 const ALL_ROUTES = {
@@ -23,6 +25,7 @@ const ALL_ROUTES = {
   chat: { label: 'Chat & Mitteilungen', short: 'Chat', icon: 'chat', page: chat, main: true, badge: true },
   ich: { label: 'Mein Bereich', short: 'Ich', icon: 'user', page: me, main: true },
   terminal: { label: 'Lagerwart-Terminal', short: 'Lagerwart', icon: 'shield', page: terminal, managerOnly: true },
+  inventur: { label: 'Inventur', short: 'Inventur', icon: 'clipboard', page: inventory, managerOnly: true },
   protokoll: { label: 'Protokoll', short: 'Protokoll', icon: 'file', page: protocol, managerOnly: true },
   einstellungen: { label: 'Einstellungen', short: 'Einstellungen', icon: 'settings', page: settings },
 };
@@ -80,7 +83,9 @@ export function renderShell(root) {
     el.querySelector('#mLogout').onclick = signOut;
   };
 
+  let navSeq = 0;
   const go = async () => {
+    const seq = ++navSeq; // spätere Navigation gewinnt: Fehler einer verlassenen Seite nicht mehr anzeigen
     if (unmount) { try { unmount(); } catch { /* ignore */ } unmount = null; }
     const key = (location.hash.replace('#/', '') || 'uebersicht').split('?')[0];
     const entry = routes.find(([k]) => k === key) || routes[0];
@@ -97,15 +102,16 @@ export function renderShell(root) {
       await route.page.render(container);
       unmount = route.page.unmount || null;
     } catch (e) {
-      container.innerHTML = `<div class="card text-red-600">Seite konnte nicht geladen werden: ${esc(e.message)}</div>`;
+      if (seq === navSeq) container.innerHTML = `<div class="card text-red-600">Seite konnte nicht geladen werden: ${esc(e.message)}</div>`;
     }
-    window.scrollTo(0, 0);
+    if (seq === navSeq) window.scrollTo(0, 0);
   };
   if (hashHandler) window.removeEventListener('hashchange', hashHandler);
   hashHandler = go;
   window.addEventListener('hashchange', go);
   go();
   watchNotifications(root);
+  mountOfflineBanner();
 }
 
 // Badge ungelesener Mitteilungen (Realtime)

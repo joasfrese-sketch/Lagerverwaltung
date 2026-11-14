@@ -3,6 +3,7 @@ import { esc, toast, openModal, busy } from '../lib/ui.js';
 import { state, canManageRoom } from '../state.js';
 import { openImportWizard } from './importWizard.js';
 import { openPhotoManager } from './photoManager.js';
+import { intervalSelect } from './inspection.js';
 
 // "Neuer Artikel" einzeln anlegen; Excel-Import über eigenen Dialog
 export function openNewItem({ defaultRoom, done }) {
@@ -17,7 +18,8 @@ export function openNewItem({ defaultRoom, done }) {
       <div class="grid grid-cols-2 gap-2"><div><label class="label">Kategorie</label><input name="category" class="input"></div><div><label class="label">Bestand</label><input name="stock" type="number" min="0" value="1" class="input"></div></div>
       <div class="grid grid-cols-2 gap-2"><div><label class="label">Regal</label><input name="shelf" class="input"></div><div><label class="label">Fach</label><input name="compartment" class="input"></div></div>
       <div><label class="label">Zubehör (kommagetrennt)</label><input name="acc" class="input" placeholder="Akku, Ladekabel, Tasche"></div>
-      <div><label class="label">Erforderliche Berechtigung (optional)</label><input name="perm" class="input" placeholder="z. B. Kamera-Schein"></div>
+      <div class="grid grid-cols-2 gap-2"><div><label class="label">Erforderliche Berechtigung (optional)</label><input name="perm" class="input" placeholder="z. B. Kamera-Schein"></div>
+        <div><label class="label">Prüfintervall</label>${intervalSelect(null)}</div></div>
       <div class="flex justify-end gap-2 pt-2"><button type="button" data-close class="btn-ghost">Abbrechen</button><button class="btn-ghost" value="photos">Speichern + Fotos</button><button class="btn-primary" value="save">Speichern</button></div></form>`);
   el.querySelector('#xl').onclick = () => { close(); openImportWizard({ defaultRoom, done }); };
   el.querySelector('#f').onsubmit = (e) => {
@@ -29,6 +31,7 @@ export function openNewItem({ defaultRoom, done }) {
         name: f.get('name').trim(), room_id: f.get('room'), item_type: f.get('type'), category: f.get('category').trim() || null,
         stock_quantity: Number(f.get('stock')) || 0, shelf: f.get('shelf').trim() || null, compartment: f.get('compartment').trim() || null,
         accessories: f.get('acc').split(',').map((s) => s.trim()).filter(Boolean), required_permission: f.get('perm').trim() || null,
+        inspection_interval_months: f.get('interval') ? Number(f.get('interval')) : null,
       }).select().single());
       close(); toast('Artikel angelegt', 'success'); done();
       if (withPhotos) openPhotoManager(created, done);

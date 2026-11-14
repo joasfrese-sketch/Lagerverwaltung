@@ -24,6 +24,13 @@ SQL Editor → `supabase/migrations/005_extend_waitlist_bulk.sql` ausführen (wi
 ### 1f. Migration 006 (Katalog-Sicht)
 SQL Editor → `supabase/migrations/006_catalog_view.sql` ausführen (wiederholbar). **Vor dem Einspielen der neuen App ausführen**, denn Katalog, Filter und Suche lesen daraus.
 
+### 1g. Migration 007 (Schadensfotos, Prüfintervalle, Änderungsprotokoll, Inventur, Kalender-Abo)
+SQL Editor → `supabase/migrations/007_inspection_inventory_feed.sql` ausführen (wiederholbar, löscht keine Daten). Danach:
+```
+supabase functions deploy calendar-feed --no-verify-jwt
+```
+(Die Funktion liefert den abonnierbaren Kalender-Link; ohne sie zeigt „Abonnieren" einen Hinweis.)
+
 ### 2. Auth (Supabase → Authentication)
 - Providers → Email: **Confirm email = an**; Multi-Factor (TOTP) muss aktiviert sein (Standard) (Voraussetzung dafür, dass die Admin-Zuweisung per E-Mail sicher ist)
 - URL Configuration: **Site URL** = Vercel-URL, **Redirect URLs** zusätzlich `http://localhost:5173`
@@ -52,10 +59,35 @@ Repo verbinden (Framework Vite). Environment Variables (Production + Preview):
 ### 7. Admin
 `joas.frese@gmail.com` wird bei der Registrierung automatisch Administrator (E-Mail muss bestätigt werden, danach Login möglich).
 
+## Testumgebung (Änderungen nicht direkt im Live-System)
+Empfohlener Ablauf mit zwei getrennten Supabase-Projekten:
+
+| | Live | Test |
+|---|---|---|
+| Supabase-Projekt | bestehendes Projekt | zweites, kostenloses Projekt (z. B. „lager-test") mit Testdaten |
+| Vercel | **Production**-Umgebungsvariablen | **Preview**-Umgebungsvariablen zeigen auf das Test-Projekt |
+| Git | Branch `main` | jeder andere Branch / Pull Request |
+
+1. Im Test-Projekt dieselben Schritte 1–5 ausführen (Migrationen, Auth, Edge Functions).
+2. Vercel → Settings → Environment Variables: `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` für **Preview** auf das Test-Projekt setzen, für **Production** auf das Live-Projekt.
+3. Neue Funktionen auf einem eigenen Branch entwickeln → Vercel baut automatisch eine Vorschau mit Testdaten → erst nach Prüfung in `main` übernehmen.
+4. Neue Migrationen immer **zuerst im Test-Projekt** ausführen, dann im Live-Projekt.
+
+## Automatische Tests
+- `npm test` – Unit-Tests (Kalender, iCal, Inventur-Abgleich, Excel-Import, Anzeige-Helfer)
+- `npm run test:db` – Datenbank-Tests: legt eine **leere lokale** Test-Datenbank an, spielt alle Migrationen ein und prüft die Kernabläufe (Ausleihe, Konflikt, Rückgabe, Rechte, Verlängerung, Entnahme, Protokoll, Prüfintervalle, Inventur, Kalender-Link). Benötigt ein lokales Postgres 16, z. B.:
+  ```
+  docker run -d --name lager-pg -e POSTGRES_PASSWORD=postgres -p 54329:5432 postgres:16
+  PGHOST=localhost PGPORT=54329 PGUSER=postgres PGPASSWORD=postgres npm run test:db
+  ```
+  Das Skript verweigert die Ausführung gegen `*.supabase.co`.
+- GitHub Actions (`.github/workflows/ci.yml`) führt beides bei jedem Push und Pull Request aus.
+
 ## Lokal
 `cp .env.example .env && npm install && npm run dev` (Service Worker/Push nur im Produktions-Build aktiv)
 
 ## Stand
 Fertig: Schema+RLS+RPCs, Login (E-Mail/Benutzername), Registrierung mit Bestätigung, Passwort-Reset, Übersicht, Katalog (Räume, Suche, Ausleihe, Entnahme, Defekt/Freigabe, QR-Etikett), Kalender (Monat, Filter, Google/.ics), Chat (Gesamt/Gruppe/Direkt) + Benachrichtigungszentrale, Persönlicher Bereich (QR, Leihen, Rückgabe, eigener Kalender, Protokoll), Lagerwart-Terminal (Sammel-Abgabe, Drittperson, Protokoll), QR-Scanner, Einstellungen (Profil, Benachrichtigungen, Push, Passwort, Benutzer/Rollen/Berechtigungen), Fristen-Erinnerungen + Web-Push.
 Paket 3: Manager-Dashboard auf der Übersicht, Katalogfilter und Sortierung, globale Suche (Strg+K). Paket 2: Frist verlängern (selbst bis 3 Tage, darüber Antrag mit Genehmigung), Warteliste („Benachrichtigen“), Sammel-Ausleihe für alle Nutzer. Paket 1: Registrierung per Einladungs-Code, Export (Excel/CSV), Protokoll-Seite mit Filtern, Zwei-Faktor-Anmeldung (2FA), einheitliche Icons, Profil-Einrichtung, Feinschliff. Davor: Artikelfotos (bis 5 pro Artikel, Titelbild, Galerie, automatische Verkleinerung), Auswahlmodus im Katalog (Alle auswählen, Bearbeiten, Status ändern, A4-Etiketten, Löschen mit Schutz für ausgeliehene Artikel), Excel/CSV-Import mit Spaltenzuordnung und Vorschau, Hell/Dunkel/Automatisch, Mehrfachscan (Ausgabe/Rücknahme) im Lagerwart-Terminal.
-Offen: Wochen-/Listenansicht, Schadensfotos bei Rückgabe, A4-Sammeldruck, Raum-Baukasten-UI.
+Paket 4: Schadensfotos bei der Rückgabe (bis 5, im Protokoll sichtbar), Wartungs-/Prüfintervalle mit Erinnerung und Dashboard-Kachel, Änderungsprotokoll für Artikel (ANGELEGT/GEÄNDERT mit alt → neu), Inventur-Modus (Raum scannen, Soll/Ist, Differenzliste als Excel/CSV/Druck, Verlauf), Kalender mit Monat/Woche/Liste und Farben pro Raum, abonnierbarer Kalender-Link (Google/Outlook/Apple), Vollsicherung als Excel (Admin), Offline-Lesemodus und Installationshinweis, automatische Tests + CI, Testumgebung.
+Offen: Raum-Baukasten-UI.

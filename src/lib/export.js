@@ -28,6 +28,23 @@ export async function exportRows(baseName, columns, rows, format) {
   download(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `${name}.xlsx`);
 }
 
+// Mehrere Tabellenblätter in einer Excel-Datei: sheets = [{ name, columns, rows }]
+export async function exportWorkbook(baseName, sheets) {
+  const mod = await import('exceljs/dist/exceljs.min.js');
+  const ExcelJS = mod.default ?? mod;
+  const wb = new ExcelJS.Workbook();
+  wb.created = new Date();
+  for (const s of sheets) {
+    const ws = wb.addWorksheet(s.name.slice(0, 31));
+    ws.columns = s.columns.map((c) => ({ header: c.label, key: c.key, width: Math.min(40, Math.max(12, c.label.length + 4)) }));
+    s.rows.forEach((r) => ws.addRow(Object.fromEntries(s.columns.map((c) => [c.key, r[c.key] ?? '']))));
+    ws.getRow(1).font = { bold: true };
+    ws.views = [{ state: 'frozen', ySplit: 1 }];
+  }
+  const buf = await wb.xlsx.writeBuffer();
+  download(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `${baseName}-${stamp()}.xlsx`);
+}
+
 // Holt alle Zeilen seitenweise (PostgREST liefert max. 1000 pro Anfrage)
 export async function fetchAll(buildQuery, max = 20000) {
   let out = [];

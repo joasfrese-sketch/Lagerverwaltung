@@ -33,7 +33,9 @@ export function openModal(html, { wide = false, onClose = null } = {}) {
   return { el: wrap, close };
 }
 
-export async function busy(btn, fn) {
+// offlineOk: reine Leseaktionen, die auch aus dem Zwischenspeicher funktionieren
+export async function busy(btn, fn, { offlineOk = false } = {}) {
+  if (!offlineOk && typeof navigator !== 'undefined' && navigator.onLine === false) { toast('Offline – diese Aktion ist erst wieder mit Verbindung möglich.', 'error'); return undefined; }
   if (btn) btn.disabled = true;
   try { return await fn(); }
   catch (e) { toast(e.message, 'error'); }

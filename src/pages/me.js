@@ -5,6 +5,9 @@ import { esc, fmtDateTime, toast, busy, openModal } from '../lib/ui.js';
 import { state } from '../state.js';
 import * as calendar from './calendar.js';
 import { openExtend } from '../components/extendModal.js';
+import { uploadDamagePhoto, removeDamagePhotos } from '../lib/photos.js';
+
+const MAX_DAMAGE = 5;
 
 export async function render(el) {
   const p = state.profile;
@@ -62,6 +65,7 @@ async function load(el) {
 
 export function returnModal(rental, reload) {
   const acc = rental.items?.accessories || [];
+  const photos = []; // { file, url }
   const { el, close } = openModal(`
     <h3 class="mb-1 text-lg font-bold">Rückgabe: ${esc(rental.items?.name)}</h3>
     <p class="mb-3 text-xs text-slate-500">Bitte Vollständigkeit prüfen.</p>
@@ -69,18 +73,47 @@ export function returnModal(rental, reload) {
       ${acc.length ? `<div class="rounded-xl bg-slate-50 p-3 text-sm">${acc.map((a) => `<label class="flex items-center gap-2"><input type="checkbox" checked> ${esc(a)}</label>`).join('')}</div>` : ''}
       <div><label class="label">Bemerkung</label><textarea name="note" class="input h-16"></textarea></div>
       <label class="flex items-center gap-2 text-sm font-semibold text-red-600"><input type="checkbox" id="dmg"> Defekt / Schaden melden</label>
-      <textarea name="damage" id="dmgText" class="input hidden h-20" placeholder="Beschreibung des Defekts…"></textarea>
+      <div id="dmgBox" class="hidden space-y-2">
+        <textarea name="damage" id="dmgText" class="input h-20" placeholder="Beschreibung des Defekts…"></textarea>
+        <div class="flex flex-wrap items-center gap-2" id="thumbs"></div>
+        <label class="btn-ghost w-full cursor-pointer">📷 Schadensfoto hinzufügen (max. ${MAX_DAMAGE})<input id="dmgFiles" type="file" accept="image/*" capture="environment" multiple class="hidden"></label>
+      </div>
       <div class="flex justify-end gap-2 pt-2"><button type="button" data-close class="btn-ghost">Abbrechen</button><button class="btn-primary">Rückgabe bestätigen</button></div>
     </form>`);
-  el.querySelector('#dmg').onchange = (e) => el.querySelector('#dmgText').classList.toggle('hidden', !e.target.checked);
+  const drawThumbs = () => {
+    el.querySelector('#thumbs').innerHTML = photos.map((p, i) => `<div class="relative"><img src="${esc(p.url)}" alt="" class="h-16 w-16 rounded-xl object-cover"><button type="button" data-rm="${i}" class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white">✕</button></div>`).join('');
+    el.querySelectorAll('[data-rm]').forEach((b) => (b.onclick = () => { URL.revokeObjectURL(photos[b.dataset.rm].url); photos.splice(Number(b.dataset.rm), 1); drawThumbs(); }));
+  };
+  el.querySelector('#dmg').onchange = (e) => { el.querySelector('#dmgBox').classList.toggle('hidden', !e.target.checked); el.querySelector('#dmgText').required = e.target.checked; };
+  el.querySelector('#dmgFiles').onchange = (e) => {
+    const files = [...e.target.files]; e.target.value = '';
+    const room = MAX_DAMAGE - photos.length;
+    if (files.length > room) toast(`Höchstens ${MAX_DAMAGE} Fotos – ${files.length - room} ignoriert.`, 'info');
+    files.slice(0, room).forEach((file) => photos.push({ file, url: URL.createObjectURL(file) }));
+    drawThumbs();
+  };
   el.querySelector('#f').onsubmit = (e) => {
     e.preventDefault();
     const f = new FormData(e.target);
-    busy(e.target.querySelector('.btn-primary'), async () => {
-      unwrap(await supabase.rpc('return_rentals', {
-        p_rental_ids: [rental.id], p_note: f.get('note'), p_damage: el.querySelector('#dmg').checked ? f.get('damage') : null,
-      }));
-      close(); toast('Rückgabe verbucht', 'success'); reload();
+    const damaged = el.querySelector('#dmg').checked;
+    const btn = e.target.querySelector('.btn-primary');
+    busy(btn, async () => {
+      const urls = [];
+      try {
+        if (damaged) {
+          for (const [i, p] of photos.entries()) { btn.textContent = `Foto ${i + 1}/${photos.length} wird hochgeladen…`; urls.push(await uploadDamagePhoto(state.user.id, p.file)); }
+        }
+        btn.textContent = 'Rückgabe wird gebucht…';
+        unwrap(await supabase.rpc('return_rentals', {
+          p_rental_ids: [rental.id], p_note: f.get('note'), p_damage: damaged ? f.get('damage') : null, p_damage_photos: urls,
+        }));
+      } catch (err) {
+        await removeDamagePhotos(urls); // keine verwaisten Fotos zurücklassen
+        btn.textContent = 'Rückgabe bestätigen';
+        throw err;
+      }
+      photos.forEach((p) => URL.revokeObjectURL(p.url));
+      close(); toast(urls.length ? `Rückgabe mit ${urls.length} Foto(s) verbucht` : 'Rückgabe verbucht', 'success'); reload();
     });
   };
 }

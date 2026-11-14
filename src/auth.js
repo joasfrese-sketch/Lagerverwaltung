@@ -1,5 +1,6 @@
 import { supabase, unwrap } from './lib/supabase.js';
 import { esc, toast, busy, openModal } from './lib/ui.js';
+import { clearOfflineData } from './components/offline.js';
 
 export function renderAuth(root) {
   const inviteParam = (new URLSearchParams(location.search).get('invite') || '').toUpperCase();
@@ -72,7 +73,7 @@ async function doRegister(root) {
   if (!data.session) toast('Konto erstellt. Bitte bestätige deine E-Mail-Adresse und melde dich danach an.', 'success');
 }
 
-export const signOut = async () => { await supabase.auth.signOut(); location.hash = ''; location.reload(); };
+export const signOut = async () => { await supabase.auth.signOut(); await clearOfflineData(); location.hash = ''; location.reload(); };
 
 async function forgotPassword(root) {
   const id = root.querySelector('#identifier').value.trim();
