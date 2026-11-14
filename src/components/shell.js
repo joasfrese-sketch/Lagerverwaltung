@@ -16,6 +16,7 @@ import * as terminal from '../pages/terminal.js';
 import * as protocol from '../pages/protocol.js';
 import * as inventory from '../pages/inventory.js';
 import { mountOfflineBanner } from './offline.js';
+import { unreadSummary } from '../lib/unread.js';
 
 // main: erscheint in der unteren Leiste (Handy); der Rest liegt unter "Mehr"
 const ALL_ROUTES = {
@@ -117,8 +118,12 @@ export function renderShell(root) {
 // Badge ungelesener Mitteilungen (Realtime)
 async function watchNotifications(root) {
   const refresh = async () => {
-    const { count } = await supabase.from('notifications').select('id', { count: 'exact', head: true }).is('read_at', null);
-    root.querySelectorAll('[data-badge]').forEach((b) => { b.textContent = count > 99 ? '99+' : count || ''; b.classList.toggle('hidden', !count); });
+    const u = await unreadSummary();
+    const count = u.total;
+    root.querySelectorAll('[data-badge]').forEach((b) => {
+      b.textContent = count > 99 ? '99+' : count || ''; b.classList.toggle('hidden', !count);
+      b.title = `${u.messages} Chat-Nachricht(en), ${u.notifications} Mitteilung(en)`;
+    });
   };
   refresh();
   window.addEventListener('notifications-changed', refresh);
