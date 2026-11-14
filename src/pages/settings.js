@@ -9,6 +9,7 @@ import { getView, openSubscribe } from './calendar.js';
 import { openExport } from '../components/exportDialog.js';
 import { fmtDateTime } from '../lib/ui.js';
 import { enablePush, disablePush, pushActive, pushSupported, pushConfigured } from '../lib/push.js';
+import { collapsible, bindCollapsibles, setCount } from '../components/collapse.js';
 
 export async function render(el) {
   const settings = unwrap(await supabase.from('user_settings').select('prefs').eq('user_id', state.user.id).maybeSingle());
@@ -17,39 +18,43 @@ export async function render(el) {
   const p = state.profile;
   const toggle = (k, label, hint = '') => `<label class="flex items-start justify-between gap-3 py-2"><span><b class="text-sm">${label}</b>${hint ? `<span class="block text-xs text-slate-500">${hint}</span>` : ''}</span><input type="checkbox" data-pref="${k}" ${prefs[k] ? 'checked' : ''} class="mt-1 h-5 w-5 rounded text-brand-600"></label>`;
 
-  el.innerHTML = `<h1 class="mb-4 text-2xl font-bold">Einstellungen</h1><div class="space-y-4">
-    <section class="card"><h2 class="mb-3 font-bold">👤 Profil</h2>
+  const THEME = { light: 'Hell', dark: 'Dunkel', auto: 'Automatisch' };
+  const HINTS = { prof: esc(p.full_name), notif: pushOn ? 'Push-Nachrichten aktiv' : 'Push-Nachrichten aus', look: THEME[getTheme()] || 'Automatisch', app: 'Kalenderansicht, Kalender-Abo', sec: 'Passwort, Zwei-Faktor-Anmeldung', data: 'Sicherung als Excel oder CSV' };
+  const sec = (id, title, hint, body, count = null) => collapsible({ id: 'set-' + id, title, hint, body, count });
+  el.innerHTML = `<h1 class="mb-3 text-2xl font-bold">Einstellungen</h1><div class="space-y-3">
+    ${sec('prof', '👤 Profil', HINTS.prof, `
       <form id="prof" class="grid gap-3 md:grid-cols-2"><div><label class="label">Name</label><input name="full_name" class="input" value="${esc(p.full_name)}" required></div>
       <div><label class="label">Benutzername</label><input name="username" class="input" value="${esc(p.username)}" pattern="[a-z0-9._-]{3,30}" title="3–30 Zeichen: a–z, 0–9, . _ -" required></div>
-      <div class="md:col-span-2 text-xs text-slate-500">E-Mail: ${esc(p.email)}</div><div class="md:col-span-2"><button class="btn-primary">Speichern</button></div></form></section>
+      <div class="md:col-span-2 text-xs text-slate-500">E-Mail: ${esc(p.email)}</div><div class="md:col-span-2"><button class="btn-primary">Speichern</button></div></form>`)}
 
-    <section class="card"><h2 class="mb-1 font-bold">🔔 Benachrichtigungen</h2><div class="divide-y">
+    ${sec('notif', '🔔 Benachrichtigungen', HINTS.notif, `<div class="divide-y">
       ${toggle('notify_rental', 'Ausleihen & Rückgaben', 'Bestätigungen in der App')}
       ${toggle('notify_chat', 'Chat-Nachrichten', 'Direkt- und Gruppenchats')}
       ${toggle('notify_deadline', 'Fristen & Überfälligkeit', 'Erinnerung 24 h vorher und bei Überfälligkeit')}</div>
       <div class="mt-2 flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"><span class="text-sm"><b>📲 Push-Nachrichten</b><span class="block text-xs text-slate-500">${!pushSupported() ? 'Dieser Browser unterstützt kein Push (iPhone: erst zum Home-Bildschirm hinzufügen).' : !pushConfigured() ? 'Noch nicht eingerichtet (VAPID-Schlüssel fehlt).' : 'Für deine eigenen Aktivitäten (Fristen, Ausleihen durch andere für dich, Chat). Gilt für dieses Gerät.'}</span></span>
-      <button id="pushBtn" class="${pushOn ? 'btn-ghost' : 'btn-primary'}" ${!pushSupported() || !pushConfigured() ? 'disabled' : ''}>${pushOn ? 'Deaktivieren' : 'Aktivieren'}</button></div></section>
+      <button id="pushBtn" class="${pushOn ? 'btn-ghost' : 'btn-primary'}" ${!pushSupported() || !pushConfigured() ? 'disabled' : ''}>${pushOn ? 'Deaktivieren' : 'Aktivieren'}</button></div>`)}
 
-    <section class="card"><h2 class="mb-2 font-bold">🌓 Darstellung</h2>
+    ${sec('look', '🌓 Darstellung', HINTS.look, `
       <div id="themeSeg" class="inline-flex rounded-xl bg-slate-100 p-0.5 text-sm font-semibold">
         <button data-theme="light" class="rounded-lg px-3 py-1.5">☀️ Hell</button>
         <button data-theme="dark" class="rounded-lg px-3 py-1.5">🌙 Dunkel</button>
         <button data-theme="auto" class="rounded-lg px-3 py-1.5">🖥️ Automatisch</button></div>
-      <p class="mt-1 text-xs text-slate-500">„Automatisch" folgt der Einstellung deines Geräts.</p></section>
+      <p class="mt-1 text-xs text-slate-500">„Automatisch" folgt der Einstellung deines Geräts.</p>`)}
 
-    <section class="card"><h2 class="mb-2 font-bold">🎛️ App</h2><label class="label">Kalenderansicht</label>
+    ${sec('app', '🎛️ App', HINTS.app, `<label class="label">Kalenderansicht</label>
       <select id="view" class="input !w-auto">${[['month', 'Monat'], ['week', 'Woche'], ['list', 'Liste']].map(([v, l]) => `<option value="${v}" ${getView() === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
-      <div class="mt-3"><button id="calSub" class="btn-ghost">🔗 Kalender abonnieren (Google/Outlook)</button></div></section>
+      <div class="mt-3"><button id="calSub" class="btn-ghost">🔗 Kalender abonnieren (Google/Outlook)</button></div>`)}
 
-    <section class="card"><h2 class="mb-2 font-bold">🔒 Sicherheit</h2>
+    ${sec('sec', '🔒 Sicherheit', HINTS.sec, `
       <div id="mfaBox" class="mb-4 rounded-xl bg-slate-50 p-3 text-sm"></div>
-      <form id="pw" class="flex flex-wrap gap-2"><input name="pw" type="password" minlength="8" required class="input !w-auto flex-1" placeholder="Neues Passwort (min. 8 Zeichen)" autocomplete="new-password"><button class="btn-primary">Ändern</button></form></section>
+      <form id="pw" class="flex flex-wrap gap-2"><input name="pw" type="password" minlength="8" required class="input !w-auto flex-1" placeholder="Neues Passwort (min. 8 Zeichen)" autocomplete="new-password"><button class="btn-primary">Ändern</button></form>`)}
 
-    ${isManager() ? `<section class="card"><h2 class="mb-2 font-bold">⬇️ Daten & Export</h2><p class="mb-3 text-xs text-slate-500">Sicherung als Excel oder CSV.</p><div class="flex flex-wrap gap-2"><button id="exItems" class="btn-ghost">Artikel</button><button id="exRentals" class="btn-ghost">Ausleihen (inkl. Historie)</button>${isAdmin() ? '<button id="backup" class="btn-primary">🗄️ Vollständige Sicherung (Excel)</button>' : ''}</div>${isAdmin() ? '<p class="mt-2 text-xs text-slate-500">Die Vollsicherung enthält Räume, Artikel, Ausleihen, Protokoll, Benutzer, Berechtigungen, Inventuren und Verlängerungsanträge in einer Datei mit mehreren Blättern. Empfehlung: einmal im Monat herunterladen und sicher ablegen.</p>' : ''}</section>` : ''}
-    ${isAdmin() ? '<section class="card"><div class="mb-3 flex items-center justify-between"><h2 class="font-bold">🎟️ Einladungs-Codes</h2><button id="newInvite" class="btn-primary !py-1.5">+ Code</button></div><p class="mb-2 text-xs text-slate-500">Nur wer einen gültigen Code hat, kann sich registrieren.</p><div id="invites" class="space-y-2"></div></section>' : ''}
-    ${isManager() ? '<section class="card"><div class="mb-3 flex items-center justify-between"><h2 class="font-bold">🛡️ Benutzer & Berechtigungen</h2>' + (isAdmin() ? '<button id="newUser" class="btn-primary !py-1.5">+ Benutzer</button>' : '') + '</div><div id="users" class="space-y-2"><p class="text-sm text-slate-400">Lade…</p></div></section>' : ''}
+    ${isManager() ? `${sec('data', '⬇️ Daten & Export', HINTS.data, `<p class="mb-3 text-xs text-slate-500">Sicherung als Excel oder CSV.</p><div class="flex flex-wrap gap-2"><button id="exItems" class="btn-ghost">Artikel</button><button id="exRentals" class="btn-ghost">Ausleihen (inkl. Historie)</button>${isAdmin() ? '<button id="backup" class="btn-primary">🗄️ Vollständige Sicherung (Excel)</button>' : ''}</div>${isAdmin() ? '<p class="mt-2 text-xs text-slate-500">Die Vollsicherung enthält Räume, Artikel, Ausleihen, Protokoll, Benutzer, Berechtigungen, Inventuren und Verlängerungsanträge in einer Datei mit mehreren Blättern. Empfehlung: einmal im Monat herunterladen und sicher ablegen.</p>' : ''}`)}` : ''}
+    ${isAdmin() ? sec('invites', '🎟️ Einladungs-Codes', 'Registrierung nur mit Code', '<div class="mb-3 flex items-center justify-between gap-2"><p class="text-xs text-slate-500">Nur wer einen gültigen Code hat, kann sich registrieren.</p><button id="newInvite" class="btn-primary shrink-0 !py-1.5">+ Code</button></div><div id="invites" class="space-y-2"></div>', '…') : ''}
+    ${isManager() ? sec('users', '🛡️ Benutzer & Berechtigungen', 'Rollen und Rechte verwalten', (isAdmin() ? '<div class="mb-3 flex justify-end"><button id="newUser" class="btn-primary !py-1.5">+ Benutzer</button></div>' : '') + '<div id="users" class="space-y-2"><p class="text-sm text-slate-400">Lade…</p></div>', '…') : ''}
   </div>`;
 
+  bindCollapsibles(el);
   // Profil
   el.querySelector('#prof').onsubmit = (e) => { e.preventDefault(); const f = new FormData(e.target);
     busy(e.target.querySelector('button'), async () => {
@@ -100,6 +105,7 @@ async function loadUsers(el) {
   const box = el.querySelector('#users');
   try {
     const users = unwrap(await supabase.from('profiles').select('*').order('full_name'));
+    setCount(el, 'set-users', users.length);
     const perms = unwrap(await supabase.from('permissions').select('*'));
     const known = [...new Set([...perms.map((x) => x.permission_name), ...unwrap(await supabase.from('items').select('required_permission').not('required_permission', 'is', null)).map((i) => i.required_permission)])];
     box.innerHTML = `<datalist id="pl">${known.map((k) => `<option value="${esc(k)}">`).join('')}</datalist>` + users.map((u) => {
@@ -181,6 +187,7 @@ async function loadInvites(el) {
   const box = el.querySelector('#invites');
   try {
     const rows = unwrap(await supabase.from('invite_codes').select('*').order('created_at', { ascending: false }));
+    setCount(el, 'set-invites', rows.filter((c) => c.active && !(c.expires_at && new Date(c.expires_at) < new Date()) && !(c.max_uses && c.uses >= c.max_uses)).length + ' aktiv');
     box.innerHTML = rows.length ? rows.map((c) => {
       const expired = c.expires_at && new Date(c.expires_at) < new Date(); const full = c.max_uses && c.uses >= c.max_uses;
       const live = c.active && !expired && !full;

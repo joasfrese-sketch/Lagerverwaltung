@@ -12,6 +12,7 @@ import { openExport } from '../components/exportDialog.js';
 import { fetchAll } from '../lib/export.js';
 import { mountItemCalendar } from '../components/itemCalendar.js';
 import { openInspection, inspectionState } from '../components/inspection.js';
+import { openSheet } from '../components/sheet.js';
 import { esc, toast, openModal, busy, toLocalInput, fmtDateTime } from '../lib/ui.js';
 import { state, canManageRoom, isManager } from '../state.js';
 
@@ -58,27 +59,36 @@ async function renderRoom(el) {
   const room = state.rooms.find((r) => r.id === currentRoom);
   const canManageHere = currentRoom === 'ALL' ? isManager() : canManageRoom(currentRoom);
   el.innerHTML = `
-    <div class="mb-4 flex flex-wrap items-center gap-2">
-      <button id="back" class="btn-ghost">← Räume</button>
-      <h1 class="text-xl font-bold">${esc(room ? room.icon + ' ' + room.name : '🌐 Gesamtes Lager')}</h1>
-      <div class="ml-auto flex flex-wrap gap-2">${canManageHere ? '<button id="exportBtn" class="btn-ghost">⬇️ Export</button>' : ''}<button id="selToggle" class="btn-ghost">${canManageHere ? '☑️ Auswählen' : '☑️ Mehrere ausleihen'}</button>${canManageHere ? '<button id="importBtn" class="btn-ghost">📊 Excel-Import</button><button id="newItem" class="btn-primary">+ Neuer Artikel</button>' : ''}</div>
+    <div class="mb-3 flex items-center gap-2">
+      <button id="back" class="btn-ghost !px-3" aria-label="Zurück zu den Räumen">←</button>
+      <h1 class="min-w-0 flex-1 truncate text-lg font-bold">${esc(room ? room.icon + ' ' + room.name : '🌐 Alle Räume')}</h1>
+      ${canManageHere ? '<button id="newItem" class="btn-primary">+ Neu</button><button id="moreBtn" class="btn-ghost !px-3.5 text-lg leading-none" aria-label="Weitere Aktionen">⋯</button>' : '<button id="selToggle" class="btn-ghost">☑️ Mehrere ausleihen</button>'}
     </div>
-    <input id="q" class="input mb-4" placeholder="Suchen (Name, Kategorie, ID)…" value="${esc(search)}">
-    <div id="filters" class="mb-3 flex flex-wrap items-center gap-2"></div>
+    <div class="mb-2 flex gap-2">
+      <input id="q" class="input min-w-0 flex-1" placeholder="Suchen (Name, Kategorie, ID)…" value="${esc(search)}">
+      <button id="filterBtn" class="btn-ghost shrink-0">⚙️ Filter<span id="fBadge" class="ml-1 hidden rounded-full bg-brand-600 px-1.5 text-[11px] font-bold leading-5 text-white"></span></button>
+    </div>
+    <div id="filters" class="mb-3 flex flex-wrap items-center gap-1.5 text-xs"></div>
     <div id="bulkBar"></div>
     <div id="list" class="grid gap-3 md:grid-cols-2"><p class="text-sm text-slate-400">Lade…</p></div>`;
   el.querySelector('#back').onclick = () => { currentRoom = null; resetSelection(); resetFilters(); render(el); };
-  el.querySelector('#importBtn')?.addEventListener('click', () => openImportWizard({ defaultRoom: currentRoom, done: () => renderRoom(el) }));
   el.querySelector('#newItem')?.addEventListener('click', () => openNewItem({ defaultRoom: currentRoom, done: () => renderRoom(el) }));
-  el.querySelector('#exportBtn')?.addEventListener('click', () => openExport({ title: 'Artikel exportieren', filename: room ? `artikel-${room.id}` : 'artikel-alle', load: async () => {
+  const doExport = () => openExport({ title: 'Artikel exportieren', filename: room ? `artikel-${room.id}` : 'artikel-alle', load: async () => {
     const rows = await fetchAll(() => filtered(supabase.from('catalog_items').select('*')).order('id'));
     return { columns: [['id', 'ID'], ['name', 'Bezeichnung'], ['room_id', 'Raum'], ['category', 'Kategorie'], ['item_type', 'Typ'], ['status', 'Status'], ['stock_quantity', 'Bestand'], ['min_stock', 'Mindestbestand'], ['shelf', 'Regal'], ['compartment', 'Fach'], ['acc', 'Zubehör'], ['required_permission', 'Berechtigung'], ['inspection_interval_months', 'Prüfintervall (Monate)'], ['last_insp', 'Letzte Prüfung'], ['next_insp', 'Nächste Prüfung']].map(([key, label]) => ({ key, label })),
       rows: rows.map((i) => ({ ...i, acc: (i.accessories || []).join(', '), last_insp: i.last_inspection_at ? fmtDateTime(i.last_inspection_at) : '', next_insp: i.next_inspection_at ? fmtDateTime(i.next_inspection_at) : '' })) };
-  } }));
+  } });
   const toggleBtn = el.querySelector('#selToggle');
   const markToggle = () => { if (toggleBtn) toggleBtn.className = selectMode ? 'btn-primary' : 'btn-ghost'; };
-  if (toggleBtn) toggleBtn.onclick = () => { selectMode = !selectMode; if (!selectMode) sel.clear(); markToggle(); paint(el); };
+  const toggleSelect = () => { selectMode = !selectMode; if (!selectMode) sel.clear(); markToggle(); paint(el); };
+  if (toggleBtn) toggleBtn.onclick = toggleSelect;
   markToggle();
+  el.querySelector('#moreBtn')?.addEventListener('click', () => openSheet('Weitere Aktionen', [
+    { label: '☑️ Mehrere auswählen', run: toggleSelect },
+    { label: '📊 Excel-Import', run: () => openImportWizard({ defaultRoom: currentRoom, done: () => renderRoom(el) }) },
+    { label: '⬇️ Export (Excel / CSV)', run: doExport },
+  ]));
+  el.querySelector('#filterBtn').onclick = () => openFilterSheet(el);
   let timer;
   el.querySelector('#q').oninput = (e) => { search = e.target.value; clearTimeout(timer); timer = setTimeout(() => loadItems(el), 250); };
   drawFilters(el);
@@ -109,21 +119,56 @@ async function loadCats(el) {
   drawFilters(el);
 }
 
+const STATUS_CHIPS = [['ALL', 'Alle'], ['avail', '✅ Verfügbar'], ['rented', 'Ausgeliehen'], ['maintenance', '🛠 Defekt'], ['inventory', '📋 Inventur'], ['low', '📉 Bestand niedrig'], ['inspection', '🔧 Prüfung fällig']];
+const TYPE_OPTS = [['', 'Alle Typen'], ['standard', 'Standard'], ['kit', 'Kit / Koffer'], ['consumable', 'Verbrauchsmaterial']];
+const SORT_OPTS = [['name', 'Name A–Z'], ['name_desc', 'Name Z–A'], ['new', 'Neueste zuerst'], ['stock', 'Bestand (niedrig zuerst)'], ['inspection', 'Nächste Prüfung']];
+const labelOf = (list, v) => (list.find(([x]) => x === v) || [])[1] || v;
+const activeFilters = () => [
+  F.status !== 'ALL' && ['status', labelOf(STATUS_CHIPS, F.status)],
+  F.category && ['category', F.category],
+  F.type && ['type', labelOf(TYPE_OPTS, F.type)],
+  F.sort !== 'name' && ['sort', `Sortiert: ${labelOf(SORT_OPTS, F.sort)}`],
+].filter(Boolean);
+
+// Zeigt nur die aktiven Filter als entfernbare Chips + Trefferzahl; alle Einstellungen liegen im Filter-Fenster
 function drawFilters(el) {
   const box = el.querySelector('#filters');
   if (!box) return;
-  const chips = [['ALL', 'Alle'], ['avail', '✅ Verfügbar'], ['rented', 'Ausgeliehen'], ['maintenance', '🛠 Defekt'], ['inventory', '📋 Inventur'], ['low', '📉 Bestand niedrig'], ['inspection', '🔧 Prüfung fällig']];
-  const opt = (v, l, cur) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${l}</option>`;
-  box.innerHTML = chips.map(([v, l]) => `<button data-st="${v}" class="rounded-full px-3 py-1 text-xs font-semibold ${F.status === v ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">${l}</button>`).join('')
-    + `<select id="fCat" class="input !w-auto !py-1 text-xs"><option value="">Alle Kategorien</option>${lastCats.map((c) => opt(esc(c), esc(c), esc(F.category))).join('')}</select>`
-    + `<select id="fType" class="input !w-auto !py-1 text-xs">${opt('', 'Alle Typen', F.type)}${opt('standard', 'Standard', F.type)}${opt('kit', 'Kit / Koffer', F.type)}${opt('consumable', 'Verbrauchsmaterial', F.type)}</select>`
-    + `<select id="fSort" class="input !w-auto !py-1 text-xs">${opt('name', 'Name A–Z', F.sort)}${opt('name_desc', 'Name Z–A', F.sort)}${opt('new', 'Neueste zuerst', F.sort)}${opt('stock', 'Bestand (niedrig zuerst)', F.sort)}${opt('inspection', 'Nächste Prüfung', F.sort)}</select>`
-    + `<span id="count" class="ml-auto text-xs text-slate-400">${lastCount}</span>`;
-  const changed = () => { drawFilters(el); loadItems(el); };
-  box.querySelectorAll('[data-st]').forEach((b) => (b.onclick = () => { F.status = b.dataset.st; changed(); }));
-  box.querySelector('#fCat').onchange = (e) => { F.category = e.target.value; changed(); };
-  box.querySelector('#fType').onchange = (e) => { F.type = e.target.value; changed(); };
-  box.querySelector('#fSort').onchange = (e) => { F.sort = e.target.value; changed(); };
+  const act = activeFilters();
+  const badge = el.querySelector('#fBadge');
+  if (badge) { badge.textContent = act.length; badge.classList.toggle('hidden', !act.length); }
+  box.innerHTML = act.map(([k, l]) => `<button data-rm="${k}" class="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2.5 py-1 font-semibold text-brand-700">${esc(l)} <span aria-hidden="true">✕</span></button>`).join('')
+    + (act.length > 1 ? '<button data-rm="all" class="px-1 font-semibold text-slate-500 underline">Alle zurücksetzen</button>' : '')
+    + `<span id="count" class="ml-auto text-slate-400">${lastCount}</span>`;
+  box.querySelectorAll('[data-rm]').forEach((b) => (b.onclick = () => {
+    const k = b.dataset.rm;
+    if (k === 'all') resetFilters(); else if (k === 'status') F.status = 'ALL'; else if (k === 'category') F.category = ''; else if (k === 'type') F.type = ''; else if (k === 'sort') F.sort = 'name';
+    drawFilters(el); loadItems(el);
+  }));
+}
+
+function openFilterSheet(el) {
+  const d = { ...F };
+  const { el: m, close } = openModal(`
+    <h3 class="mb-3 text-lg font-bold">⚙️ Filter &amp; Sortierung</h3>
+    <div class="space-y-4">
+      <div><label class="label">Status</label><div id="chips" class="flex flex-wrap gap-1.5"></div></div>
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="label">Kategorie</label><select id="dCat" class="input"><option value="">Alle</option>${lastCats.map((c) => `<option value="${esc(c)}" ${c === d.category ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></div>
+        <div><label class="label">Typ</label><select id="dType" class="input">${TYPE_OPTS.map(([v, l]) => `<option value="${v}" ${v === d.type ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+      <div><label class="label">Sortierung</label><select id="dSort" class="input">${SORT_OPTS.map(([v, l]) => `<option value="${v}" ${v === d.sort ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    </div>
+    <div class="mt-5 flex gap-2"><button id="dReset" class="btn-ghost flex-1">Zurücksetzen</button><button id="dApply" class="btn-primary flex-[2]">Anwenden</button></div>`);
+  const chips = () => {
+    m.querySelector('#chips').innerHTML = STATUS_CHIPS.map(([v, l]) => `<button type="button" data-st="${v}" class="rounded-full px-3 py-1.5 text-xs font-semibold ${d.status === v ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">${l}</button>`).join('');
+    m.querySelectorAll('[data-st]').forEach((b) => (b.onclick = () => { d.status = b.dataset.st; chips(); }));
+  };
+  chips();
+  m.querySelector('#dCat').onchange = (e) => { d.category = e.target.value; };
+  m.querySelector('#dType').onchange = (e) => { d.type = e.target.value; };
+  m.querySelector('#dSort').onchange = (e) => { d.sort = e.target.value; };
+  m.querySelector('#dReset').onclick = () => { Object.assign(F, { status: 'ALL', category: '', type: '', sort: 'name' }); close(); drawFilters(el); loadItems(el); };
+  m.querySelector('#dApply').onclick = () => { Object.assign(F, d); close(); drawFilters(el); loadItems(el); };
 }
 
 async function loadItems(el) {
@@ -173,16 +218,14 @@ function drawBulk(el) {
   if (!selectMode) { bar.innerHTML = ''; return; }
   const mgr = isManager();
   const none = sel.size ? '' : 'disabled';
-  bar.innerHTML = `<div class="sticky top-2 z-30 mb-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-lg"><div class="flex flex-wrap items-center gap-2">
-    <b class="text-sm">${sel.size} ausgewählt</b>
-    <button id="bAll" class="btn-ghost !py-1.5 !text-xs">${mgr ? 'Alle auswählen' : 'Alle verfügbaren auswählen'}</button>
-    <button id="bNone" class="btn-ghost !py-1.5 !text-xs" ${none}>Auswahl aufheben</button>
-    <button id="bRent" class="btn-primary !py-1.5 !text-xs" ${none}>📤 Ausleihen</button>
-    ${mgr ? `<button id="bEdit" class="btn-ghost !py-1.5 !text-xs" ${none}>✏️ Bearbeiten</button>
-    <select id="bStatus" class="input !w-auto !py-1.5 text-xs" ${none}><option value="">Status ändern…</option><option value="maintenance">🛠 Defekt / Wartung</option><option value="inventory">📋 In Inventur</option><option value="active">✅ Freigeben</option></select>
-    <button id="bQr" class="btn-ghost !py-1.5 !text-xs" ${none}>🏷️ Etiketten (A4)</button>
-    <button id="bDel" class="btn-danger !py-1.5 !text-xs" ${none}>🗑 Löschen</button>` : ''}
-    <button id="bEnd" class="btn-ghost ml-auto !py-1.5 !text-xs">✖ Beenden</button></div></div>`;
+  bar.innerHTML = `<div class="sticky top-2 z-30 mb-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-lg">
+    <div class="flex items-center gap-2">
+      <b class="text-sm">${sel.size} ausgewählt</b>
+      <button id="bAll" class="btn-ghost !py-1.5 !text-xs">${mgr ? 'Alle' : 'Alle verfügbaren'}</button>
+      ${sel.size ? '<button id="bNone" class="text-xs font-semibold text-slate-500 underline">aufheben</button>' : ''}
+      <button id="bEnd" class="btn-ghost ml-auto !py-1.5 !text-xs">✖ Beenden</button></div>
+    <div class="mt-2 flex gap-2"><button id="bRent" class="btn-primary flex-1 !py-2 !text-sm" ${none}>📤 Ausleihen</button>
+      ${mgr ? `<button id="bMore" class="btn-ghost flex-1 !py-2 !text-sm" ${none}>Aktionen ▾</button>` : ''}</div></div>`;
   const reload = () => loadItems(el);
   // Verwaltungsaktionen nur für Artikel, für die man zuständig ist
   const managed = async () => {
@@ -190,12 +233,17 @@ function drawBulk(el) {
     if (ok.length < all.length) toast(`${all.length - ok.length} Artikel ohne Berechtigung werden übersprungen.`, 'info');
     return ok;
   };
+  const setStatus = (status) => busy(null, async () => {
+    const items = await managed(); if (!items.length) return;
+    const n = unwrap(await supabase.rpc('bulk_set_item_status', { p_ids: items.map((i) => i.id), p_status: status }));
+    toast(`${n} Artikel aktualisiert`, 'success'); reload();
+  });
   bar.querySelector('#bAll').onclick = (e) => busy(e.target, async () => {
     const rows = unwrap(await filtered(supabase.from('catalog_items').select('id, room_id, item_type, status').order('id').range(0, 4999)));
     rows.filter((r) => (mgr ? canManageRoom(r.room_id) : isBorrowable(r))).forEach((r) => sel.add(r.id));
     toast(`${sel.size} Artikel ausgewählt`, 'success'); paint(el);
   });
-  bar.querySelector('#bNone').onclick = () => { sel.clear(); paint(el); };
+  bar.querySelector('#bNone')?.addEventListener('click', () => { sel.clear(); paint(el); });
   bar.querySelector('#bEnd').onclick = () => { resetSelection(); const t = el.querySelector('#selToggle'); if (t) t.className = 'btn-ghost'; paint(el); };
   bar.querySelector('#bRent').onclick = (e) => busy(e.target, async () => {
     const all = await itemsByIds([...sel]); const items = all.filter(isBorrowable);
@@ -204,15 +252,14 @@ function drawBulk(el) {
     if (items.length < all.length) toast(`${all.length - items.length} nicht ausleihbare Artikel wurden ausgelassen.`, 'info');
     bulkRentModal(items, (booked) => { booked.forEach((id) => sel.delete(id)); reload(); });
   });
-  bar.querySelector('#bEdit')?.addEventListener('click', (e) => busy(e.target, async () => { const items = await managed(); if (items.length) openBulkEdit(items, reload); }));
-  bar.querySelector('#bDel')?.addEventListener('click', (e) => busy(e.target, async () => { const items = await managed(); if (items.length) deleteItems(items, () => { sel.clear(); reload(); }); }));
-  bar.querySelector('#bQr')?.addEventListener('click', (e) => busy(e.target, async () => { const items = await managed(); if (items.length) printLabels(items.map((i) => i.id)); }));
-  bar.querySelector('#bStatus')?.addEventListener('change', (e) => { const status = e.target.value; if (!status) return;
-    busy(e.target, async () => {
-      const items = await managed(); if (!items.length) return;
-      const n = unwrap(await supabase.rpc('bulk_set_item_status', { p_ids: items.map((i) => i.id), p_status: status }));
-      toast(`${n} Artikel aktualisiert`, 'success'); reload();
-    }); });
+  bar.querySelector('#bMore')?.addEventListener('click', () => openSheet(`${sel.size} Artikel`, [
+    { label: '✏️ Bearbeiten', run: () => busy(null, async () => { const items = await managed(); if (items.length) openBulkEdit(items, reload); }) },
+    { label: '🛠 Als defekt / Wartung markieren', run: () => setStatus('maintenance') },
+    { label: '📋 In Inventur setzen', run: () => setStatus('inventory') },
+    { label: '✅ Freigeben (verfügbar)', run: () => setStatus('active') },
+    { label: '🏷️ Etiketten drucken (A4)', run: () => busy(null, async () => { const items = await managed(); if (items.length) printLabels(items.map((i) => i.id)); }) },
+    { label: '🗑 Löschen …', danger: true, run: () => busy(null, async () => { const items = await managed(); if (items.length) deleteItems(items, () => { sel.clear(); reload(); }); }) },
+  ]));
 }
 
 // Sammel-Ausleihe: mehrere Artikel mit gemeinsamem Zeitraum buchen (freie werden gebucht, belegte gemeldet)
@@ -283,24 +330,22 @@ function itemCard(i, rental) {
   const loc = [i.shelf, i.compartment].filter(Boolean).join(' · ');
   const insp = inspectionState(i);
   const small = '!px-2.5 !py-1 !text-xs';
+  const rentable = i.item_type !== 'consumable' && (rental || i.status !== 'active');
   const actions = `
         ${i.item_type === 'consumable' ? `<button data-act="consume" data-id="${esc(i.id)}" class="btn-primary ${small}">Entnehmen</button>`
           : i.status === 'active' ? `<button data-act="rent" data-id="${esc(i.id)}" class="btn-primary ${small}">Ausleihen</button>` : ''}
-        ${i.item_type !== 'consumable' && (rental || i.status !== 'active') ? `<button data-act="wait" data-id="${esc(i.id)}" class="btn-ghost ${small}">${lastWait.has(i.id) ? '🔔 Benachrichtigung aktiv ✓' : '🔔 Benachrichtigen'}</button>` : ''}
-        <button data-act="qr" data-id="${esc(i.id)}" class="btn-ghost ${small}">QR</button>
-        ${manage && i.status === 'active' ? `<button data-act="status" data-status="maintenance" data-id="${esc(i.id)}" class="btn-ghost ${small}">🛠 Defekt</button>` : ''}
-        ${manage && i.status !== 'active' ? `<button data-act="status" data-status="active" data-id="${esc(i.id)}" class="btn-ghost ${small}">✅ Freigeben</button>` : ''}
-        ${manage && i.inspection_interval_months ? `<button data-act="inspect" data-id="${esc(i.id)}" class="btn-ghost ${small}">🔧 Prüfung</button>` : ''}
-        ${manage ? `<button data-act="photos" data-id="${esc(i.id)}" class="btn-ghost ${small}">📷</button><button data-act="edit" data-id="${esc(i.id)}" class="btn-ghost ${small}">✏️</button><button data-act="delete" data-id="${esc(i.id)}" class="btn-ghost ${small} !text-red-600">🗑</button>` : ''}`;
-  return `<article data-card="${esc(i.id)}" class="card flex gap-3 ${selectMode ? 'cursor-pointer' : ''} ${sel.has(i.id) ? 'ring-2 ring-brand-500' : ''} ${selectMode && !selectable ? 'opacity-50' : ''}">
+        ${rentable ? `<button data-act="wait" data-id="${esc(i.id)}" class="btn-ghost ${small}">${lastWait.has(i.id) ? '🔔 Benachrichtigung aktiv ✓' : '🔔 Benachrichtigen'}</button>` : ''}
+`;
+  const more = selectMode ? '' : `<button data-act="more" data-id="${esc(i.id)}" class="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-base font-bold leading-none text-slate-600 hover:bg-slate-200" aria-label="Weitere Aktionen">⋯</button>`;
+  return `<article data-card="${esc(i.id)}" class="card relative flex gap-3 ${selectMode ? 'cursor-pointer' : ''} ${sel.has(i.id) ? 'ring-2 ring-brand-500' : ''} ${selectMode && !selectable ? 'opacity-50' : ''}">
     ${selectMode ? `<input type="checkbox" tabindex="-1" ${sel.has(i.id) ? 'checked' : ''} ${selectable ? '' : 'disabled'} class="mt-1 h-5 w-5 shrink-0 rounded text-brand-600">` : ''}
     ${photo ? `<div class="relative h-16 w-16 shrink-0"><img ${selectMode ? '' : `data-act="gallery" data-id="${esc(i.id)}"`} src="${esc(thumbUrl(photo))}" alt="" loading="lazy" decoding="async" class="h-16 w-16 rounded-xl object-cover ${selectMode ? '' : 'cursor-zoom-in'}">${i.photos.length > 1 ? `<span class="absolute -bottom-1 -right-1 rounded-full bg-black/70 px-1.5 text-[10px] font-bold text-white">${i.photos.length}</span>` : ''}</div>` : '<div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-2xl">📦</div>'}
     <div class="min-w-0 flex-1">
-      <div class="flex flex-wrap items-center gap-1.5"><h3 class="truncate font-bold">${esc(i.name)}</h3>${i.item_type === 'kit' ? '<span class="badge bg-purple-100 text-purple-700">KIT</span>' : ''}</div>
+      <div class="flex flex-wrap items-center gap-1.5 pr-9"><h3 class="truncate font-bold">${esc(i.name)}</h3>${i.item_type === 'kit' ? '<span class="badge bg-purple-100 text-purple-700">KIT</span>' : ''}</div>
       <p class="text-xs text-slate-500">${esc(i.id)} · ${esc(i.room_id)}${loc ? ' · ' + esc(loc) : ''}</p>
       <div class="mt-1 flex flex-wrap items-center gap-2">${statusBadge(i, rental)}${rental ? `<span class="text-[11px] text-slate-500">bis ${fmtDateTime(rental.end_at)}</span>` : ''}${insp && insp.level !== 'ok' ? `<span class="badge ${insp.level === 'due' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'}">🔧 ${esc(insp.text)}</span>` : ''}</div>
       ${selectMode ? '' : `<div class="mt-2 flex flex-wrap gap-2">${actions}</div>`}
-    </div></article>`;
+    </div>${more}</article>`;
 }
 
 async function handleAction(btn, items, reload) {
@@ -308,6 +353,17 @@ async function handleAction(btn, items, reload) {
   if (btn.dataset.act === 'rent') return rentModal(item, reload);
   if (btn.dataset.act === 'consume') return consumeModal(item, reload);
   if (btn.dataset.act === 'qr') return qrModal(item);
+  if (btn.dataset.act === 'more') {
+    const manage = canManageRoom(item.room_id);
+    const go = (act, extra = {}) => () => handleAction({ dataset: { act, id: item.id, ...extra } }, items, reload);
+    return openSheet(item.name, [
+      { label: '🏷️ QR-Code / Etikett', run: go('qr') },
+      ...(manage && item.status === 'active' ? [{ label: '🛠 Als defekt markieren', run: go('status', { status: 'maintenance' }) }] : []),
+      ...(manage && item.status !== 'active' ? [{ label: '✅ Freigeben', run: go('status', { status: 'active' }) }] : []),
+      ...(manage && item.inspection_interval_months ? [{ label: '🔧 Prüfung eintragen', run: go('inspect') }] : []),
+      ...(manage ? [{ label: `📷 Fotos (${(item.photos || []).length}/5)`, run: go('photos') }, { label: '✏️ Bearbeiten', run: go('edit') }, { label: '🗑 Löschen …', danger: true, run: go('delete') }] : []),
+    ]);
+  }
   if (btn.dataset.act === 'wait') {
     return busy(btn, async () => {
       const on = lastWait.has(item.id);

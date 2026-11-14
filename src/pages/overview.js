@@ -6,9 +6,13 @@ import { openInspection, inspectionState } from '../components/inspection.js';
 import { mountInstallHint } from '../components/installHint.js';
 import { openScanner, routeScan } from '../components/scanner.js';
 import { toast } from '../lib/ui.js';
+import { collapsible, bindCollapsibles, openSection } from '../components/collapse.js';
+
+const MFA_KEY = 'mfa_hint_until';
+const mfaHidden = () => { try { return Number(localStorage.getItem(MFA_KEY) || 0) > Date.now(); } catch { return false; } };
 
 export async function render(el) {
-  el.innerHTML = `<h1 class="mb-4 text-2xl font-bold">Hallo, ${esc((state.profile.full_name || state.profile.username).split(' ')[0])} 👋</h1><div id="ov" class="grid gap-4 md:grid-cols-2"><p class="text-sm text-slate-400">Lade…</p></div>`;
+  el.innerHTML = `<h1 class="mb-4 text-2xl font-bold">Hallo, ${esc((state.profile.full_name || state.profile.username).split(' ')[0])} 👋</h1><div id="ov" class="grid items-start gap-3 md:grid-cols-2"><p class="text-sm text-slate-400">Lade…</p></div>`;
   const nowIso = new Date().toISOString();
   const [rentals, notifs, upcoming, msgs] = await Promise.all([
     supabase.from('rentals').select('id, end_at, start_at, project, items(name)').eq('borrower_id', state.user.id).eq('status', 'active').order('end_at'),
@@ -20,38 +24,30 @@ export async function render(el) {
   const ids = [...new Set(ms.map((m) => m.sender_id))];
   const names = Object.fromEntries((ids.length ? unwrap(await supabase.from('public_profiles').select('id, full_name, username').in('id', ids)) : []).map((p) => [p.id, displayName(p)]));
   let mfaHint = false;
-  if (state.profile.role === 'admin') { const { data: fa } = await supabase.auth.mfa.listFactors(); mfaHint = !(fa?.totp || []).some((f) => f.status === 'verified'); }
+  if (state.profile.role === 'admin' && !mfaHidden()) { const { data: fa } = await supabase.auth.mfa.listFactors(); mfaHint = !(fa?.totp || []).some((f) => f.status === 'verified'); }
   const dash = isManager() ? await managerDashboard() : null;
   const overdue = my.filter((r) => new Date(r.end_at) < new Date()).length;
 
+  const late = (r) => new Date(r.end_at) < new Date();
+  const row = (inner) => `<div class="mb-1.5 rounded-xl bg-slate-50 p-2.5 text-sm last:mb-0">${inner}</div>`;
   el.querySelector('#ov').innerHTML = `
-    <section class="md:col-span-2 flex flex-wrap gap-2">
-      <button id="qaScan" class="btn-primary">📷 Scannen</button>
-      <a href="#/katalog" class="btn-ghost">📦 Katalog</a>
-      <a href="#/kalender" class="btn-ghost">📅 Kalender</a>
-      ${isManager() ? '<a href="#/terminal" class="btn-ghost">🛡️ Ausgabe / Rücknahme</a><a href="#/inventur" class="btn-ghost">📋 Inventur</a>' : ''}
-    </section>
+    ${isManager() ? `<section class="grid grid-cols-[1.8fr_1fr] gap-2 md:col-span-2 md:flex"><a href="#/terminal" class="btn-primary whitespace-nowrap !py-2.5">🛡️ Ausgabe / Rücknahme</a><a href="#/inventur" class="btn-ghost whitespace-nowrap !py-2.5">📋 Inventur</a></section>` : ''}
     <div id="installHint" class="md:col-span-2 empty:hidden"></div>
-    ${dash ? dash.html : ''}
-    ${mfaHint ? '<a href="#/einstellungen" class="card md:col-span-2 !border-amber-300 !bg-amber-50 text-sm font-semibold text-amber-800">🔐 Empfehlung: Aktiviere die Zwei-Faktor-Anmeldung für dein Administrator-Konto (Einstellungen → Sicherheit).</a>' : ''}
-    <section class="card grid grid-cols-3 gap-3 text-center md:col-span-2">
-      <div><div class="text-2xl font-black">${my.length}</div><div class="text-xs text-slate-500">Aktive Leihen</div></div>
-      <div><div class="text-2xl font-black ${overdue ? 'text-red-600' : ''}">${overdue}</div><div class="text-xs text-slate-500">Überfällig</div></div>
-      <div><div class="text-2xl font-black">${nf.length}</div><div class="text-xs text-slate-500">Neue Mitteilungen</div></div>
-    </section>
-    <section class="card"><h2 class="mb-2 text-sm font-bold">📦 Meine aktuellen Leihen</h2>
-      ${my.length ? my.map((r) => `<div class="mb-2 rounded-xl bg-slate-50 p-2.5 text-sm"><b>${esc(r.items?.name)}</b>${new Date(r.end_at) < new Date() ? ' <span class="badge bg-red-600 text-white">Überfällig</span>' : ''}<div class="text-xs text-slate-500">Bis ${fmtDateTime(r.end_at)}${r.project ? ' · ' + esc(r.project) : ''}</div></div>`).join('') : '<p class="text-sm italic text-slate-400">Keine aktiven Ausleihen.</p>'}
-    </section>
-    <section class="card"><div class="mb-2 flex items-center justify-between"><h2 class="text-sm font-bold">🔔 Mitteilungen</h2><a href="#/chat" class="text-xs font-semibold text-brand-600">Alle →</a></div>
-      ${nf.length ? nf.map((n) => `<div class="mb-2 rounded-xl bg-brand-50 p-2.5 text-sm"><b>${esc(n.title)}</b><div class="text-xs text-slate-600">${esc(n.body)}</div></div>`).join('') : '<p class="text-sm italic text-slate-400">Alles gelesen.</p>'}
-    </section>
-    <section class="card"><div class="mb-2 flex items-center justify-between"><h2 class="text-sm font-bold">📅 Anstehende Belegungen</h2><a href="#/kalender" class="text-xs font-semibold text-brand-600">Kalender →</a></div>
-      ${up.length ? up.map((u) => `<div class="mb-1.5 flex justify-between gap-2 text-sm"><span class="truncate font-semibold">${esc(u.item_name)}</span><span class="shrink-0 text-xs text-slate-500">${fmtDateTime(u.start_at)}</span></div>`).join('') : '<p class="text-sm italic text-slate-400">Keine anstehenden Belegungen.</p>'}
-    </section>
-    <section class="card"><div class="mb-2 flex items-center justify-between"><h2 class="text-sm font-bold">💬 Gesamtchat</h2><a href="#/chat" class="text-xs font-semibold text-brand-600">Öffnen →</a></div>
-      ${ms.length ? ms.reverse().map((m) => `<div class="mb-1.5 text-sm"><b>${esc(names[m.sender_id] || 'Unbekannt')}:</b> <span class="text-slate-600">${esc(m.body)}</span></div>`).join('') : '<p class="text-sm italic text-slate-400">Noch keine Nachrichten.</p>'}
-    </section>`;
-  el.querySelector('#qaScan').onclick = () => openScanner(routeScan);
+    ${mfaHint ? '<div class="flex items-center gap-2 rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 md:col-span-2"><a href="#/einstellungen" class="flex-1">🔐 Zwei-Faktor-Anmeldung für dein Admin-Konto aktivieren → Einstellungen › Sicherheit</a><button id="mfaOff" class="shrink-0 px-1 text-base leading-none" aria-label="Hinweis 7 Tage ausblenden">✕</button></div>' : ''}
+    ${dash ? dash.kpis : ''}
+    ${dash ? dash.panels : ''}
+    ${collapsible({ id: 'ov-mine', title: '📦 Meine aktuellen Leihen', count: my.length, countCls: overdue ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-600', hint: overdue ? `${overdue} überfällig` : '', open: true,
+      body: my.length ? my.map((r) => row(`<b>${esc(r.items?.name)}</b>${late(r) ? ' <span class="badge bg-red-600 text-white">Überfällig</span>' : ''}<div class="text-xs text-slate-500">Bis ${fmtDateTime(r.end_at)}${r.project ? ' · ' + esc(r.project) : ''}</div>`)).join('') : '<p class="text-sm italic text-slate-400">Keine aktiven Ausleihen.</p>' })}
+    ${collapsible({ id: 'ov-notif', title: '🔔 Mitteilungen', count: nf.length, countCls: nf.length ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-600', open: nf.length > 0,
+      body: (nf.length ? nf.map((n) => `<div class="mb-1.5 rounded-xl bg-brand-50 p-2.5 text-sm"><b>${esc(n.title)}</b><div class="text-xs text-slate-600">${esc(n.body)}</div></div>`).join('') : '<p class="text-sm italic text-slate-400">Alles gelesen.</p>') + '<a href="#/chat" class="mt-1 block text-right text-xs font-semibold text-brand-600">Alle ansehen →</a>' })}
+    ${collapsible({ id: 'ov-upcoming', title: '📅 Anstehende Belegungen', count: up.length,
+      body: (up.length ? up.map((u) => `<div class="mb-1.5 flex justify-between gap-2 text-sm"><span class="truncate font-semibold">${esc(u.item_name)}</span><span class="shrink-0 text-xs text-slate-500">${fmtDateTime(u.start_at)}</span></div>`).join('') : '<p class="text-sm italic text-slate-400">Keine anstehenden Belegungen.</p>') + '<a href="#/kalender" class="mt-1 block text-right text-xs font-semibold text-brand-600">Zum Kalender →</a>' })}
+    ${collapsible({ id: 'ov-chat', title: '💬 Gesamtchat', count: ms.length,
+      body: (ms.length ? ms.reverse().map((m) => `<div class="mb-1.5 text-sm"><b>${esc(names[m.sender_id] || 'Unbekannt')}:</b> <span class="text-slate-600">${esc(m.body)}</span></div>`).join('') : '<p class="text-sm italic text-slate-400">Noch keine Nachrichten.</p>') + '<a href="#/chat" class="mt-1 block text-right text-xs font-semibold text-brand-600">Chat öffnen →</a>' })}`;
+  bindCollapsibles(el);
+  el.querySelector('#mfaOff')?.addEventListener('click', (e) => { try { localStorage.setItem(MFA_KEY, String(Date.now() + 7 * 86400000)); } catch { /* egal */ } e.target.closest('div').remove(); });
+  // Kennzahl antippen = passende Liste aufklappen
+  el.querySelectorAll('[data-kpi]').forEach((b) => (b.onclick = () => { if (!openSection(el, b.dataset.kpi) && b.dataset.href) location.hash = b.dataset.href; }));
   mountInstallHint(el.querySelector('#installHint'));
   el.querySelectorAll('[data-insp]').forEach((b) => (b.onclick = () => {
     const it = dash?.inspections.find((i) => i.id === b.dataset.insp);
@@ -85,17 +81,18 @@ async function managerDashboard() {
   const people = ids.length ? await supabase.from('public_profiles').select('id, full_name, username').in('id', ids) : { data: [] };
   const name = Object.fromEntries((people.data || []).map((p) => [p.id, displayName(p)]));
 
-  const kpi = (n, label, color, href) => `<a href="${href}" class="card block text-center transition hover:shadow-md"><div class="text-3xl font-black ${n ? color : 'text-slate-300'}">${n}</div><div class="text-xs font-semibold text-slate-500">${label}</div></a>`;
-  const panel = (title, body) => `<section class="card"><h2 class="mb-2 text-sm font-bold">${title}</h2><div class="space-y-1.5 text-sm">${body}</div></section>`;
+  const kpi = (n, label, color, sec, href) => `<button data-kpi="${sec}" data-href="${href}" class="rounded-xl bg-slate-50 px-1 py-2 text-center transition hover:bg-slate-100"><div class="text-2xl font-black leading-none ${n ? color : 'text-slate-300'}">${n}</div><div class="mt-1 text-[11px] font-semibold leading-tight text-slate-500">${label}</div></button>`;
+  const panel = (id, title, n, body, open = false, cls = 'bg-slate-100 text-slate-600') => collapsible({ id, title, count: n, countCls: cls, open, body: `<div class="space-y-1.5 text-sm">${body}</div>` });
   const rentalRow = (r) => `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2"><span class="min-w-0"><b class="block truncate">${esc(r.items?.name)}</b><span class="text-xs text-slate-500">${esc(name[r.borrower_id] || '?')} · fällig ${fmtDateTime(r.end_at)}</span></span><a href="#/terminal?user=${esc(r.borrower_id)}" class="btn-ghost !px-2.5 !py-1 !text-xs">Terminal</a></div>`;
   const parts = [];
-  if (overdue.length) parts.push(panel(`⏰ Überfällig (${overdue.length})`, overdue.map(rentalRow).join('')));
-  if (due.length) parts.push(panel(`📅 Heute fällig (${due.length})`, due.map(rentalRow).join('')));
-  if (broken.length) parts.push(panel(`🛠 Defekt / Wartung (${broken.length})`, broken.map((i) => `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2"><span class="truncate"><b>${esc(i.name)}</b> <span class="text-xs text-slate-400">${esc(i.room_id)}</span></span><button data-free="${esc(i.id)}" class="btn-ghost !px-2.5 !py-1 !text-xs">Freigeben</button></div>`).join('')));
-  if (lowStock.length) parts.push(panel(`📉 Bestand niedrig (${lowStock.length})`, lowStock.map((i) => `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2"><span class="truncate"><b>${esc(i.name)}</b> <span class="text-xs text-slate-400">${esc(i.room_id)}</span></span><span class="badge bg-red-100 text-red-700">${i.stock_quantity} / min. ${i.min_stock}</span></div>`).join('')));
-  if (inspections.length) parts.push(panel(`🔧 Prüfung fällig (${inspections.length})`, inspections.map((i) => { const st = inspectionState(i); return `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2"><span class="min-w-0"><b class="block truncate">${esc(i.name)}</b><span class="text-xs ${st?.level === 'due' ? 'text-red-600' : 'text-slate-500'}">${esc(st?.text || '')}</span></span><button data-insp="${esc(i.id)}" class="btn-ghost !px-2.5 !py-1 !text-xs">Prüfung eintragen</button></div>`; }).join('')));
-  const html = `<section class="md:col-span-2"><h2 class="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Arbeitsübersicht${room ? ' – ' + esc(room) : ''}</h2>
-    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">${kpi(overdue.length, 'Überfällig', 'text-red-600', '#/terminal')}${kpi(due.length, 'Heute fällig', 'text-amber-600', '#/terminal')}${kpi(broken.length, 'Defekt / Wartung', 'text-red-600', '#/katalog')}${kpi(lowStock.length, 'Bestand niedrig', 'text-amber-600', '#/katalog')}${kpi(inspections.length, 'Prüfung fällig', 'text-amber-600', '#/katalog')}${kpi(requests, 'Offene Anträge', 'text-brand-600', '#/terminal')}</div></section>
-    ${parts.length ? parts.join('') : '<section class="card md:col-span-2 text-center text-sm font-semibold text-emerald-700">✅ Alles in Ordnung – nichts überfällig, defekt oder knapp.</section>'}`;
-  return { html, inspections };
+  if (overdue.length) parts.push(panel('ov-overdue', '⏰ Überfällig', overdue.length, overdue.map(rentalRow).join(''), true, 'bg-red-600 text-white'));
+  if (due.length) parts.push(panel('ov-due', '📅 Heute fällig', due.length, due.map(rentalRow).join('')));
+  if (broken.length) parts.push(panel('ov-broken', '🛠 Defekt / Wartung', broken.length, broken.map((i) => `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2"><span class="truncate"><b>${esc(i.name)}</b> <span class="text-xs text-slate-400">${esc(i.room_id)}</span></span><button data-free="${esc(i.id)}" class="btn-ghost !px-2.5 !py-1 !text-xs">Freigeben</button></div>`).join('')));
+  if (lowStock.length) parts.push(panel('ov-low', '📉 Bestand niedrig', lowStock.length, lowStock.map((i) => `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2"><span class="truncate"><b>${esc(i.name)}</b> <span class="text-xs text-slate-400">${esc(i.room_id)}</span></span><span class="badge bg-red-100 text-red-700">${i.stock_quantity} / min. ${i.min_stock}</span></div>`).join('')));
+  if (inspections.length) parts.push(panel('ov-insp', '🔧 Prüfung fällig', inspections.length, inspections.map((i) => { const st = inspectionState(i); return `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2"><span class="min-w-0"><b class="block truncate">${esc(i.name)}</b><span class="text-xs ${st?.level === 'due' ? 'text-red-600' : 'text-slate-500'}">${esc(st?.text || '')}</span></span><button data-insp="${esc(i.id)}" class="btn-ghost !px-2.5 !py-1 !text-xs">Prüfung eintragen</button></div>`; }).join('')));
+  const allGood = !overdue.length && !due.length && !broken.length && !lowStock.length && !inspections.length;
+  const kpis = `<section class="card md:col-span-2"><div class="mb-2 flex items-center justify-between"><h2 class="text-xs font-bold uppercase tracking-wide text-slate-500">Arbeitsübersicht${room ? ' – ' + esc(room) : ''}</h2>${allGood ? '<span class="text-xs font-semibold text-emerald-700">✅ alles in Ordnung</span>' : ''}</div>
+    <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">${kpi(overdue.length, 'Überfällig', 'text-red-600', 'ov-overdue', '#/terminal')}${kpi(due.length, 'Heute fällig', 'text-amber-600', 'ov-due', '#/terminal')}${kpi(broken.length, 'Defekt / Wartung', 'text-red-600', 'ov-broken', '#/katalog')}${kpi(lowStock.length, 'Bestand niedrig', 'text-amber-600', 'ov-low', '#/katalog')}${kpi(inspections.length, 'Prüfung fällig', 'text-amber-600', 'ov-insp', '#/katalog')}${kpi(requests, 'Offene Anträge', 'text-brand-600', 'none', '#/terminal')}</div></section>`;
+  const html = kpis + parts.join('');
+  return { html, kpis, panels: parts.join(''), inspections };
 }

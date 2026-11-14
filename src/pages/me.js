@@ -6,27 +6,30 @@ import { state } from '../state.js';
 import * as calendar from './calendar.js';
 import { openExtend } from '../components/extendModal.js';
 import { uploadDamagePhoto, removeDamagePhotos } from '../lib/photos.js';
+import { collapsible, bindCollapsibles, setCount } from '../components/collapse.js';
 
 const MAX_DAMAGE = 5;
 
 export async function render(el) {
   const p = state.profile;
   el.innerHTML = `
-    <h1 class="mb-4 text-2xl font-bold">Mein Bereich</h1>
-    <div class="grid gap-4 md:grid-cols-3">
-      <section class="card text-center">
-        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-xl font-bold text-white">${esc((displayName(p))[0]?.toUpperCase())}</div>
-        <div class="mt-2 font-bold">${esc(p.full_name)}</div><div class="text-xs text-slate-500">@${esc(p.username)} · ${esc(p.email)}</div>
-        <img id="qr" alt="Benutzer-QR" class="mx-auto mt-3 h-40 w-40 rounded-xl border"><div class="mt-1 text-[11px] text-slate-400">Am Lagerterminal vorzeigen</div>
-      </section>
-      <div class="space-y-4 md:col-span-2">
-        <section class="card"><h2 class="mb-2 text-sm font-bold">📦 Aktuelle Leihen</h2><div id="rentals" class="space-y-2 text-sm"><p class="text-slate-400">Lade…</p></div></section>
-        <section class="card"><h2 class="mb-2 text-sm font-bold">📅 Mein Kalender</h2><div id="myCal"></div></section>
-        <section class="card"><h2 class="mb-2 text-sm font-bold">🔔 Meine Warteliste</h2><div id="wait" class="space-y-2 text-sm"></div></section>
-        <section class="card"><h2 class="mb-2 text-sm font-bold">🧾 Protokoll</h2><div id="log" class="space-y-1.5 text-xs"><p class="text-slate-400">Lade…</p></div></section>
-      </div>
+    <h1 class="mb-3 text-2xl font-bold">Mein Bereich</h1>
+    <section class="card mb-3 flex items-center gap-3">
+      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-600 text-lg font-bold text-white">${esc((displayName(p))[0]?.toUpperCase())}</div>
+      <div class="min-w-0 flex-1"><div class="truncate font-bold">${esc(p.full_name)}</div><div class="truncate text-xs text-slate-500">@${esc(p.username)} · ${esc(p.email)}</div></div>
+      <button id="qrBtn" class="btn-ghost shrink-0">📱 Mein QR-Code</button>
+    </section>
+    <div class="space-y-3">
+      ${collapsible({ id: 'me-rentals', title: '📦 Aktuelle Leihen', count: '…', open: true, body: '<div id="rentals" class="space-y-2 text-sm"><p class="text-slate-400">Lade…</p></div>' })}
+      ${collapsible({ id: 'me-cal', title: '📅 Mein Kalender', hint: 'Deine Buchungen im Monatsüberblick', body: '<div id="myCal"></div>' })}
+      ${collapsible({ id: 'me-wait', title: '🔔 Meine Warteliste', count: '…', body: '<div id="wait" class="space-y-2 text-sm"></div>' })}
+      ${collapsible({ id: 'me-log', title: '🧾 Protokoll', hint: 'Deine letzten Aktivitäten', count: '…', body: '<div id="log" class="space-y-1.5 text-xs"><p class="text-slate-400">Lade…</p></div>' })}
     </div>`;
-  QRCode.toDataURL(`USER:${p.id}`, { width: 320, margin: 1 }).then((u) => (el.querySelector('#qr').src = u));
+  bindCollapsibles(el);
+  el.querySelector('#qrBtn').onclick = async () => {
+    const url = await QRCode.toDataURL(`USER:${p.id}`, { width: 360, margin: 1 });
+    openModal(`<div class="text-center"><h3 class="mb-1 text-lg font-bold">${esc(p.full_name)}</h3><p class="mb-3 text-xs text-slate-500">Am Lagerterminal vorzeigen</p><img src="${url}" alt="Benutzer-QR" class="mx-auto h-64 w-64 rounded-xl border"><button data-close class="btn-ghost mt-4 w-full">Schließen</button></div>`);
+  };
   load(el);
   calendar.render(el.querySelector('#myCal'), { mine: true });
 }
@@ -38,6 +41,8 @@ async function load(el) {
     const pending = await safeData(supabase.from('extension_requests').select('id, rental_id, new_end_at').eq('requested_by', state.user.id).eq('status', 'pending'));
     const pend = Object.fromEntries(pending.map((p) => [p.rental_id, p]));
     const small = '!px-2.5 !py-1 !text-xs';
+    const lateN = rentals.filter((r) => new Date(r.end_at) < new Date()).length;
+    setCount(el, 'me-rentals', rentals.length, lateN ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-600');
     el.querySelector('#rentals').innerHTML = rentals.length ? rentals.map((r) => {
       const late = new Date(r.end_at) < new Date(); const p = pend[r.id];
       return `<div class="rounded-xl border p-2.5 ${late ? 'border-red-300 bg-red-50' : 'bg-slate-50'}">
@@ -52,12 +57,14 @@ async function load(el) {
     el.querySelectorAll('[data-cancel]').forEach((b) => (b.onclick = () => busy(b, async () => { unwrap(await supabase.rpc('cancel_extension_request', { p_request_id: b.dataset.cancel })); toast('Antrag zurückgezogen', 'success'); load(el); })));
 
     const wait = await safeData(supabase.from('waitlist').select('item_id, items(name)').order('created_at'));
+    setCount(el, 'me-wait', wait.length);
     el.querySelector('#wait').innerHTML = wait.length ? wait.map((w) => `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2.5"><span><b>${esc(w.items?.name)}</b> <span class="font-mono text-xs text-slate-400">${esc(w.item_id)}</span></span><button data-leave="${esc(w.item_id)}" class="btn-ghost ${small}">Abbestellen</button></div>`).join('')
       : '<p class="italic text-slate-400">Keine Benachrichtigungen aktiv. Im Katalog kannst du dich bei belegten Artikeln benachrichtigen lassen.</p>';
     el.querySelectorAll('[data-leave]').forEach((b) => (b.onclick = () => busy(b, async () => { unwrap(await supabase.rpc('leave_waitlist', { p_item_id: b.dataset.leave })); load(el); })));
 
     const log = unwrap(await supabase.from('activity_log').select('*').or(`actor_id.eq.${state.user.id},subject_id.eq.${state.user.id}`)
       .order('created_at', { ascending: false }).limit(30));
+    setCount(el, 'me-log', log.length);
     el.querySelector('#log').innerHTML = log.length ? log.map((l) => `<div class="flex justify-between gap-2 border-b border-slate-100 pb-1"><span><b class="text-brand-600">[${esc(l.action)}]</b> ${esc(l.item_name || '')}</span><span class="shrink-0 text-slate-400">${fmtDateTime(l.created_at)}</span></div>`).join('')
       : '<p class="italic text-slate-400">Noch keine Aktivitäten.</p>';
   } catch (e) { toast(e.message, 'error'); }

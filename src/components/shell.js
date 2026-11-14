@@ -59,8 +59,8 @@ export function renderShell(root) {
       </div>
     </aside>
     <main class="min-w-0 flex-1 pb-24 md:pb-8"><div id="page" class="mx-auto max-w-5xl p-4 md:p-8"></div></main>
-    <button id="searchFab" class="fixed bottom-36 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-slate-700 text-white shadow-lg md:hidden" title="Suchen">${icon('search', 'h-6 w-6')}</button>
-    <button id="scanFab" class="fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg md:hidden" title="Scannen">${icon('camera', 'h-6 w-6')}</button>
+    <button id="searchFab" class="fixed bottom-32 right-3 z-40 flex h-10 w-10 items-center justify-center rounded-full bg-slate-700/90 text-white shadow-lg md:hidden" title="Suchen">${icon('search', 'h-5 w-5')}</button>
+    <button id="scanFab" class="fixed bottom-20 right-3 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-brand-600/95 text-white shadow-lg md:hidden" title="Scannen">${icon('camera', 'h-5 w-5')}</button>
     <nav class="fixed inset-x-0 bottom-0 z-40 grid border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" id="tabBar" style="grid-template-columns:repeat(${mainRoutes.length + 1},minmax(0,1fr))">
       ${mainRoutes.map(([k, r]) => `<a href="#/${k}" data-route="${k}" class="relative flex flex-col items-center py-2 text-[10px] font-semibold text-slate-500">${icon(r.icon, 'h-5 w-5')}${esc(r.short)}${r.badge ? badge('absolute right-2 top-1 !px-1 text-[9px]') : ''}</a>`).join('')}
       <button id="moreBtn" class="flex flex-col items-center py-2 text-[10px] font-semibold text-slate-500">${icon('settings', 'h-5 w-5')}Mehr</button>
