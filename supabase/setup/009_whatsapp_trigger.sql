@@ -9,7 +9,13 @@ create extension if not exists pg_net with schema extensions;
 create or replace function public.trg_chat_message_whatsapp() returns trigger
 language plpgsql security definer set search_path = public, extensions, net as $$
 begin
-  if not exists (select 1 from whatsapp_contacts where chat_id = new.chat_id) then return null; end if;
+  -- nur wenn der Chat verbundene Rufnummern oder bestätigte Mitglieder (außer dem Absender) hat
+  if not exists (select 1 from whatsapp_contacts where chat_id = new.chat_id)
+     and not exists (select 1 from chat_members cm join profiles p on p.id = cm.user_id
+                      where cm.chat_id = new.chat_id and p.whatsapp_optin and p.whatsapp_verified_at is not null
+                        and p.id is distinct from new.sender_id) then
+    return null;
+  end if;
   begin
     perform net.http_post(
       url := 'https://qqjtlcdqhyglhbcixvbr.supabase.co/functions/v1/whatsapp-send',

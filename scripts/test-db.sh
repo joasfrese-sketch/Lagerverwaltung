@@ -24,8 +24,9 @@ for f in supabase/migrations/*.sql; do
   # psql liefert bei Fehlern Exit-Code 3; durch die Pipe prüfen wir ihn explizit
   test "${PIPESTATUS[0]}" -eq 0 || { echo "Migration fehlgeschlagen: $f" >&2; exit 1; }
 done
-# Migrationen sind wiederholbar – 002 bis 007 ein zweites Mal einspielen
-for f in supabase/migrations/00[2-9]*.sql; do
+# Migrationen sind wiederholbar – alle außer 001 (löscht das Schema) ein zweites Mal einspielen, in derselben Reihenfolge
+for f in supabase/migrations/*.sql; do
+  case "$f" in *001_schema.sql) continue ;; esac
   "${PSQL[@]}" -d "$DB" -f "$f" >/dev/null 2>&1 || { echo "Migration nicht wiederholbar: $f" >&2; exit 1; }
 done
 "${PSQL[@]}" -d "$DB" -f supabase/tests/10_core_flows.sql 2>&1 | sed -e 's/^psql:[^ ]* NOTICE:  /  /' -e '/NOTICE:  /d'

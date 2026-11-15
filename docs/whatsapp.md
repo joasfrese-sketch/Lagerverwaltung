@@ -44,8 +44,19 @@ Verbinden und Trennen steht im Protokoll.
 Im WhatsApp Manager eine Vorlage der Kategorie *Utility* anlegen, Sprache Deutsch, Text z. B.:
 `Neue Nachricht im Lager-Chat von {{1}}: {{2}}` → Name in `WHATSAPP_TEMPLATE_NAME` eintragen. Vorlagen kosten pro Zustellung.
 
+## Mitglieder mit Telefonnummer (automatisch)
+Jede Person kann unter **Einstellungen → 📱 WhatsApp** (oder schon bei der Registrierung) ihre Mobilnummer eintragen und per Häkchen zustimmen.
+Damit niemand fremde Nummern eintragen kann, wird die Nummer **einmal per WhatsApp bestätigt**: Die Person sendet von dieser Nummer `VERBINDEN <Code>` an die Lager-Nummer (die App zeigt Code und einen Knopf „In WhatsApp öffnen“). Danach gilt:
+- Alle Nachrichten ihrer Chats (auch Direktchats) kommen per WhatsApp an; bei Gruppen steht der Chat-Name vor dem Absender, bei Direktchats „(privat)“.
+- Antworten per WhatsApp landen in dem Chat, aus dem zuletzt eine Nachricht kam (innerhalb von 24 h), sonst im Gesamtchat. In der App erscheinen sie mit dem Namen der Person und „via WhatsApp“.
+- Die App kann nur schreiben, solange die Person in den letzten 24 Stunden selbst an die Lager-Nummer geschrieben hat (Regel von WhatsApp). Sonst erscheint unter der Nachricht „n nicht erreichbar (24 h)“.
+- Abschalten: Häkchen entfernen oder Nummer löschen.
+
+## Einrichtungsstatus
+**Einstellungen → 💬 WhatsApp-Anbindung (Admin)** zeigt, welche Secrets fehlen und ob die Verbindung zu Meta funktioniert. Solange Secrets fehlen, werden keine Nachrichten versendet.
+
 ## Technik
-- Tabellen: `whatsapp_contacts`, `whatsapp_deliveries` (Migration `009_whatsapp.sql`). Rufnummern sieht nur der Administrator.
+- Tabellen: `whatsapp_contacts`, `whatsapp_deliveries` (Migrationen `009_whatsapp.sql`, `010_whatsapp_members.sql`). Rufnummern sieht nur der Administrator.
 - Eingang: Edge Function `whatsapp-webhook` (Signaturprüfung, nur eingetragene Nummern, doppelte Zustellung wird ignoriert).
 - Ausgang: Datenbank-Trigger (`supabase/setup/009_whatsapp_trigger.sql`) → Edge Function `whatsapp-send` (jede Zustellung genau einmal, nur frische Nachrichten).
 - Tests: `npm test` und `npm run test:db`.

@@ -10,16 +10,20 @@ import { openExport } from '../components/exportDialog.js';
 import { fmtDateTime } from '../lib/ui.js';
 import { enablePush, disablePush, pushActive, pushSupported, pushConfigured } from '../lib/push.js';
 import { collapsible, bindCollapsibles, setCount } from '../components/collapse.js';
+import { mountWhatsAppProfile, waStatusText } from '../components/whatsappProfile.js';
+import { mountWhatsAppStatus } from '../components/whatsappStatus.js';
+import { safeData } from '../lib/supabase.js';
 
 export async function render(el) {
   const settings = unwrap(await supabase.from('user_settings').select('prefs').eq('user_id', state.user.id).maybeSingle());
   const prefs = { notify_deadline: true, notify_rental: true, notify_chat: true, push: true, calendar_view: 'month', ...(settings?.prefs || {}) };
   const pushOn = await pushActive();
+  const waMe = await safeData(supabase.from('profiles').select('phone, whatsapp_optin, whatsapp_verified_at').eq('id', state.user.id).maybeSingle(), null);
   const p = state.profile;
   const toggle = (k, label, hint = '') => `<label class="flex items-start justify-between gap-3 py-2"><span><b class="text-sm">${label}</b>${hint ? `<span class="block text-xs text-slate-500">${hint}</span>` : ''}</span><input type="checkbox" data-pref="${k}" ${prefs[k] ? 'checked' : ''} class="mt-1 h-5 w-5 rounded text-brand-600"></label>`;
 
   const THEME = { light: 'Hell', dark: 'Dunkel', auto: 'Automatisch' };
-  const HINTS = { prof: esc(p.full_name), notif: pushOn ? 'Push-Nachrichten aktiv' : 'Push-Nachrichten aus', look: THEME[getTheme()] || 'Automatisch', app: 'Kalenderansicht, Kalender-Abo', sec: 'Passwort, Zwei-Faktor-Anmeldung', data: 'Sicherung als Excel oder CSV' };
+  const HINTS = { prof: esc(p.full_name), notif: pushOn ? 'Push-Nachrichten aktiv' : 'Push-Nachrichten aus', wa: waMe ? waStatusText(waMe) : 'Telefonnummer, Chat per WhatsApp', look: THEME[getTheme()] || 'Automatisch', app: 'Kalenderansicht, Kalender-Abo', sec: 'Passwort, Zwei-Faktor-Anmeldung', data: 'Sicherung als Excel oder CSV' };
   const sec = (id, title, hint, body, count = null) => collapsible({ id: 'set-' + id, title, hint, body, count });
   el.innerHTML = `<h1 class="mb-3 text-2xl font-bold">Einstellungen</h1><div class="space-y-3">
     ${sec('prof', '👤 Profil', HINTS.prof, `
@@ -34,6 +38,8 @@ export async function render(el) {
       <div class="mt-2 flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"><span class="text-sm"><b>📲 Push-Nachrichten</b><span class="block text-xs text-slate-500">${!pushSupported() ? 'Dieser Browser unterstützt kein Push (iPhone: erst zum Home-Bildschirm hinzufügen).' : !pushConfigured() ? 'Noch nicht eingerichtet (VAPID-Schlüssel fehlt).' : 'Für deine eigenen Aktivitäten (Fristen, Ausleihen durch andere für dich, Chat). Gilt für dieses Gerät.'}</span></span>
       <button id="pushBtn" class="${pushOn ? 'btn-ghost' : 'btn-primary'}" ${!pushSupported() || !pushConfigured() ? 'disabled' : ''}>${pushOn ? 'Deaktivieren' : 'Aktivieren'}</button></div>`)}
 
+    ${sec('wa', '📱 WhatsApp', HINTS.wa, '<div id="waProfile"><p class="text-sm text-slate-400">Lade…</p></div>')}
+    ${isAdmin() ? sec('wastatus', '💬 WhatsApp-Anbindung (Admin)', 'Einrichtungsstatus der Secrets und der Verbindung', '<div id="waStatus"></div>') : ''}
     ${sec('look', '🌓 Darstellung', HINTS.look, `
       <div id="themeSeg" class="inline-flex rounded-xl bg-slate-100 p-0.5 text-sm font-semibold">
         <button data-theme="light" class="rounded-lg px-3 py-1.5">☀️ Hell</button>
@@ -55,6 +61,8 @@ export async function render(el) {
   </div>`;
 
   bindCollapsibles(el);
+  mountWhatsAppProfile(el.querySelector('#waProfile'));
+  if (isAdmin()) mountWhatsAppStatus(el.querySelector('#waStatus'));
   // Profil
   el.querySelector('#prof').onsubmit = (e) => { e.preventDefault(); const f = new FormData(e.target);
     busy(e.target.querySelector('button'), async () => {
@@ -110,7 +118,7 @@ async function loadUsers(el) {
     const known = [...new Set([...perms.map((x) => x.permission_name), ...unwrap(await supabase.from('items').select('required_permission').not('required_permission', 'is', null)).map((i) => i.required_permission)])];
     box.innerHTML = `<datalist id="pl">${known.map((k) => `<option value="${esc(k)}">`).join('')}</datalist>` + users.map((u) => {
       const mine = perms.filter((x) => x.user_id === u.id);
-      return `<div class="rounded-xl border p-3" data-u="${esc(u.id)}"><div class="flex flex-wrap items-center gap-2"><div class="mr-auto min-w-0"><b class="text-sm">${esc(displayName(u))}</b><div class="truncate text-xs text-slate-500">@${esc(u.username)} · ${esc(u.email)}</div></div>
+      return `<div class="rounded-xl border p-3" data-u="${esc(u.id)}"><div class="flex flex-wrap items-center gap-2"><div class="mr-auto min-w-0"><b class="text-sm">${esc(displayName(u))}</b><div class="truncate text-xs text-slate-500">@${esc(u.username)} · ${esc(u.email)}${u.phone ? ' · 📱 +' + esc(u.phone) : ''}</div>${u.whatsapp_optin ? (u.whatsapp_verified_at ? '<span class="badge bg-emerald-100 text-emerald-800">WhatsApp verbunden</span>' : '<span class="badge bg-amber-100 text-amber-800">WhatsApp wartet auf Bestätigung</span>') : ''}</div>
         ${isAdmin() && u.id !== state.user.id ? `<select data-role class="input !w-auto !py-1.5 text-xs"><option value="user" ${u.role === 'user' ? 'selected' : ''}>Benutzer</option><option value="raum_manager" ${u.role === 'raum_manager' ? 'selected' : ''}>Raum-Manager</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrator</option></select>
         <select data-room class="input !w-auto !py-1.5 text-xs ${u.role === 'raum_manager' ? '' : 'hidden'}"><option value="">Alle Räume</option>${state.rooms.map((r) => `<option value="${esc(r.id)}" ${u.managed_room === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select>` : `<span class="badge bg-slate-100 text-slate-600">${esc(roleName(u.role))}</span>`}</div>
         <div class="mt-2 flex flex-wrap items-center gap-1.5">${mine.map((x) => `<span class="badge bg-brand-100 text-brand-700">${esc(x.permission_name)} <button data-delperm="${esc(x.permission_name)}" class="ml-1">✕</button></span>`).join('')}

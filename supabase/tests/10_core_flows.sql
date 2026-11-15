@@ -260,4 +260,90 @@ select tests.ok((select count(*) from public.whatsapp_contacts) = 1, 'Admin kann
 reset role;
 select tests.ok((select count(*) from public.activity_log where action = 'WHATSAPP') >= 3, 'Verbinden/Trennen steht im Protokoll');
 
+
+-- ======================= WhatsApp für Mitglieder (Nummer im Profil) =======================
+set role authenticated;
+select tests.as_user('00000000-0000-0000-0000-0000000000c1');
+select tests.throws($$update public.profiles set phone = '4915100000001' where id = '00000000-0000-0000-0000-0000000000c1'$$, 'Einstellungen', 'Nutzer kann die Rufnummer nicht direkt ändern');
+select tests.throws($$update public.profiles set whatsapp_verified_at = now() where id = '00000000-0000-0000-0000-0000000000c1'$$, 'Einstellungen', 'Nutzer kann sich nicht selbst als bestätigt markieren');
+select tests.throws($$select public.set_my_whatsapp('0151 1234567', true)$$, 'Ländervorwahl', 'Nummer im Profil wird geprüft');
+select set_config('tests.set1', public.set_my_whatsapp('+49 151 30000001', true)::text, false);
+select tests.ok((current_setting('tests.set1')::jsonb ->> 'status') = 'pending' and length(current_setting('tests.set1')::jsonb ->> 'code') = 6, 'Nummer gespeichert, wartet auf Bestätigung mit 6-stelligem Code');
+select tests.as_user('00000000-0000-0000-0000-0000000000c2');
+select tests.throws($$select public.set_my_whatsapp('+49 151 30000001', true)$$, 'bereits', 'Eine Rufnummer gehört nur zu einem Konto');
+reset role;
+select set_config('tests.code1', (select wa_verify_code from public.profiles where id = '00000000-0000-0000-0000-0000000000c1'), false);
+
+-- unbestätigt: keine Weiterleitung
+insert into public.chat_messages (chat_id, sender_id, body) values ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000a1', 'Hallo alle');
+select set_config('tests.mg1', (select id::text from public.chat_messages where body = 'Hallo alle'), false);
+set role service_role;
+select set_config('tests.o1', (select count(*)::text from public.whatsapp_outbound(current_setting('tests.mg1')::uuid)), false);
+reset role;
+select tests.ok(current_setting('tests.o1') = '0', 'Unbestätigte Nummer bekommt keine Nachrichten');
+
+-- Bestätigung per WhatsApp
+set role service_role;
+select set_config('tests.v0', public.whatsapp_handle_inbound('4915130000001', 'Uta', 'VERBINDEN ZZZZZZ', 'v0')::text, false);
+reset role;
+select tests.ok((current_setting('tests.v0')::jsonb ->> 'kind') = 'ignored' and (select whatsapp_verified_at is null from public.profiles where id = '00000000-0000-0000-0000-0000000000c1'), 'Falscher Code bestätigt nichts');
+set role service_role;
+select set_config('tests.v1', public.whatsapp_handle_inbound('4915130000001', 'Uta', '  verbinden ' || lower(current_setting('tests.code1')) || ' ', 'v1')::text, false);
+select set_config('tests.v2', public.whatsapp_handle_inbound('4915199999999', 'Fremd', 'VERBINDEN ' || current_setting('tests.code1'), 'v2')::text, false);
+reset role;
+select tests.ok((current_setting('tests.v1')::jsonb ->> 'kind') = 'verified' and (select whatsapp_verified_at is not null and wa_verify_code is null from public.profiles where id = '00000000-0000-0000-0000-0000000000c1'), 'Richtiger Code (von der eigenen Nummer) bestätigt die Nummer');
+select tests.ok(not exists (select 1 from public.chat_messages where wa_message_id in ('v0', 'v1', 'v2')), 'Bestätigungsnachrichten landen nicht im Chat');
+
+-- Weiterleitung an Mitglieder: Gesamtchat ohne Zusatz, Gruppe mit Chat-Namen, Direktchat als „(privat)“
+insert into public.chat_members (chat_id, user_id) values (current_setting('tests.wachat')::uuid, '00000000-0000-0000-0000-0000000000c1') on conflict do nothing;
+insert into public.chat_messages (chat_id, sender_id, body) values ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000a1', 'Gesamtchat-Nachricht');
+insert into public.chat_messages (chat_id, sender_id, body) values (current_setting('tests.wachat')::uuid, '00000000-0000-0000-0000-0000000000a1', 'Gruppen-Nachricht');
+set role service_role;
+select set_config('tests.l1', (select string_agg(sender_label || '|' || in_window::text, ',') from public.whatsapp_outbound((select id from public.chat_messages where body = 'Gesamtchat-Nachricht'))), false);
+select set_config('tests.l2', (select string_agg(phone || '=' || sender_label, ',' order by phone) from public.whatsapp_outbound((select id from public.chat_messages where body = 'Gruppen-Nachricht'))), false);
+reset role;
+select tests.ok(current_setting('tests.l1') = 'Ada Admin|true', 'Gesamtchat: Absendername, Mitglied hat kürzlich geschrieben (Fenster offen)');
+select tests.ok(current_setting('tests.l2') = '4915111111111=Gemeinde-Helfer · Ada Admin,4915130000001=Gemeinde-Helfer · Ada Admin', 'Gruppe: Chat-Name vor dem Absender, Nummern und Mitglieder zusammen');
+
+-- Antworten: in den Chat, aus dem zuletzt eine Nachricht kam
+set role service_role;
+select public.whatsapp_handle_inbound('4915130000001', 'Uta', 'Antwort an die Gruppe', 'r1');
+reset role;
+select tests.ok((select chat_id = current_setting('tests.wachat')::uuid and sender_id = '00000000-0000-0000-0000-0000000000c1' and source = 'whatsapp' from public.chat_messages where wa_message_id = 'r1'), 'Antwort landet im Chat der letzten Nachricht, mit Namen des Mitglieds');
+update public.whatsapp_member_state set active_at = now() - interval '30 hours' where user_id = '00000000-0000-0000-0000-0000000000c1';
+set role service_role;
+select public.whatsapp_handle_inbound('4915130000001', 'Uta', 'Spätere Antwort', 'r2');
+select public.whatsapp_handle_inbound('4915130000001', 'Uta', 'Spätere Antwort', 'r2');
+reset role;
+select tests.ok((select count(*) from public.chat_messages where wa_message_id = 'r2' and chat_id = '00000000-0000-0000-0000-0000000000c1') = 1, 'Nach 24 h landet die Antwort im Gesamtchat (und wird nicht doppelt gespeichert)');
+
+-- eigene Nachrichten des Mitglieds gehen nicht an es selbst zurück
+set role service_role;
+select set_config('tests.e1', (select string_agg(phone, ',') from public.whatsapp_outbound((select id from public.chat_messages where wa_message_id = 'r1'))), false);
+reset role;
+select tests.ok(current_setting('tests.e1') = '4915111111111', 'Antwort eines Mitglieds geht nur an die anderen, nicht zurück an das Mitglied');
+
+-- verbundene Chats, Status „übersprungen“, Abwahl
+set role authenticated;
+select tests.as_user('00000000-0000-0000-0000-0000000000a1');
+select tests.ok((select n from public.whatsapp_bridged_chats() where chat_id = '00000000-0000-0000-0000-0000000000c1') = 1, 'Gesamtchat zählt als verbunden, sobald ein Mitglied bestätigt ist');
+select tests.as_user('00000000-0000-0000-0000-0000000000c1');
+select tests.ok((select (public.set_my_whatsapp('+49 151 30000001', false)::jsonb ->> 'status') = 'off'), 'Abwahl der WhatsApp-Nachrichten');
+reset role;
+select tests.ok((select whatsapp_verified_at is not null and not whatsapp_optin from public.profiles where id = '00000000-0000-0000-0000-0000000000c1'), 'Nummer bleibt bestätigt, Zustimmung ist entzogen');
+set role service_role;
+select set_config('tests.o2', (select count(*)::text from public.whatsapp_outbound((select id from public.chat_messages where body = 'Hallo alle'))), false);
+select public.whatsapp_set_delivery((select id from public.whatsapp_deliveries where status = 'pending' limit 1), 'skipped', '24h');
+reset role;
+select tests.ok((select count(*) from public.whatsapp_deliveries where status = 'skipped') = 1, 'Status „übersprungen“ wird gespeichert');
+
+-- Registrierung mit Nummer und Zustimmung
+insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data) values
+  ('00000000-0000-0000-0000-0000000000d1', 'neu1@test.local', '{"full_name":"Neu Eins","username":"neu1","phone":"+49 170 5550001","whatsapp_optin":"true"}', '{"admin_created":true}'),
+  ('00000000-0000-0000-0000-0000000000d2', 'neu2@test.local', '{"full_name":"Neu Zwei","username":"neu2","phone":"+49 170 5550001","whatsapp_optin":"true"}', '{"admin_created":true}'),
+  ('00000000-0000-0000-0000-0000000000d3', 'neu3@test.local', '{"full_name":"Neu Drei","username":"neu3","phone":"+49 170 5550003"}', '{"admin_created":true}');
+select tests.ok((select phone = '491705550001' and whatsapp_optin and whatsapp_verified_at is null and length(wa_verify_code) = 6 from public.profiles where id = '00000000-0000-0000-0000-0000000000d1'), 'Registrierung mit Nummer und Zustimmung: gespeichert, aber unbestätigt');
+select tests.ok((select phone is null and not whatsapp_optin from public.profiles where id = '00000000-0000-0000-0000-0000000000d2'), 'Doppelte Nummer bei der Registrierung wird nicht übernommen');
+select tests.ok((select phone = '491705550003' and not whatsapp_optin and wa_verify_code is null from public.profiles where id = '00000000-0000-0000-0000-0000000000d3'), 'Nummer ohne Zustimmung: gespeichert, aber WhatsApp aus');
+
 \echo 'ALLE DATENBANK-TESTS BESTANDEN'

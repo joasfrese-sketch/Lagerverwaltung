@@ -129,16 +129,16 @@ async function loadMessages() {
     if (S.wa[S.current]) (await safeData(supabase.from('whatsapp_deliveries').select('message_id, status, error').eq('chat_id', S.current).order('created_at', { ascending: false }).limit(500), [])).forEach((d) => { (dl[d.message_id] ||= []).push(d); });
     const state2 = (id) => {
       const d = dl[id]; if (!d?.length) return '';
-      const ok = d.filter((x) => x.status === 'sent').length; const bad = d.filter((x) => x.status === 'failed'); const wait = d.length - ok - bad.length;
+      const ok = d.filter((x) => x.status === 'sent').length; const bad = d.filter((x) => x.status === 'failed'); const skip = d.filter((x) => x.status === 'skipped'); const wait = d.length - ok - bad.length - skip.length;
       if (bad.length) return `<div class="text-[12px] text-amber-700" title="${esc(bad[0].error || '')}">⚠ WhatsApp: ${bad.length} von ${d.length} nicht zugestellt – ${esc((bad[0].error || '').slice(0, 90))}</div>`;
-      return `<div class="text-[12px] text-slate-400">${wait ? '⏳' : '✓'} WhatsApp: ${ok}/${d.length} zugestellt</div>`;
+      return `<div class="text-[12px] text-slate-400" ${skip.length ? 'title="Diese Personen haben in den letzten 24 Stunden nicht an die Lager-Nummer geschrieben; WhatsApp erlaubt dann keine freie Nachricht."' : ''}>${wait ? '⏳' : '✓'} WhatsApp: ${ok} zugestellt${skip.length ? ` · ${skip.length} nicht erreichbar (24 h)` : ''}</div>`;
     };
     box.innerHTML = msgs.reverse().map((m) => {
       const mine = m.sender_id === state.user.id; const wa = m.source === 'whatsapp';
       const t = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      const who = mine ? 'Du' : wa ? `${esc(m.wa_name || '+' + m.wa_phone)} · WhatsApp` : esc(S.names[m.sender_id] || 'Unbekannt');
+      const who = mine ? `Du${wa ? ' · via WhatsApp' : ''}` : wa && !m.sender_id ? `${esc(m.wa_name || '+' + m.wa_phone)} · WhatsApp` : `${esc(S.names[m.sender_id] || 'Unbekannt')}${wa ? ' · via WhatsApp' : ''}`;
       return `<div class="flex flex-col ${mine ? 'items-end' : 'items-start'}"><div class="text-[12px] text-slate-400">${who} · ${t}</div>
-        <div class="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${mine ? 'rounded-tr-none bg-brand-600 text-white' : wa ? 'rounded-tl-none bg-emerald-100 text-emerald-900' : 'rounded-tl-none bg-slate-100'}">${esc(m.body)}</div>${mine ? state2(m.id) : ''}</div>`;
+        <div class="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${mine ? 'rounded-tr-none bg-brand-600 text-white' : wa && !m.sender_id ? 'rounded-tl-none bg-emerald-100 text-emerald-900' : 'rounded-tl-none bg-slate-100'}">${esc(m.body)}</div>${mine ? state2(m.id) : ''}</div>`;
     }).join('') || '<p class="py-8 text-center text-sm italic text-slate-400">Noch keine Nachrichten.</p>';
     box.scrollTop = box.scrollHeight;
   } catch (e) { toast(e.message, 'error'); }
