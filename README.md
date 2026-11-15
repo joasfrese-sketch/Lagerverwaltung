@@ -31,6 +31,9 @@ supabase functions deploy calendar-feed --no-verify-jwt
 ```
 (Die Funktion liefert den abonnierbaren Kalender-Link; ohne sie zeigt „Abonnieren" einen Hinweis.)
 
+### 1h. WhatsApp-Anbindung (optional)
+Migration `009_whatsapp.sql` ausführen, dann `supabase/setup/009_whatsapp_trigger.sql`, dann die Edge Functions `whatsapp-webhook` und `whatsapp-send` deployen (beide `--no-verify-jwt`). Einrichtung bei Meta und Secrets: siehe [docs/whatsapp.md](docs/whatsapp.md).
+
 ### 2. Auth (Supabase → Authentication)
 - Providers → Email: **Confirm email = an**; Multi-Factor (TOTP) muss aktiviert sein (Standard) (Voraussetzung dafür, dass die Admin-Zuweisung per E-Mail sicher ist)
 - URL Configuration: **Site URL** = Vercel-URL, **Redirect URLs** zusätzlich `http://localhost:5173`

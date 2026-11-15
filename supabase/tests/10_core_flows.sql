@@ -192,4 +192,72 @@ select tests.as_user('00000000-0000-0000-0000-0000000000c1');
 select tests.ok(public.calendar_feed_token(true) <> current_setting('tests.tok_user'), 'Kalender-Link kann zurückgesetzt werden');
 reset role;
 
+
+-- ======================= WhatsApp-Anbindung =======================
+select tests.ok(public.wa_normalize_phone('+49 (151) 234-567 89') = '4915123456789', 'Rufnummer wird normalisiert (+49 …)');
+select tests.ok(public.wa_normalize_phone('0049 151 23456789') = '4915123456789', 'Rufnummer mit 00 am Anfang');
+select tests.throws($$select public.wa_normalize_phone('0151 23456789')$$, 'Ländervorwahl', 'Nummer ohne Ländervorwahl wird abgelehnt');
+select tests.throws($$select public.wa_normalize_phone('+49 12')$$, 'Länge', 'Zu kurze Nummer wird abgelehnt');
+select tests.throws($$select public.wa_normalize_phone('+49abc12345678')$$, 'Ziffern', 'Buchstaben in der Nummer werden abgelehnt');
+
+set role authenticated;
+select tests.as_user('00000000-0000-0000-0000-0000000000c1');
+select tests.throws($$select public.whatsapp_create_chat('X', 'Y', '+4915111111111')$$, 'Nur Administratoren', 'Nutzer kann keinen WhatsApp-Chat anlegen');
+select tests.throws($$select public.whatsapp_add_contact('00000000-0000-0000-0000-0000000000c1', 'Y', '+4915111111111')$$, 'Nur Administratoren', 'Nutzer kann keine Rufnummer verbinden');
+select tests.as_user('00000000-0000-0000-0000-0000000000a1');
+select set_config('tests.wachat', public.whatsapp_create_chat('Gemeinde-Helfer', 'Anna', '+49 151 11111111')::text, false);
+select public.whatsapp_add_contact(current_setting('tests.wachat')::uuid, 'Ben', '+49 152 22222222');
+select tests.ok((select count(*) from public.whatsapp_contacts where chat_id = current_setting('tests.wachat')::uuid) = 2, 'Admin verbindet zwei Rufnummern mit einem Chat (Verteiler)');
+select tests.throws(format('select public.whatsapp_add_contact(%L, ''Z'', ''0151 5555555'')', current_setting('tests.wachat')), 'Ländervorwahl', 'Verbinden prüft die Rufnummer');
+select tests.ok((select count(*) from public.whatsapp_bridged_chats() where n = 2) = 1, 'Mitglied sieht, dass der Chat verbunden ist');
+select tests.as_user('00000000-0000-0000-0000-0000000000c1');
+select tests.ok((select count(*) from public.whatsapp_contacts) = 0, 'Normale Nutzer sehen keine Rufnummern (RLS)');
+select tests.ok((select count(*) from public.whatsapp_bridged_chats()) = 0, 'Nicht-Mitglieder sehen verbundene Chats nicht');
+select tests.throws($$select public.whatsapp_ingest('4915111111111', 'x', 'hi', 'w1')$$, 'permission denied', 'Nutzer kann keine WhatsApp-Nachricht einschleusen');
+select tests.throws($$select * from public.whatsapp_outbound('00000000-0000-0000-0000-0000000000c1')$$, 'permission denied', 'Nutzer kann den Versand nicht auslösen');
+reset role;
+
+-- Eingehend (Edge Function mit service_role)
+set role service_role;
+select tests.ok(public.whatsapp_ingest('4915111111111', 'Anna Profil', 'Hallo Team', 'wamid.1') = 1, 'Eingehende WhatsApp-Nachricht landet im Chat');
+select tests.ok(public.whatsapp_ingest('4915111111111', 'Anna Profil', 'Hallo Team', 'wamid.1') = 0, 'Doppelte Zustellung (gleiche ID) wird ignoriert');
+select tests.ok(public.whatsapp_ingest('4999999999999', 'Fremd', 'Spam', 'wamid.9') = 0, 'Unbekannte Rufnummer wird ignoriert');
+reset role;
+select tests.ok((select count(*) from public.chat_messages where source = 'whatsapp' and chat_id = current_setting('tests.wachat')::uuid) = 1, 'Genau eine WhatsApp-Nachricht gespeichert');
+select tests.ok((select sender_id is null and wa_name = 'Anna' from public.chat_messages where wa_message_id = 'wamid.1'), 'Absender ist die WhatsApp-Person (Name aus der Kontaktliste)');
+select tests.ok(exists (select 1 from public.notifications where link = 'chat:' || current_setting('tests.wachat') and user_id = '00000000-0000-0000-0000-0000000000a1' and title like 'Anna (WhatsApp)%'), 'App-Mitglieder werden über WhatsApp-Nachrichten benachrichtigt');
+select tests.ok((select last_inbound_at is not null from public.whatsapp_contacts where phone = '4915111111111' limit 1), '24-Stunden-Fenster wird vermerkt');
+
+-- Ausgehend: App-Nachricht an alle Rufnummern; WhatsApp-Nachricht nur an die ANDEREN (Verteiler)
+insert into public.chat_messages (chat_id, sender_id, body) values (current_setting('tests.wachat')::uuid, '00000000-0000-0000-0000-0000000000a1', 'Antwort aus der App');
+select set_config('tests.m_app', (select id::text from public.chat_messages where body = 'Antwort aus der App'), false);
+set role service_role;
+select set_config('tests.out1', (select count(*)::text || '|' || string_agg(phone || '=' || in_window::text, ',' order by phone) from public.whatsapp_outbound(current_setting('tests.m_app')::uuid)), false);
+select set_config('tests.out2', (select count(*)::text from public.whatsapp_outbound(current_setting('tests.m_app')::uuid)), false);
+reset role;
+select tests.ok(split_part(current_setting('tests.out1'), '|', 1) = '2', 'App-Nachricht wird für beide Rufnummern zum Versand reserviert');
+select tests.ok(split_part(current_setting('tests.out1'), '|', 2) = '4915111111111=true,4915222222222=false', '24-Stunden-Fenster: nur wer kürzlich geschrieben hat, bekommt freien Text');
+select tests.ok(current_setting('tests.out2') = '0', 'Erneuter Aufruf versendet nichts doppelt');
+select tests.ok((select count(*) from public.whatsapp_deliveries d join public.whatsapp_contacts c on c.id = d.contact_id where d.message_id = current_setting('tests.m_app')::uuid and c.phone = '4915111111111') = 1, 'Zustellung ist je Rufnummer vermerkt');
+select set_config('tests.m_wa', (select id::text from public.chat_messages where wa_message_id = 'wamid.1'), false);
+set role service_role;
+select set_config('tests.wa_to', (select string_agg(phone, ',') from public.whatsapp_outbound(current_setting('tests.m_wa')::uuid)), false);
+select public.whatsapp_set_delivery((select id from public.whatsapp_deliveries where message_id = current_setting('tests.m_app')::uuid limit 1), 'failed', 'Fenster zu');
+reset role;
+select tests.ok(current_setting('tests.wa_to') = '4915222222222', 'WhatsApp-Nachricht geht an die anderen Teilnehmer, nicht an den Absender zurück');
+select tests.ok((select count(*) from public.whatsapp_deliveries where status = 'failed' and error = 'Fenster zu') = 1, 'Fehlerstatus wird gespeichert');
+
+-- Sichtbarkeit des Zustellstatus nur für Chat-Mitglieder
+insert into public.chat_members (chat_id, user_id) values (current_setting('tests.wachat')::uuid, '00000000-0000-0000-0000-0000000000c2');
+set role authenticated;
+select tests.as_user('00000000-0000-0000-0000-0000000000c2');
+select tests.ok((select count(*) from public.whatsapp_deliveries) >= 3, 'Chat-Mitglied sieht den Zustellstatus');
+select tests.as_user('00000000-0000-0000-0000-0000000000c1');
+select tests.ok((select count(*) from public.whatsapp_deliveries) = 0, 'Nicht-Mitglied sieht keinen Zustellstatus');
+select tests.as_user('00000000-0000-0000-0000-0000000000a1');
+select public.whatsapp_remove_contact((select id from public.whatsapp_contacts where phone = '4915222222222' limit 1));
+select tests.ok((select count(*) from public.whatsapp_contacts) = 1, 'Admin kann eine Rufnummer trennen');
+reset role;
+select tests.ok((select count(*) from public.activity_log where action = 'WHATSAPP') >= 3, 'Verbinden/Trennen steht im Protokoll');
+
 \echo 'ALLE DATENBANK-TESTS BESTANDEN'
