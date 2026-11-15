@@ -39,14 +39,14 @@ export function renderShell(root) {
   const routes = Object.entries(ALL_ROUTES).filter(([, r]) => !r.managerOnly || isManager());
   const mainRoutes = routes.filter(([, r]) => r.main);
   const moreRoutes = routes.filter(([, r]) => !r.main);
-  const badge = (cls) => `<span data-badge class="hidden rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white ${cls}"></span>`;
+  const badge = (cls) => `<span data-badge class="hidden rounded-full bg-red-500 px-1.5 text-[12px] font-bold text-white ${cls}"></span>`;
 
   root.innerHTML = `
   <div class="flex min-h-screen">
     <aside class="sticky top-0 hidden h-screen w-60 shrink-0 flex-col justify-between bg-[#0f172a] p-4 text-[#cbd5e1] md:flex">
       <div>
-        <div class="mb-6 flex items-center gap-3 px-2 text-white">${logoMark('h-8 w-auto shrink-0')}<span class="leading-tight"><span class="block font-bold">MBG Lemgo</span><span class="block text-[11px] font-medium text-[#94a3b8]">Lagerverwaltung</span></span></div>
-        <button id="searchBtn" class="mb-2 flex w-full items-center gap-2 rounded-xl bg-[#1e293b] px-3 py-2 text-sm text-[#94a3b8] hover:text-white">${icon('search', 'h-4 w-4')}<span>Suchen</span><kbd class="ml-auto rounded bg-[#0f172a] px-1.5 text-[10px]">Strg K</kbd></button>
+        <div class="mb-6 flex items-center gap-3 px-2 text-white">${logoMark('h-8 w-auto shrink-0')}<span class="leading-tight"><span class="block font-bold">MBG Lemgo</span><span class="block text-[13px] font-medium text-[#94a3b8]">Lagerverwaltung</span></span></div>
+        <button id="searchBtn" class="mb-2 flex w-full items-center gap-2 rounded-xl bg-[#1e293b] px-3 py-2 text-sm text-[#94a3b8] hover:text-white">${icon('search', 'h-4 w-4')}<span>Suchen</span><kbd class="ml-auto rounded bg-[#0f172a] px-1.5 text-[12px]">Strg K</kbd></button>
         <button id="scanBtn" class="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-bold text-white hover:bg-brand-700">${icon('camera', 'h-4 w-4')} Scannen</button>
         <nav class="space-y-1" id="sideNav">
           ${routes.map(([k, r]) => `<a href="#/${k}" data-route="${k}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-[#1e293b]">${icon(r.icon, 'h-5 w-5 shrink-0')}<span class="truncate">${esc(r.label)}</span>${r.badge ? badge('ml-auto') : ''}</a>`).join('')}
@@ -54,7 +54,7 @@ export function renderShell(root) {
       </div>
       <div class="rounded-xl bg-[#1e293b] p-3">
         <div class="truncate text-xs font-bold text-white">${esc(displayName(state.profile))}</div>
-        <div class="mb-2 text-[10px] uppercase tracking-wider text-[#94a3b8]">${esc(roleName(state.profile.role))}${state.profile.managed_room ? ' · ' + esc(state.profile.managed_room) : ''}</div>
+        <div class="mb-2 text-[12px] uppercase tracking-wider text-[#94a3b8]">${esc(roleName(state.profile.role))}${state.profile.managed_room ? ' · ' + esc(state.profile.managed_room) : ''}</div>
         <button id="logoutBtn" class="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f172a] px-2 py-1.5 text-xs font-semibold text-[#cbd5e1] hover:text-white">${icon('logout', 'h-4 w-4')} Abmelden</button>
       </div>
     </aside>
@@ -62,8 +62,8 @@ export function renderShell(root) {
     <button id="searchFab" class="fixed bottom-32 right-3 z-40 flex h-10 w-10 items-center justify-center rounded-full bg-slate-700/90 text-white shadow-lg md:hidden" title="Suchen">${icon('search', 'h-5 w-5')}</button>
     <button id="scanFab" class="fixed bottom-20 right-3 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-brand-600/95 text-white shadow-lg md:hidden" title="Scannen">${icon('camera', 'h-5 w-5')}</button>
     <nav class="fixed inset-x-0 bottom-0 z-40 grid border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" id="tabBar" style="grid-template-columns:repeat(${mainRoutes.length + 1},minmax(0,1fr))">
-      ${mainRoutes.map(([k, r]) => `<a href="#/${k}" data-route="${k}" class="relative flex flex-col items-center py-2 text-[10px] font-semibold text-slate-500">${icon(r.icon, 'h-5 w-5')}${esc(r.short)}${r.badge ? badge('absolute right-2 top-1 !px-1 text-[9px]') : ''}</a>`).join('')}
-      <button id="moreBtn" class="flex flex-col items-center py-2 text-[10px] font-semibold text-slate-500">${icon('settings', 'h-5 w-5')}Mehr</button>
+      ${mainRoutes.map(([k, r]) => `<a href="#/${k}" data-route="${k}" class="relative flex flex-col items-center py-2 text-[12px] font-semibold text-slate-500">${icon(r.icon, 'h-5 w-5')}${esc(r.short)}${r.badge ? badge('absolute right-2 top-1 !px-1 text-[13px]') : ''}</a>`).join('')}
+      <button id="moreBtn" class="flex flex-col items-center py-2 text-[12px] font-semibold text-slate-500">${icon('settings', 'h-5 w-5')}Mehr</button>
     </nav>
   </div>`;
   root.querySelector('#logoutBtn').onclick = signOut;

@@ -81,7 +81,7 @@ async function managerDashboard() {
   const people = ids.length ? await supabase.from('public_profiles').select('id, full_name, username').in('id', ids) : { data: [] };
   const name = Object.fromEntries((people.data || []).map((p) => [p.id, displayName(p)]));
 
-  const kpi = (n, label, color, sec, href) => `<button data-kpi="${sec}" data-href="${href}" class="rounded-xl bg-slate-50 px-1 py-2 text-center transition hover:bg-slate-100"><div class="text-2xl font-black leading-none ${n ? color : 'text-slate-300'}">${n}</div><div class="mt-1 text-[11px] font-semibold leading-tight text-slate-500">${label}</div></button>`;
+  const kpi = (n, label, color, sec, href) => `<button data-kpi="${sec}" data-href="${href}" class="rounded-xl bg-slate-50 px-1 py-2 text-center transition hover:bg-slate-100"><div class="text-2xl font-black leading-none ${n ? color : 'text-slate-300'}">${n}</div><div class="mt-1 text-[13px] font-semibold leading-tight text-slate-500">${label}</div></button>`;
   const panel = (id, title, n, body, open = false, cls = 'bg-slate-100 text-slate-600') => collapsible({ id, title, count: n, countCls: cls, open, body: `<div class="space-y-1.5 text-sm">${body}</div>` });
   const rentalRow = (r) => `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2"><span class="min-w-0"><b class="block truncate">${esc(r.items?.name)}</b><span class="text-xs text-slate-500">${esc(name[r.borrower_id] || '?')} · fällig ${fmtDateTime(r.end_at)}</span></span><a href="#/terminal?user=${esc(r.borrower_id)}" class="btn-ghost !px-2.5 !py-1 !text-xs">Terminal</a></div>`;
   const parts = [];

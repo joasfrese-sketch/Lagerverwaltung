@@ -36,7 +36,7 @@ export async function render(el, opts = {}) {
       </div>
       <div id="grid"></div>
     </div>
-    <div class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-500">
+    <div class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-slate-500">
       ${state.rooms.map((r) => `<span class="inline-flex items-center gap-1"><i class="inline-block h-2.5 w-2.5 rounded" style="background:${roomColor(r.id, state.rooms)}"></i>${esc(r.name)}</span>`).join('')}
       <span class="inline-flex items-center gap-1"><i class="inline-block h-2.5 w-2.5 rounded border-2 border-red-600"></i>Überfällig</span>
       <span class="inline-flex items-center gap-1"><i class="inline-block h-2.5 w-2.5 rounded bg-slate-400 opacity-60"></i>Belegt (Details nicht sichtbar)</span>
@@ -101,7 +101,7 @@ function chipStyle(e) {
 }
 const chip = (e, text, extra = '') => {
   const s = chipStyle(e);
-  return `<button data-ev="${esc(e.id)}" style="${s.style}" class="mb-0.5 block w-full truncate rounded px-1 py-0.5 text-left text-[10px] font-semibold text-white ${s.cls} ${extra}" title="${esc(e.item_name)}">${e.overdue ? '⚠ ' : ''}${text}</button>`;
+  return `<button data-ev="${esc(e.id)}" style="${s.style}" class="mb-0.5 block w-full truncate rounded px-1 py-0.5 text-left text-[12px] font-semibold text-white ${s.cls} ${extra}" title="${esc(e.item_name)}">${e.overdue ? '⚠ ' : ''}${text}</button>`;
 };
 
 function drawMonth(grid, cal, first) {
@@ -120,7 +120,7 @@ function drawMonth(grid, cal, first) {
     html += `<div class="min-h-[4.5rem] bg-white p-1 md:min-h-[6rem]">
       <div class="mb-0.5 text-right"><span class="${isToday ? 'rounded-full bg-brand-600 px-1.5 py-0.5 font-bold text-white' : 'text-slate-500'}">${dayNum}</span></div>
       ${evs.slice(0, 3).map((e) => chip(e, esc(e.item_name))).join('')}
-      ${evs.length > 3 ? `<div class="text-[10px] font-semibold text-slate-400">+${evs.length - 3} weitere</div>` : ''}
+      ${evs.length > 3 ? `<div class="text-[12px] font-semibold text-slate-400">+${evs.length - 3} weitere</div>` : ''}
     </div>`;
   }
   grid.innerHTML = html + '</div>';
@@ -133,8 +133,8 @@ function drawWeek(grid, cal, monday) {
     const evs = cal.events.filter((e) => overlaps(e, d0, d1));
     const isToday = d0.toDateString() === todayStr;
     return `<div class="min-w-0 bg-white p-1.5 md:min-h-[14rem]">
-      <div class="mb-1 flex items-baseline justify-between gap-1 border-b border-slate-100 pb-1"><b class="text-xs ${isToday ? 'text-brand-600' : 'text-slate-500'}">${WEEKDAYS[i]}</b><span class="text-[11px] ${isToday ? 'rounded-full bg-brand-600 px-1.5 font-bold text-white' : 'text-slate-400'}">${d0.getDate()}.${d0.getMonth() + 1}.</span></div>
-      ${evs.length ? evs.map((e) => chip(e, `<span class="block truncate">${esc(e.item_name)}</span><span class="block font-normal opacity-90">${esc(dayLabel(e, d0))}${e.borrower_name ? ' · ' + esc(e.borrower_name) : ''}</span>`, '!py-1')).join('') : '<p class="text-center text-[10px] text-slate-300">–</p>'}
+      <div class="mb-1 flex items-baseline justify-between gap-1 border-b border-slate-100 pb-1"><b class="text-xs ${isToday ? 'text-brand-600' : 'text-slate-500'}">${WEEKDAYS[i]}</b><span class="text-[13px] ${isToday ? 'rounded-full bg-brand-600 px-1.5 font-bold text-white' : 'text-slate-400'}">${d0.getDate()}.${d0.getMonth() + 1}.</span></div>
+      ${evs.length ? evs.map((e) => chip(e, `<span class="block truncate">${esc(e.item_name)}</span><span class="block font-normal opacity-90">${esc(dayLabel(e, d0))}${e.borrower_name ? ' · ' + esc(e.borrower_name) : ''}</span>`, '!py-1')).join('') : '<p class="text-center text-[12px] text-slate-300">–</p>'}
     </div>`;
   }).join('');
   grid.innerHTML = `<div class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 sm:grid-cols-7">${cols}</div>`;

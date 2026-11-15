@@ -71,7 +71,7 @@ function drawWork(el) {
   const d = diffInventory(S.items, S.scanned, S.room);
   const pct = d.expected ? Math.round((d.found.length / d.expected) * 100) : 100;
   const tabs = [['missing', `Fehlend (${d.missing.length})`], ['found', `Gefunden (${d.found.length})`], ['foreign', `Fremd/unbekannt (${d.unexpected.length + d.unknown.length})`], ['rented', `Ausgeliehen (${d.rented.length})`]];
-  const row = (i, extra = '') => `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2 text-sm"><span class="min-w-0"><b class="block truncate">${esc(i.name)}</b><span class="font-mono text-[11px] text-slate-400">${esc(i.id)}${i.shelf || i.compartment ? ' · ' + esc([i.shelf, i.compartment].filter(Boolean).join(' · ')) : ''}</span></span>${extra}</div>`;
+  const row = (i, extra = '') => `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2 text-sm"><span class="min-w-0"><b class="block truncate">${esc(i.name)}</b><span class="font-mono text-[13px] text-slate-400">${esc(i.id)}${i.shelf || i.compartment ? ' · ' + esc([i.shelf, i.compartment].filter(Boolean).join(' · ')) : ''}</span></span>${extra}</div>`;
   const lists = {
     missing: d.missing.map((i) => row(i, `<button data-mark="${esc(i.id)}" class="btn-ghost shrink-0 !px-2.5 !py-1 !text-xs">✓ Gefunden</button>`)),
     found: d.found.map((i) => row(i, `<button data-unmark="${esc(i.id)}" class="shrink-0 text-xs text-slate-400 hover:text-red-600">rückgängig</button>`)),
@@ -120,10 +120,10 @@ function showResult(res, roomId, when) {
   const { el } = openModal(`
     <h3 class="mb-1 text-lg font-bold">Inventur ${esc(roomId)} – ${fmtDateTime(when)}</h3>
     <div class="mb-3 grid grid-cols-4 gap-2 text-center">
-      <div class="rounded-xl bg-slate-50 p-2"><div class="text-xl font-black">${res.expected}</div><div class="text-[11px] text-slate-500">Soll</div></div>
-      <div class="rounded-xl bg-emerald-50 p-2"><div class="text-xl font-black text-emerald-700">${res.found}</div><div class="text-[11px] text-slate-500">Ist</div></div>
-      <div class="rounded-xl bg-red-50 p-2"><div class="text-xl font-black text-red-600">${res.missing.length}</div><div class="text-[11px] text-slate-500">Fehlt</div></div>
-      <div class="rounded-xl bg-amber-50 p-2"><div class="text-xl font-black text-amber-700">${res.unexpected.length + res.unknown.length}</div><div class="text-[11px] text-slate-500">Fremd</div></div></div>
+      <div class="rounded-xl bg-slate-50 p-2"><div class="text-xl font-black">${res.expected}</div><div class="text-[13px] text-slate-500">Soll</div></div>
+      <div class="rounded-xl bg-emerald-50 p-2"><div class="text-xl font-black text-emerald-700">${res.found}</div><div class="text-[13px] text-slate-500">Ist</div></div>
+      <div class="rounded-xl bg-red-50 p-2"><div class="text-xl font-black text-red-600">${res.missing.length}</div><div class="text-[13px] text-slate-500">Fehlt</div></div>
+      <div class="rounded-xl bg-amber-50 p-2"><div class="text-xl font-black text-amber-700">${res.unexpected.length + res.unknown.length}</div><div class="text-[13px] text-slate-500">Fremd</div></div></div>
     ${ok ? '<p class="mb-3 rounded-xl bg-emerald-50 p-3 text-center text-sm font-semibold text-emerald-700">✅ Keine Differenzen – Bestand stimmt.</p>'
       : `<div class="mb-3 max-h-64 overflow-y-auto rounded-xl border"><table class="w-full text-left text-xs"><thead class="bg-slate-50 text-slate-500"><tr><th class="p-2">Ergebnis</th><th class="p-2">ID</th><th class="p-2">Bezeichnung</th><th class="p-2">Raum</th></tr></thead><tbody>${rows.map((r) => `<tr class="border-t"><td class="p-2 font-semibold">${esc(r.ergebnis)}</td><td class="p-2 font-mono">${esc(r.id)}</td><td class="p-2">${esc(r.name)}</td><td class="p-2">${esc(r.raum)}</td></tr>`).join('')}</tbody></table></div>`}
     <div class="grid grid-cols-3 gap-2"><button data-f="xlsx" class="btn-primary" ${rows.length ? '' : 'disabled'}>Excel</button><button data-f="csv" class="btn-ghost" ${rows.length ? '' : 'disabled'}>CSV</button><button id="print" class="btn-ghost">Drucken</button></div>

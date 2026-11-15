@@ -21,8 +21,8 @@ export async function mountItemCalendar(box, itemId, { getRange, onPickDay }) {
   box.innerHTML = `
     <div class="mb-1 flex items-center justify-between"><button type="button" data-nav="-1" class="btn-ghost !px-2.5 !py-1">←</button><b id="ttl" class="text-sm"></b><button type="button" data-nav="1" class="btn-ghost !px-2.5 !py-1">→</button></div>
     <div id="grid"></div>
-    <div class="mt-2 flex flex-wrap gap-3 text-[11px] text-slate-500"><span><i class="inline-block h-2.5 w-2.5 rounded bg-red-200"></i> ganztägig belegt</span><span><i class="inline-block h-2.5 w-2.5 rounded bg-amber-200"></i> teilweise belegt</span><span><i class="inline-block h-2.5 w-2.5 rounded ring-2 ring-brand-500"></i> dein Zeitraum</span></div>
-    <p class="mt-1 text-[11px] text-slate-400">Tippe zwei Tage an, um Beginn und Rückgabe zu setzen.</p>
+    <div class="mt-2 flex flex-wrap gap-3 text-[13px] text-slate-500"><span><i class="inline-block h-2.5 w-2.5 rounded bg-red-200"></i> ganztägig belegt</span><span><i class="inline-block h-2.5 w-2.5 rounded bg-amber-200"></i> teilweise belegt</span><span><i class="inline-block h-2.5 w-2.5 rounded ring-2 ring-brand-500"></i> dein Zeitraum</span></div>
+    <p class="mt-1 text-[13px] text-slate-400">Tippe zwei Tage an, um Beginn und Rückgabe zu setzen.</p>
     <div id="info" class="mt-2 space-y-1 text-xs"></div>`;
   box.querySelectorAll('[data-nav]').forEach((b) => (b.onclick = () => {
     view.m += Number(b.dataset.nav);
@@ -38,7 +38,7 @@ export async function mountItemCalendar(box, itemId, { getRange, onPickDay }) {
     const first = new Date(view.y, view.m, 1); const offset = (first.getDay() + 6) % 7;
     const days = new Date(view.y, view.m + 1, 0).getDate(); const cells = Math.ceil((offset + days) / 7) * 7;
     const { start, end } = getRange();
-    let html = `<div class="grid grid-cols-7 gap-1 text-center text-[11px]">${WD.map((d) => `<div class="font-bold text-slate-400">${d}</div>`).join('')}`;
+    let html = `<div class="grid grid-cols-7 gap-1 text-center text-[13px]">${WD.map((d) => `<div class="font-bold text-slate-400">${d}</div>`).join('')}`;
     for (let c = 0; c < cells; c++) {
       const n = c - offset + 1;
       if (n < 1 || n > days) { html += '<div></div>'; continue; }

@@ -65,8 +65,8 @@ async function renderRoom(el) {
       ${canManageHere ? '<button id="newItem" class="btn-primary">+ Neu</button><button id="moreBtn" class="btn-ghost !px-3.5 text-lg leading-none" aria-label="Weitere Aktionen">⋯</button>' : '<button id="selToggle" class="btn-ghost">☑️ Mehrere ausleihen</button>'}
     </div>
     <div class="mb-2 flex gap-2">
-      <input id="q" class="input min-w-0 flex-1" placeholder="Suchen (Name, Kategorie, ID)…" value="${esc(search)}">
-      <button id="filterBtn" class="btn-ghost shrink-0">⚙️ Filter<span id="fBadge" class="ml-1 hidden rounded-full bg-brand-600 px-1.5 text-[11px] font-bold leading-5 text-white"></span></button>
+      <input id="q" class="input min-w-0 flex-1" placeholder="Artikel suchen…" value="${esc(search)}">
+      <button id="filterBtn" class="btn-ghost shrink-0">⚙️ Filter<span id="fBadge" class="ml-1 hidden rounded-full bg-brand-600 px-1.5 text-[13px] font-bold leading-5 text-white"></span></button>
     </div>
     <div id="filters" class="mb-3 flex flex-wrap items-center gap-1.5 text-xs"></div>
     <div id="bulkBar"></div>
@@ -339,11 +339,11 @@ function itemCard(i, rental) {
   const more = selectMode ? '' : `<button data-act="more" data-id="${esc(i.id)}" class="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-base font-bold leading-none text-slate-600 hover:bg-slate-200" aria-label="Weitere Aktionen">⋯</button>`;
   return `<article data-card="${esc(i.id)}" class="card relative flex gap-3 ${selectMode ? 'cursor-pointer' : ''} ${sel.has(i.id) ? 'ring-2 ring-brand-500' : ''} ${selectMode && !selectable ? 'opacity-50' : ''}">
     ${selectMode ? `<input type="checkbox" tabindex="-1" ${sel.has(i.id) ? 'checked' : ''} ${selectable ? '' : 'disabled'} class="mt-1 h-5 w-5 shrink-0 rounded text-brand-600">` : ''}
-    ${photo ? `<div class="relative h-16 w-16 shrink-0"><img ${selectMode ? '' : `data-act="gallery" data-id="${esc(i.id)}"`} src="${esc(thumbUrl(photo))}" alt="" loading="lazy" decoding="async" class="h-16 w-16 rounded-xl object-cover ${selectMode ? '' : 'cursor-zoom-in'}">${i.photos.length > 1 ? `<span class="absolute -bottom-1 -right-1 rounded-full bg-black/70 px-1.5 text-[10px] font-bold text-white">${i.photos.length}</span>` : ''}</div>` : '<div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-2xl">📦</div>'}
+    ${photo ? `<div class="relative h-16 w-16 shrink-0"><img ${selectMode ? '' : `data-act="gallery" data-id="${esc(i.id)}"`} src="${esc(thumbUrl(photo))}" alt="" loading="lazy" decoding="async" class="h-16 w-16 rounded-xl object-cover ${selectMode ? '' : 'cursor-zoom-in'}">${i.photos.length > 1 ? `<span class="absolute -bottom-1 -right-1 rounded-full bg-black/70 px-1.5 text-[12px] font-bold text-white">${i.photos.length}</span>` : ''}</div>` : '<div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-2xl">📦</div>'}
     <div class="min-w-0 flex-1">
       <div class="flex flex-wrap items-center gap-1.5 pr-9"><h3 class="truncate font-bold">${esc(i.name)}</h3>${i.item_type === 'kit' ? '<span class="badge bg-purple-100 text-purple-700">KIT</span>' : ''}</div>
       <p class="text-xs text-slate-500">${esc(i.id)} · ${esc(i.room_id)}${loc ? ' · ' + esc(loc) : ''}</p>
-      <div class="mt-1 flex flex-wrap items-center gap-2">${statusBadge(i, rental)}${rental ? `<span class="text-[11px] text-slate-500">bis ${fmtDateTime(rental.end_at)}</span>` : ''}${insp && insp.level !== 'ok' ? `<span class="badge ${insp.level === 'due' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'}">🔧 ${esc(insp.text)}</span>` : ''}</div>
+      <div class="mt-1 flex flex-wrap items-center gap-2">${statusBadge(i, rental)}${rental ? `<span class="text-[13px] text-slate-500">bis ${fmtDateTime(rental.end_at)}</span>` : ''}${insp && insp.level !== 'ok' ? `<span class="badge ${insp.level === 'due' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'}">🔧 ${esc(insp.text)}</span>` : ''}</div>
       ${selectMode ? '' : `<div class="mt-2 flex flex-wrap gap-2">${actions}</div>`}
     </div>${more}</article>`;
 }

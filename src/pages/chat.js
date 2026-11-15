@@ -13,8 +13,8 @@ export async function render(el) {
   el.innerHTML = `
     <div class="mb-3 flex items-center gap-2"><h1 class="mr-auto text-2xl font-bold">Chat</h1>
       <div class="flex rounded-xl bg-slate-200 p-0.5 text-sm font-semibold">
-        <button id="tChats" class="flex items-center gap-1.5 rounded-lg px-3 py-1.5">💬 Chats<span id="bChats" class="hidden min-w-[1.25rem] rounded-full bg-red-500 px-1.5 text-center text-[11px] font-bold leading-5 text-white"></span></button>
-        <button id="tNotif" class="flex items-center gap-1.5 rounded-lg px-3 py-1.5">🔔 Mitteilungen<span id="bNotif" class="hidden min-w-[1.25rem] rounded-full bg-red-500 px-1.5 text-center text-[11px] font-bold leading-5 text-white"></span></button></div></div>
+        <button id="tChats" class="flex items-center gap-1.5 rounded-lg px-3 py-1.5">💬 Chats<span id="bChats" class="hidden min-w-[1.25rem] rounded-full bg-red-500 px-1.5 text-center text-[13px] font-bold leading-5 text-white"></span></button>
+        <button id="tNotif" class="flex items-center gap-1.5 rounded-lg px-3 py-1.5">🔔 Mitteilungen<span id="bNotif" class="hidden min-w-[1.25rem] rounded-full bg-red-500 px-1.5 text-center text-[13px] font-bold leading-5 text-white"></span></button></div></div>
     <div id="body"></div>`;
   el.querySelector('#tChats').onclick = () => { S.tab = 'chats'; draw(); };
   el.querySelector('#tNotif').onclick = () => { S.tab = 'notif'; draw(); };
@@ -75,7 +75,7 @@ async function loadList() {
     });
     S.chats.sort((a, b) => (a.type === 'global' ? -1 : b.type === 'global' ? 1 : a.title.localeCompare(b.title)));
     list.innerHTML = `<button id="newChat" class="btn-primary mb-2 w-full">+ Neuer Chat</button><div class="space-y-1.5">
-      ${S.chats.map((c) => `<button data-chat="${esc(c.id)}" class="card flex w-full items-center justify-between !p-3 text-left text-sm font-semibold ${S.current === c.id ? 'ring-2 ring-brand-500' : ''}">${esc(c.title)}${S.unread.has(c.id) ? `<span class="min-w-[1.25rem] rounded-full bg-red-500 px-1.5 text-center text-[11px] font-bold leading-5 text-white" title="ungelesene Nachrichten">${S.unreadCount[c.id] || '•'}</span>` : ''}</button>`).join('')}</div>`;
+      ${S.chats.map((c) => `<button data-chat="${esc(c.id)}" class="card flex w-full items-center justify-between !p-3 text-left text-sm font-semibold ${S.current === c.id ? 'ring-2 ring-brand-500' : ''}">${esc(c.title)}${S.unread.has(c.id) ? `<span class="min-w-[1.25rem] rounded-full bg-red-500 px-1.5 text-center text-[13px] font-bold leading-5 text-white" title="ungelesene Nachrichten">${S.unreadCount[c.id] || '•'}</span>` : ''}</button>`).join('')}</div>`;
     list.querySelector('#newChat').onclick = newChatModal;
     list.querySelectorAll('[data-chat]').forEach((b) => (b.onclick = () => openChat(b.dataset.chat)));
   } catch (e) { toast(e.message, 'error'); }
@@ -123,7 +123,7 @@ async function loadMessages() {
     box.innerHTML = msgs.reverse().map((m) => {
       const mine = m.sender_id === state.user.id;
       const t = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      return `<div class="flex flex-col ${mine ? 'items-end' : 'items-start'}"><div class="text-[10px] text-slate-400">${mine ? 'Du' : esc(S.names[m.sender_id] || 'Unbekannt')} · ${t}</div>
+      return `<div class="flex flex-col ${mine ? 'items-end' : 'items-start'}"><div class="text-[12px] text-slate-400">${mine ? 'Du' : esc(S.names[m.sender_id] || 'Unbekannt')} · ${t}</div>
         <div class="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${mine ? 'rounded-tr-none bg-brand-600 text-white' : 'rounded-tl-none bg-slate-100'}">${esc(m.body)}</div></div>`;
     }).join('') || '<p class="py-8 text-center text-sm italic text-slate-400">Noch keine Nachrichten.</p>';
     box.scrollTop = box.scrollHeight;
@@ -164,7 +164,7 @@ async function drawNotifs() {
     body.innerHTML = `<div class="mb-2 flex justify-end"><button id="allRead" class="btn-ghost !py-1 !text-xs">Alle als gelesen markieren</button></div>
       <div class="space-y-2">${list.map((n) => `<button data-n="${esc(n.id)}" class="card flex w-full gap-3 !p-3 text-left ${n.read_at ? 'opacity-60' : 'border-brand-500/40 bg-brand-50/50'}">
         <span class="text-xl">${ICONS[n.type] || 'ℹ️'}</span><span class="min-w-0 flex-1"><b class="block text-sm">${esc(n.title)}</b><span class="block text-xs text-slate-600">${esc(n.body)}</span>
-        <span class="text-[10px] text-slate-400">${timeAgo(n.created_at)}</span></span></button>`).join('') || '<p class="card py-10 text-center text-sm italic text-slate-400">Keine Mitteilungen.</p>'}</div>`;
+        <span class="text-[12px] text-slate-400">${timeAgo(n.created_at)}</span></span></button>`).join('') || '<p class="card py-10 text-center text-sm italic text-slate-400">Keine Mitteilungen.</p>'}</div>`;
     body.querySelector('#allRead').onclick = async () => {
       await supabase.from('notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
       window.dispatchEvent(new Event('notifications-changed')); drawNotifs();

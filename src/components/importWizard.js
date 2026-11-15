@@ -72,7 +72,7 @@ export function openImportWizard({ defaultRoom, done }) {
         <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           ${Array.from({ length: colsN }, (_, i) => {
             const f = S.mapping[i]; const sample = rows.slice(0, 2).map((r) => r.cells[i]).filter(Boolean).join(' · ');
-            return `<div class="rounded-xl border p-2.5 ${f ? '' : 'opacity-60'}"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="truncate text-xs font-bold">${esc(header(i))}</div><div class="truncate text-[11px] text-slate-400">${esc(sample) || '—'}</div></div>
+            return `<div class="rounded-xl border p-2.5 ${f ? '' : 'opacity-60'}"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="truncate text-xs font-bold">${esc(header(i))}</div><div class="truncate text-[13px] text-slate-400">${esc(sample) || '—'}</div></div>
               ${f ? `<button data-rm="${i}" title="Spalte nicht importieren" class="text-slate-400 hover:text-red-600">✕</button>` : ''}</div>
               <select data-map="${i}" class="input mt-1.5 !py-1.5 text-xs"><option value="">— nicht importieren —</option>${FIELDS.map((x) => `<option value="${x.key}" ${f === x.key ? 'selected' : ''}>${esc(x.label)}${x.required ? ' *' : ''}</option>`).join('')}</select></div>`;
           }).join('')}</div>
