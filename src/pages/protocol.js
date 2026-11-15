@@ -7,7 +7,7 @@ import { openExport } from '../components/exportDialog.js';
 import { icon } from '../lib/icons.js';
 
 const PAGE = 50;
-const ACTIONS = ['AUSLEIHE', 'RÜCKGABE', 'DEFEKT', 'STATUS', 'ENTNAHME', 'ANGELEGT', 'GEÄNDERT', 'GELÖSCHT', 'VERLÄNGERUNG', 'ANTRAG', 'PRÜFUNG', 'INVENTUR'];
+const ACTIONS = ['AUSLEIHE', 'RÜCKGABE', 'DEFEKT', 'STATUS', 'ENTNAHME', 'ANGELEGT', 'GEÄNDERT', 'GELÖSCHT', 'VERLÄNGERUNG', 'ANTRAG', 'PRÜFUNG', 'INVENTUR', 'PASSWORT'];
 const FIELD = { name: 'Bezeichnung', room_id: 'Raum', category: 'Kategorie', item_type: 'Typ', shelf: 'Regal', compartment: 'Fach', accessories: 'Zubehör', stock_quantity: 'Bestand', min_stock: 'Mindestbestand', required_permission: 'Berechtigung', inspection_interval_months: 'Prüfintervall (Monate)', photos: 'Fotos' };
 const val = (v) => (v == null || v === '' ? '–' : Array.isArray(v) ? v.join(', ') || '–' : String(v));
 const F = { from: '', to: '', action: '', who: '', q: '', page: 0 };

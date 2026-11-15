@@ -10,6 +10,7 @@ import { openExport } from '../components/exportDialog.js';
 import { fmtDateTime } from '../lib/ui.js';
 import { enablePush, disablePush, pushActive, pushSupported, pushConfigured } from '../lib/push.js';
 import { collapsible, bindCollapsibles, setCount } from '../components/collapse.js';
+import { generatePassword, checkPassword } from '../lib/password.js';
 
 export async function render(el) {
   const settings = unwrap(await supabase.from('user_settings').select('prefs').eq('user_id', state.user.id).maybeSingle());
@@ -112,7 +113,8 @@ async function loadUsers(el) {
       const mine = perms.filter((x) => x.user_id === u.id);
       return `<div class="rounded-xl border p-3" data-u="${esc(u.id)}"><div class="flex flex-wrap items-center gap-2"><div class="mr-auto min-w-0"><b class="text-sm">${esc(displayName(u))}</b><div class="truncate text-xs text-slate-500">@${esc(u.username)} · ${esc(u.email)}</div></div>
         ${isAdmin() && u.id !== state.user.id ? `<select data-role class="input !w-auto !py-1.5 text-xs"><option value="user" ${u.role === 'user' ? 'selected' : ''}>Benutzer</option><option value="raum_manager" ${u.role === 'raum_manager' ? 'selected' : ''}>Raum-Manager</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrator</option></select>
-        <select data-room class="input !w-auto !py-1.5 text-xs ${u.role === 'raum_manager' ? '' : 'hidden'}"><option value="">Alle Räume</option>${state.rooms.map((r) => `<option value="${esc(r.id)}" ${u.managed_room === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select>` : `<span class="badge bg-slate-100 text-slate-600">${esc(roleName(u.role))}</span>`}</div>
+        <select data-room class="input !w-auto !py-1.5 text-xs ${u.role === 'raum_manager' ? '' : 'hidden'}"><option value="">Alle Räume</option>${state.rooms.map((r) => `<option value="${esc(r.id)}" ${u.managed_room === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select>
+        <button data-pw class="btn-ghost !px-2.5 !py-1.5 !text-xs" title="Passwort dieser Person neu setzen">🔑 Passwort</button>` : `<span class="badge bg-slate-100 text-slate-600">${esc(roleName(u.role))}</span>`}</div>
         <div class="mt-2 flex flex-wrap items-center gap-1.5">${mine.map((x) => `<span class="badge bg-brand-100 text-brand-700">${esc(x.permission_name)} <button data-delperm="${esc(x.permission_name)}" class="ml-1">✕</button></span>`).join('')}
         <form data-addperm class="flex gap-1"><input list="pl" name="p" class="input !w-36 !py-1 text-xs" placeholder="+ Berechtigung" required><button class="btn-ghost !px-2 !py-1 !text-xs">+</button></form></div></div>`;
     }).join('');
@@ -120,12 +122,42 @@ async function loadUsers(el) {
       const id = row.dataset.u;
       const upd = (patch) => busy(null, async () => { unwrap(await supabase.from('profiles').update(patch).eq('id', id)); toast('Gespeichert', 'success'); loadUsers(el); });
       row.querySelector('[data-role]')?.addEventListener('change', (e) => upd({ role: e.target.value, managed_room: e.target.value === 'raum_manager' ? row.querySelector('[data-room]').value || null : null }));
+      row.querySelector('[data-pw]')?.addEventListener('click', () => passwordModal(users.find((x) => x.id === id)));
       row.querySelector('[data-room]')?.addEventListener('change', (e) => upd({ managed_room: e.target.value || null }));
       row.querySelectorAll('[data-delperm]').forEach((b) => (b.onclick = () => busy(null, async () => { unwrap(await supabase.from('permissions').delete().eq('user_id', id).eq('permission_name', b.dataset.delperm)); loadUsers(el); })));
       row.querySelector('[data-addperm]').onsubmit = (e) => { e.preventDefault(); const name = new FormData(e.target).get('p').trim();
         busy(null, async () => { unwrap(await supabase.from('permissions').upsert({ user_id: id, permission_name: name }, { onConflict: 'user_id,permission_name', ignoreDuplicates: true })); loadUsers(el); }); };
     });
   } catch (e) { box.innerHTML = `<p class="text-red-600">${esc(e.message)}</p>`; }
+}
+
+// Administrator setzt das Passwort einer anderen Person neu
+function passwordModal(u) {
+  const { el, close } = openModal(`<h3 class="mb-1 text-lg font-bold">🔑 Passwort setzen</h3>
+    <p class="mb-3 text-sm text-slate-500">Für <b>${esc(displayName(u))}</b> (@${esc(u.username)}). Teile das neue Passwort der Person auf sicherem Weg mit und bitte sie, es nach der Anmeldung unter Einstellungen → Sicherheit zu ändern.</p>
+    <form id="npwForm" class="space-y-3">
+      <div><label class="label">Neues Passwort (mindestens 8 Zeichen)</label>
+        <div class="flex gap-2"><input id="npw" name="npw" type="text" minlength="8" maxlength="72" required class="input font-mono" autocomplete="off" spellcheck="false"><button type="button" id="ngen" class="btn-ghost shrink-0">Zufällig</button></div>
+        <p id="nhint" class="mt-1 text-xs text-slate-500">Tipp: „Zufällig“ erzeugt ein sicheres Passwort ohne verwechselbare Zeichen.</p></div>
+      <div class="flex flex-wrap justify-end gap-2"><button type="button" id="ncopy" class="btn-ghost">Kopieren</button><button type="button" data-close class="btn-ghost">Abbrechen</button><button class="btn-primary">Passwort setzen</button></div></form>`);
+  const pw = el.querySelector('#npw');
+  const check = () => { const m = pw.value ? checkPassword(pw.value) : null; el.querySelector('#nhint').textContent = m || 'Tipp: „Zufällig“ erzeugt ein sicheres Passwort ohne verwechselbare Zeichen.'; el.querySelector('#nhint').className = `mt-1 text-xs ${m ? 'text-red-600' : 'text-slate-500'}`; return m; };
+  pw.oninput = check;
+  el.querySelector('#ngen').onclick = () => { pw.value = generatePassword(); check(); };
+  el.querySelector('#ncopy').onclick = async () => { try { await navigator.clipboard.writeText(pw.value); toast('Kopiert', 'success'); } catch { pw.select(); } };
+  el.querySelector('#npwForm').onsubmit = (e) => {
+    e.preventDefault();
+    const m = checkPassword(pw.value); if (m) return toast(m, 'error');
+    busy(e.target.querySelector('.btn-primary'), async () => {
+      const { data, error } = await supabase.functions.invoke('admin-set-password', { body: { user_id: u.id, password: pw.value } });
+      if (error || data?.error) {
+        let msg = data?.error;
+        if (!msg && error?.context?.json) { try { msg = (await error.context.json())?.error; } catch { /* keine Details */ } }
+        throw new Error(msg || error.message);
+      }
+      close(); toast(`Passwort für ${displayName(u)} gesetzt`, 'success');
+    });
+  };
 }
 
 function newUserModal(done) {
