@@ -6,7 +6,7 @@
 // Secrets: WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID, optional WHATSAPP_TEMPLATE_NAME, WHATSAPP_TEMPLATE_LANG
 // Deploy: supabase functions deploy whatsapp-send --no-verify-jwt
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { outboundText, templateParam, interpretSendResult } from './whatsapp.js';
+import { outboundText, templateParam, interpretSendResult } from '../_shared/whatsapp.js';
 
 const GRAPH = 'https://graph.facebook.com/v21.0';
 

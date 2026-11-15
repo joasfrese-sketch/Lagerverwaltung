@@ -18,7 +18,7 @@ export async function render(el) {
     supabase.from('rentals').select('id, end_at, start_at, project, items(name)').eq('borrower_id', state.user.id).eq('status', 'active').order('end_at'),
     supabase.from('notifications').select('*').is('read_at', null).order('created_at', { ascending: false }).limit(5),
     supabase.from('rental_calendar').select('id, item_name, start_at, end_at, borrower_name').eq('status', 'active').gte('end_at', nowIso).order('start_at').limit(5),
-    supabase.from('chat_messages').select('body, sender_id, created_at, source, wa_name').eq('chat_id', GLOBAL_CHAT_ID).order('created_at', { ascending: false }).limit(4),
+    supabase.from('chat_messages').select('*').eq('chat_id', GLOBAL_CHAT_ID).order('created_at', { ascending: false }).limit(4),
   ]);
   const my = unwrap(rentals), nf = unwrap(notifs), up = unwrap(upcoming), ms = unwrap(msgs);
   const ids = [...new Set(ms.map((m) => m.sender_id).filter(Boolean))];

@@ -4,7 +4,7 @@
 // Nur Rufnummern, die ein Administrator mit einem Chat verbunden hat, werden übernommen.
 // Deploy: supabase functions deploy whatsapp-webhook --no-verify-jwt
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { parseWebhook, verifySignature } from './whatsapp.js';
+import { parseWebhook, verifySignature } from '../_shared/whatsapp.js';
 
 Deno.serve(async (req) => {
   if (req.method === 'GET') {
