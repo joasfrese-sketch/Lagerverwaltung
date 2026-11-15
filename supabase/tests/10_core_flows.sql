@@ -132,6 +132,13 @@ select public.decide_extension((select id from public.extension_requests where s
 reset role;
 select tests.ok((select end_at from public.rentals where borrower_id = '00000000-0000-0000-0000-0000000000c2' and status = 'active') > now() + interval '19 days', 'Raum-Manager genehmigt den Antrag');
 
+-- ======================= Konto anlegen wie die Edge Function (Code statt Markierung) =======================
+insert into public.invite_codes (code, max_uses, expires_at) values ('TESTCODE', 1, now() + interval '10 minutes');
+insert into auth.users (id, email, raw_user_meta_data) values ('00000000-0000-0000-0000-0000000000e1', 'viaCode@test.local', '{"full_name":"Via Code","username":"viacode","invite_code":"TESTCODE"}');
+select tests.ok((select count(*) from public.profiles where id = '00000000-0000-0000-0000-0000000000e1') = 1, 'Konto mit einmaligem Einladungs-Code wird angelegt');
+select tests.ok((select uses from public.invite_codes where code = 'TESTCODE') = 1, 'Der Code wird dabei verbraucht');
+select tests.throws($$insert into auth.users (id, email, raw_user_meta_data) values ('00000000-0000-0000-0000-0000000000e2', 'zweit@test.local', '{"invite_code":"TESTCODE"}')$$, 'Einladungs-Code', 'Ein verbrauchter Code funktioniert kein zweites Mal');
+
 -- ======================= Überfällig blockiert =======================
 insert into public.rentals (item_id, borrower_id, start_at, end_at) values ('T-DRILL', '00000000-0000-0000-0000-0000000000c2', now() - interval '3 days', now() - interval '1 day');
 set role authenticated;
