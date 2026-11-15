@@ -139,7 +139,11 @@ function newUserModal(done) {
   el.querySelector('#f').onsubmit = (e) => { e.preventDefault(); const body = Object.fromEntries(new FormData(e.target)); body.username = body.username.toLowerCase(); body.email = body.email.toLowerCase(); body.managed_room = body.managed_room || null;
     busy(e.target.querySelector('.btn-primary'), async () => {
       const { data, error } = await supabase.functions.invoke('admin-create-user', { body });
-      if (error || data?.error) throw new Error(data?.error || error.message);
+      if (error || data?.error) {
+        let msg = data?.error;
+        if (!msg && error?.context?.json) { try { msg = (await error.context.json())?.error; } catch { /* keine Details */ } }
+        throw new Error(msg || error.message);
+      }
       close(); toast('Benutzer angelegt', 'success'); done();
     }); };
 }

@@ -2,13 +2,19 @@
 // Deploy: supabase functions deploy admin-create-user
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' };
+// Die Anmeldebibliothek der App sendet zusätzlich „apikey“ und „x-client-info“; ohne diese Header bricht der Browser
+// die Anfrage schon bei der Vorabprüfung ab („Failed to send a request to the Edge Function“).
+const cors = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
     const url = Deno.env.get('SUPABASE_URL')!;
-    const caller = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: req.headers.get('Authorization')! } } });
+    const caller = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } }, auth: { persistSession: false } });
     const { data: { user } } = await caller.auth.getUser();
     if (!user) throw new Error('Nicht angemeldet');
     const { data: me } = await caller.from('profiles').select('role').eq('id', user.id).single();
