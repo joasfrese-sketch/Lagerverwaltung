@@ -1,12 +1,11 @@
 import { displayName } from '../lib/format.js';
-import { supabase, unwrap, safeData } from '../lib/supabase.js';
+import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, toast, openModal, busy } from '../lib/ui.js';
-import { state, GLOBAL_CHAT_ID, isManager, isAdmin } from '../state.js';
-import { openWhatsAppManager, openNewWhatsAppChat } from '../components/whatsappChat.js';
+import { state, GLOBAL_CHAT_ID, isManager } from '../state.js';
 import { timeAgo } from '../lib/format.js';
 import { unreadSummary, countUnreadMessages } from '../lib/unread.js';
 
-const S = { tab: 'chats', chats: [], wa: {}, names: {}, unread: new Set(), unreadCount: {}, current: null, channel: null, root: null };
+const S = { tab: 'chats', chats: [], names: {}, unread: new Set(), unreadCount: {}, current: null, channel: null, root: null };
 const ICONS = { overdue: '⏰', due_soon: '⏳', rental: '📦', return: '✅', damage: '🛠️', stock: '📉', chat: '💬', info: 'ℹ️', system: '⚙️' };
 
 export async function render(el) {
@@ -69,7 +68,6 @@ async function loadList() {
     const un = unwrap(await supabase.from('notifications').select('link').eq('type', 'chat').is('read_at', null));
     S.unread = new Set(un.map((n) => (n.link || '').replace('chat:', '')));
     S.unreadCount = await countUnreadMessages([...S.unread]);
-    S.wa = Object.fromEntries((await safeData(supabase.rpc('whatsapp_bridged_chats'), [])).map((x) => [x.chat_id, x.n]));
     S.chats.forEach((c) => {
       if (c.type === 'global') c.title = '🌐 Alle';
       else if (c.type === 'group') c.title = '👥 ' + (c.name || 'Gruppe');
@@ -77,7 +75,7 @@ async function loadList() {
     });
     S.chats.sort((a, b) => (a.type === 'global' ? -1 : b.type === 'global' ? 1 : a.title.localeCompare(b.title)));
     list.innerHTML = `<button id="newChat" class="btn-primary mb-2 w-full">+ Neuer Chat</button><div class="space-y-1.5">
-      ${S.chats.map((c) => `<button data-chat="${esc(c.id)}" class="card flex w-full items-center justify-between !p-3 text-left text-sm font-semibold ${S.current === c.id ? 'ring-2 ring-brand-500' : ''}"><span class="min-w-0 truncate">${esc(c.title)}${S.wa[c.id] ? ' <span class="badge bg-emerald-100 text-emerald-800" title="Mit WhatsApp verbunden">WhatsApp</span>' : ''}</span>${S.unread.has(c.id) ? `<span class="min-w-[1.25rem] rounded-full bg-red-500 px-1.5 text-center text-[13px] font-bold leading-5 text-white" title="ungelesene Nachrichten">${S.unreadCount[c.id] || '•'}</span>` : ''}</button>`).join('')}</div>`;
+      ${S.chats.map((c) => `<button data-chat="${esc(c.id)}" class="card flex w-full items-center justify-between !p-3 text-left text-sm font-semibold ${S.current === c.id ? 'ring-2 ring-brand-500' : ''}">${esc(c.title)}${S.unread.has(c.id) ? `<span class="min-w-[1.25rem] rounded-full bg-red-500 px-1.5 text-center text-[13px] font-bold leading-5 text-white" title="ungelesene Nachrichten">${S.unreadCount[c.id] || '•'}</span>` : ''}</button>`).join('')}</div>`;
     list.querySelector('#newChat').onclick = newChatModal;
     list.querySelectorAll('[data-chat]').forEach((b) => (b.onclick = () => openChat(b.dataset.chat)));
   } catch (e) { toast(e.message, 'error'); }
@@ -98,12 +96,11 @@ function drawPane() {
   const pane = S.root.querySelector('#pane');
   pane.innerHTML = `
     <div class="card flex h-[70vh] flex-col !p-0 md:h-[34rem]">
-      <div class="flex items-center gap-2 border-b p-3"><button id="back" class="btn-ghost !px-2.5 !py-1 md:hidden">←</button><b class="min-w-0 flex-1 truncate text-sm">${esc(c ? c.title : 'Chat')}${S.wa[S.current] && !isAdmin() ? ' <span class="badge bg-emerald-100 text-emerald-800">WhatsApp</span>' : ''}</b>${isAdmin() ? '<button id="waBtn" class="btn-ghost shrink-0 !px-2.5 !py-1 !text-xs">💬 WhatsApp</button>' : ''}</div>
+      <div class="flex items-center gap-2 border-b p-3"><button id="back" class="btn-ghost !px-2.5 !py-1 md:hidden">←</button><b class="text-sm">${esc(c ? c.title : 'Chat')}</b></div>
       <div id="msgs" class="flex-1 space-y-2 overflow-y-auto p-3"></div>
       <form id="send" class="flex gap-2 border-t p-3"><input id="msg" class="input" placeholder="Nachricht schreiben…" maxlength="4000" required autocomplete="off"><button class="btn-primary">Senden</button></form>
     </div>`;
   pane.querySelector('#back').onclick = () => { S.current = null; draw(); };
-  pane.querySelector('#waBtn')?.addEventListener('click', () => openWhatsAppManager(c, async () => { await loadList(); drawPane(); }));
   pane.querySelector('#send').onsubmit = (e) => {
     e.preventDefault();
     const input = pane.querySelector('#msg'); const body = input.value.trim();
@@ -111,7 +108,6 @@ function drawPane() {
     busy(e.target.querySelector('button'), async () => {
       unwrap(await supabase.from('chat_messages').insert({ chat_id: S.current, sender_id: state.user.id, body }));
       input.value = ''; await loadMessages();
-      if (S.wa[S.current]) setTimeout(loadMessages, 4000); // Zustellstatus von WhatsApp nachladen
     });
   };
   loadMessages();
@@ -122,23 +118,13 @@ async function loadMessages() {
   if (!box || !S.current) return;
   try {
     const msgs = unwrap(await supabase.from('chat_messages').select('*').eq('chat_id', S.current).order('created_at', { ascending: false }).limit(200));
-    const unknown = [...new Set(msgs.map((m) => m.sender_id))].filter((id) => id && !S.names[id]);
+    const unknown = [...new Set(msgs.map((m) => m.sender_id))].filter((id) => !S.names[id]);
     if (unknown.length) unwrap(await supabase.from('public_profiles').select('id, full_name, username').in('id', unknown)).forEach((p) => (S.names[p.id] = displayName(p)));
-    // Zustellstatus der WhatsApp-Weiterleitung (nur in verbundenen Chats)
-    const dl = {};
-    if (S.wa[S.current]) (await safeData(supabase.from('whatsapp_deliveries').select('message_id, status, error').eq('chat_id', S.current).order('created_at', { ascending: false }).limit(500), [])).forEach((d) => { (dl[d.message_id] ||= []).push(d); });
-    const state2 = (id) => {
-      const d = dl[id]; if (!d?.length) return '';
-      const ok = d.filter((x) => x.status === 'sent').length; const bad = d.filter((x) => x.status === 'failed'); const skip = d.filter((x) => x.status === 'skipped'); const wait = d.length - ok - bad.length - skip.length;
-      if (bad.length) return `<div class="text-[12px] text-amber-700" title="${esc(bad[0].error || '')}">⚠ WhatsApp: ${bad.length} von ${d.length} nicht zugestellt – ${esc((bad[0].error || '').slice(0, 90))}</div>`;
-      return `<div class="text-[12px] text-slate-400" ${skip.length ? 'title="Diese Personen haben in den letzten 24 Stunden nicht an die Lager-Nummer geschrieben; WhatsApp erlaubt dann keine freie Nachricht."' : ''}>${wait ? '⏳' : '✓'} WhatsApp: ${ok} zugestellt${skip.length ? ` · ${skip.length} nicht erreichbar (24 h)` : ''}</div>`;
-    };
     box.innerHTML = msgs.reverse().map((m) => {
-      const mine = m.sender_id === state.user.id; const wa = m.source === 'whatsapp';
+      const mine = m.sender_id === state.user.id;
       const t = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      const who = mine ? `Du${wa ? ' · via WhatsApp' : ''}` : wa && !m.sender_id ? `${esc(m.wa_name || '+' + m.wa_phone)} · WhatsApp` : `${esc(S.names[m.sender_id] || 'Unbekannt')}${wa ? ' · via WhatsApp' : ''}`;
-      return `<div class="flex flex-col ${mine ? 'items-end' : 'items-start'}"><div class="text-[12px] text-slate-400">${who} · ${t}</div>
-        <div class="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${mine ? 'rounded-tr-none bg-brand-600 text-white' : wa && !m.sender_id ? 'rounded-tl-none bg-emerald-100 text-emerald-900' : 'rounded-tl-none bg-slate-100'}">${esc(m.body)}</div>${mine ? state2(m.id) : ''}</div>`;
+      return `<div class="flex flex-col ${mine ? 'items-end' : 'items-start'}"><div class="text-[12px] text-slate-400">${mine ? 'Du' : esc(S.names[m.sender_id] || 'Unbekannt')} · ${t}</div>
+        <div class="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${mine ? 'rounded-tr-none bg-brand-600 text-white' : 'rounded-tl-none bg-slate-100'}">${esc(m.body)}</div></div>`;
     }).join('') || '<p class="py-8 text-center text-sm italic text-slate-400">Noch keine Nachrichten.</p>';
     box.scrollTop = box.scrollHeight;
   } catch (e) { toast(e.message, 'error'); }
@@ -154,11 +140,9 @@ async function newChatModal() {
   const people = unwrap(await supabase.from('public_profiles').select('id, full_name, username').neq('id', state.user.id).order('full_name'));
   const { el, close } = openModal(`
     <h3 class="mb-1 text-lg font-bold">Neuer Chat</h3><p class="mb-3 text-xs text-slate-500">Eine Person wählen = Direktchat. Mehrere Personen + Name = Gruppe.</p>
-    ${isAdmin() ? '<button id="waNew" type="button" class="btn-ghost mb-3 w-full">💬 Stattdessen: neuer WhatsApp-Chat</button>' : ''}
     <form id="f" class="space-y-3"><input name="name" class="input" placeholder="Gruppenname (nur bei Gruppen)">
       <div class="max-h-56 space-y-1 overflow-y-auto rounded-xl bg-slate-50 p-2 text-sm">${people.map((p) => `<label class="flex items-center gap-2"><input type="checkbox" name="u" value="${esc(p.id)}"> ${esc(displayName(p))} <span class="text-xs text-slate-400">@${esc(p.username)}</span></label>`).join('') || '<i class="text-slate-400">Keine weiteren Nutzer.</i>'}</div>
       <div class="flex justify-end gap-2"><button type="button" data-close class="btn-ghost">Abbrechen</button><button class="btn-primary">Erstellen</button></div></form>`);
-  el.querySelector('#waNew')?.addEventListener('click', () => { close(); openNewWhatsAppChat(async (id) => { S.current = id; await draw(); markRead(id); }); });
   el.querySelector('#f').onsubmit = (e) => {
     e.preventDefault();
     const f = new FormData(e.target); const users = f.getAll('u'); const name = (f.get('name') || '').trim();

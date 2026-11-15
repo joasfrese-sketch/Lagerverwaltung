@@ -18,10 +18,10 @@ export async function render(el) {
     supabase.from('rentals').select('id, end_at, start_at, project, items(name)').eq('borrower_id', state.user.id).eq('status', 'active').order('end_at'),
     supabase.from('notifications').select('*').is('read_at', null).order('created_at', { ascending: false }).limit(5),
     supabase.from('rental_calendar').select('id, item_name, start_at, end_at, borrower_name').eq('status', 'active').gte('end_at', nowIso).order('start_at').limit(5),
-    supabase.from('chat_messages').select('*').eq('chat_id', GLOBAL_CHAT_ID).order('created_at', { ascending: false }).limit(4),
+    supabase.from('chat_messages').select('body, sender_id, created_at').eq('chat_id', GLOBAL_CHAT_ID).order('created_at', { ascending: false }).limit(4),
   ]);
   const my = unwrap(rentals), nf = unwrap(notifs), up = unwrap(upcoming), ms = unwrap(msgs);
-  const ids = [...new Set(ms.map((m) => m.sender_id).filter(Boolean))];
+  const ids = [...new Set(ms.map((m) => m.sender_id))];
   const names = Object.fromEntries((ids.length ? unwrap(await supabase.from('public_profiles').select('id, full_name, username').in('id', ids)) : []).map((p) => [p.id, displayName(p)]));
   let mfaHint = false;
   if (state.profile.role === 'admin' && !mfaHidden()) { const { data: fa } = await supabase.auth.mfa.listFactors(); mfaHint = !(fa?.totp || []).some((f) => f.status === 'verified'); }
@@ -43,7 +43,7 @@ export async function render(el) {
     ${collapsible({ id: 'ov-upcoming', title: '📅 Anstehende Belegungen', count: up.length,
       body: (up.length ? up.map((u) => `<div class="mb-1.5 flex justify-between gap-2 text-sm"><span class="truncate font-semibold">${esc(u.item_name)}</span><span class="shrink-0 text-xs text-slate-500">${fmtDateTime(u.start_at)}</span></div>`).join('') : '<p class="text-sm italic text-slate-400">Keine anstehenden Belegungen.</p>') + '<a href="#/kalender" class="mt-1 block text-right text-xs font-semibold text-brand-600">Zum Kalender →</a>' })}
     ${collapsible({ id: 'ov-chat', title: '💬 Gesamtchat', count: ms.length,
-      body: (ms.length ? ms.reverse().map((m) => `<div class="mb-1.5 text-sm"><b>${esc(m.sender_id ? names[m.sender_id] || 'Unbekannt' : (m.wa_name || 'WhatsApp') + ' (WhatsApp)')}:</b> <span class="text-slate-600">${esc(m.body)}</span></div>`).join('') : '<p class="text-sm italic text-slate-400">Noch keine Nachrichten.</p>') + '<a href="#/chat" class="mt-1 block text-right text-xs font-semibold text-brand-600">Chat öffnen →</a>' })}`;
+      body: (ms.length ? ms.reverse().map((m) => `<div class="mb-1.5 text-sm"><b>${esc(names[m.sender_id] || 'Unbekannt')}:</b> <span class="text-slate-600">${esc(m.body)}</span></div>`).join('') : '<p class="text-sm italic text-slate-400">Noch keine Nachrichten.</p>') + '<a href="#/chat" class="mt-1 block text-right text-xs font-semibold text-brand-600">Chat öffnen →</a>' })}`;
   bindCollapsibles(el);
   el.querySelector('#mfaOff')?.addEventListener('click', (e) => { try { localStorage.setItem(MFA_KEY, String(Date.now() + 7 * 86400000)); } catch { /* egal */ } e.target.closest('div').remove(); });
   // Kennzahl antippen = passende Liste aufklappen

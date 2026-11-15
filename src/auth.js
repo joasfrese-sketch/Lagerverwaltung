@@ -2,7 +2,6 @@ import { supabase, unwrap } from './lib/supabase.js';
 import { esc, toast, busy, openModal } from './lib/ui.js';
 import { clearOfflineData } from './components/offline.js';
 import { logoFull } from './lib/logo.js';
-import { normalizePhone } from '../supabase/functions/_shared/whatsapp.js';
 
 export function renderAuth(root) {
   const inviteParam = (new URLSearchParams(location.search).get('invite') || '').toUpperCase();
@@ -21,9 +20,7 @@ export function renderAuth(root) {
           <div><label class="label">Vollständiger Name</label><input id="fullName" class="input" required autocomplete="name"></div>
           <div><label class="label">Benutzername</label><input id="username" class="input" required minlength="3" maxlength="30" pattern="[a-zA-Z0-9._-]+" autocomplete="username" placeholder="max.mustermann"></div>
           <div><label class="label">E-Mail</label><input id="email" type="email" class="input" required autocomplete="email"></div>
-          <div><label class="label">Einladungs-Code</label><input id="invite" class="input font-mono uppercase tracking-widest" required maxlength="20" value="${esc(inviteParam)}" placeholder="z. B. 7F3A9C21" autocomplete="off"></div>
-          <div><label class="label">Mobilnummer (optional, für WhatsApp)</label><input id="phone" class="input" inputmode="tel" autocomplete="tel" placeholder="+49 151 2345678"></div>
-          <label class="flex items-start gap-2 text-xs text-slate-600"><input type="checkbox" id="waOptin" class="mt-0.5 h-4 w-4"> <span>Ich möchte die Chat-Nachrichten der Lager-App per WhatsApp erhalten (jederzeit abschaltbar). Die Nummer bestätigst du nach der Anmeldung in den Einstellungen.</span></label>` : `
+          <div><label class="label">Einladungs-Code</label><input id="invite" class="input font-mono uppercase tracking-widest" required maxlength="20" value="${esc(inviteParam)}" placeholder="z. B. 7F3A9C21" autocomplete="off"></div>` : `
           <div><label class="label">Benutzername oder E-Mail</label><input id="identifier" class="input" required autocomplete="username"></div>`}
           <div><label class="label">Passwort</label><input id="password" type="password" class="input" required minlength="8" autocomplete="${register ? 'new-password' : 'current-password'}"></div>
           <button class="btn-primary w-full py-3" id="submitBtn">${register ? 'Konto erstellen' : 'Anmelden'} →</button>
@@ -69,15 +66,10 @@ async function doRegister(root) {
   const email = root.querySelector('#email').value.trim().toLowerCase();
   const password = root.querySelector('#password').value;
   const invite_code = root.querySelector('#invite').value.trim().toUpperCase();
-  const phoneRaw = (root.querySelector('#phone')?.value || '').trim();
-  const optin = !!root.querySelector('#waOptin')?.checked;
-  let phone = '';
-  if (phoneRaw) { const n = normalizePhone(phoneRaw); if (!n.ok) throw new Error(n.error); phone = '+' + n.phone; }
-  if (optin && !phone) throw new Error('Für WhatsApp bitte eine Mobilnummer eingeben.');
   const { data: valid, error: invErr } = await supabase.rpc('check_invite', { p_code: invite_code });
   if (invErr) throw new Error('Der Code konnte nicht geprüft werden. Bitte später erneut versuchen.');
   if (!valid) throw new Error('Einladungs-Code ungültig, abgelaufen oder bereits aufgebraucht.');
-  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name, username, invite_code, phone, whatsapp_optin: optin ? 'true' : 'false' } } });
+  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name, username, invite_code } } });
   if (error) throw new Error(error.message);
   if (!data.session) toast('Konto erstellt. Bitte bestätige deine E-Mail-Adresse und melde dich danach an.', 'success');
 }
