@@ -8,10 +8,13 @@ import { registerServiceWorker } from './lib/push.js';
 import { applyTheme, getTheme, setTheme } from './lib/theme.js';
 import { captureInstallPrompt } from './components/installHint.js';
 import { watchA11y } from './lib/a11y.js';
+import { installErrorReporting } from './lib/errorReport.js';
+import { maybeStartTour } from './components/tour.js';
 
 applyTheme();
 captureInstallPrompt();
 watchA11y();
+installErrorReporting();
 
 const root = document.getElementById('app');
 let booted = false;
@@ -37,6 +40,7 @@ async function boot(session) {
         const prefs = data?.prefs || {};
         if (prefs.theme && prefs.theme !== getTheme()) setTheme(prefs.theme);
         if (!prefs.profile_done) openProfileSetup(prefs);
+        else maybeStartTour(prefs);
       });
   } catch (e) {
     booted = false;

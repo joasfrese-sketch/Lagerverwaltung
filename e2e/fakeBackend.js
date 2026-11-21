@@ -26,7 +26,7 @@ export function makeData() {
     rooms, items, catalog_items: items,
     rental_calendar: [{ id: 'r1', item_id: 'T-CAM', item_name: 'Kamera', room_id: 'Technik', start_at: hours(-30), end_at: hours(20), status: 'active', overdue: false, borrower_id: UID, borrower_name: 'Ada Admin', project: 'Fest' }],
     user_settings: [{ user_id: UID, prefs: { profile_done: true, tour_done: true } }],
-    rentals: [rental], notifications: [], extension_requests: [], waitlist: [], permissions: [], invite_codes: [], inventory_counts: [], activity_log: [], chat_messages: [], chats: [{ id: 'c1', type: 'global' }], chat_members: [], push_subscriptions: [],
+    rentals: [rental], notifications: [], extension_requests: [], waitlist: [], permissions: [], invite_codes: [], inventory_counts: [], activity_log: [], chat_messages: [], chats: [{ id: 'c1', type: 'global' }], chat_members: [], push_subscriptions: [], feedback: [], backups: [], client_errors: [],
   };
 }
 

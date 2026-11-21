@@ -11,6 +11,9 @@ import { fmtDateTime } from '../lib/ui.js';
 import { enablePush, disablePush, pushActive, pushSupported, pushConfigured } from '../lib/push.js';
 import { collapsible, bindCollapsibles, setCount } from '../components/collapse.js';
 import { generatePassword, checkPassword } from '../lib/password.js';
+import { mountOps } from '../components/opsTools.js';
+import { openFeedback } from '../components/feedback.js';
+import { openTour } from '../components/tour.js';
 
 export async function render(el) {
   const settings = unwrap(await supabase.from('user_settings').select('prefs').eq('user_id', state.user.id).maybeSingle());
@@ -53,9 +56,14 @@ export async function render(el) {
     ${isManager() ? `${sec('data', '⬇️ Daten & Export', HINTS.data, `<p class="mb-3 text-xs text-slate-500">Sicherung als Excel oder CSV.</p><div class="flex flex-wrap gap-2"><button id="exItems" class="btn-ghost">Artikel</button><button id="exRentals" class="btn-ghost">Ausleihen (inkl. Historie)</button>${isAdmin() ? '<button id="backup" class="btn-primary">🗄️ Vollständige Sicherung (Excel)</button>' : ''}</div>${isAdmin() ? '<p class="mt-2 text-xs text-slate-500">Die Vollsicherung enthält Räume, Artikel, Ausleihen, Protokoll, Benutzer, Berechtigungen, Inventuren und Verlängerungsanträge in einer Datei mit mehreren Blättern. Empfehlung: einmal im Monat herunterladen und sicher ablegen.</p>' : ''}`)}` : ''}
     ${isAdmin() ? sec('invites', '🎟️ Einladungs-Codes', 'Registrierung nur mit Code', '<div class="mb-3 flex items-center justify-between gap-2"><p class="text-xs text-slate-500">Nur wer einen gültigen Code hat, kann sich registrieren.</p><button id="newInvite" class="btn-primary shrink-0 !py-1.5">+ Code</button></div><div id="invites" class="space-y-2"></div>', '…') : ''}
     ${isManager() ? sec('users', '🛡️ Benutzer & Berechtigungen', 'Rollen und Rechte verwalten', (isAdmin() ? '<div class="mb-3 flex justify-end"><button id="newUser" class="btn-primary !py-1.5">+ Benutzer</button></div>' : '') + '<div id="users" class="space-y-2"><p class="text-sm text-slate-400">Lade…</p></div>', '…') : ''}
+    ${sec('help', '💬 Hilfe & Rückmeldung', 'Tour, Hilfeseite, Ideen und Probleme melden', `<div class="flex flex-wrap gap-2"><a href="#/hilfe" class="btn-ghost">❓ Hilfe öffnen</a><button id="tourBtn" class="btn-ghost">▶️ Tour wiederholen</button><button id="fbBtn" class="btn-primary">Rückmeldung geben</button></div>`)}
+    ${isAdmin() ? sec('ops', '🛠 Betrieb & Sicherung', 'Sicherungen, Protokoll aufräumen, Rückmeldungen, Fehlerberichte', '<div id="opsBox"><p class="text-sm text-slate-500">Lade…</p></div>') : ''}
   </div>`;
 
   bindCollapsibles(el);
+  el.querySelector('#tourBtn').onclick = () => openTour();
+  el.querySelector('#fbBtn').onclick = () => openFeedback('idee');
+  if (isAdmin()) { const ops = el.querySelector('#sec-set-ops'); const load = () => { if (ops.open && !ops.dataset.loaded) { ops.dataset.loaded = '1'; mountOps(el.querySelector('#opsBox')); } }; ops.addEventListener('toggle', load); load(); }
   // Profil
   el.querySelector('#prof').onsubmit = (e) => { e.preventDefault(); const f = new FormData(e.target);
     busy(e.target.querySelector('button'), async () => {

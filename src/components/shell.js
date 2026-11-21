@@ -16,6 +16,7 @@ import * as settings from '../pages/settings.js';
 import * as terminal from '../pages/terminal.js';
 import * as protocol from '../pages/protocol.js';
 import * as inventory from '../pages/inventory.js';
+import * as help from '../pages/help.js';
 import { mountOfflineBanner } from './offline.js';
 import { unreadSummary } from '../lib/unread.js';
 
@@ -29,6 +30,7 @@ const ALL_ROUTES = {
   terminal: { label: 'Lagerwart-Terminal', short: 'Lagerwart', icon: 'shield', page: terminal, managerOnly: true },
   inventur: { label: 'Inventur', short: 'Inventur', icon: 'clipboard', page: inventory, managerOnly: true },
   protokoll: { label: 'Protokoll', short: 'Protokoll', icon: 'file', page: protocol, managerOnly: true },
+  hilfe: { label: 'Hilfe', short: 'Hilfe', icon: 'help', page: help },
   einstellungen: { label: 'Einstellungen', short: 'Einstellungen', icon: 'settings', page: settings },
 };
 

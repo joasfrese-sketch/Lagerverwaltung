@@ -1,5 +1,6 @@
 import { displayName } from '../lib/format.js';
-import { supabase, unwrap } from '../lib/supabase.js';
+import { supabase, unwrap, safeData } from '../lib/supabase.js';
+import { backupAgeDays } from '../lib/backupStatus.js';
 import { esc, fmtDateTime, busy } from '../lib/ui.js';
 import { state, GLOBAL_CHAT_ID, isManager, canManageRoom } from '../state.js';
 import { openInspection, inspectionState } from '../components/inspection.js';
@@ -26,6 +27,13 @@ export async function render(el) {
   let mfaHint = false;
   if (state.profile.role === 'admin' && !mfaHidden()) { const { data: fa } = await supabase.auth.mfa.listFactors(); mfaHint = !(fa?.totp || []).some((f) => f.status === 'verified'); }
   const dash = isManager() ? await managerDashboard() : null;
+  // Administratoren: Warnung, wenn die nächtliche Sicherung fehlt oder veraltet ist
+  let bkWarn = '';
+  if (state.profile.role === 'admin') {
+    const last = (await safeData(supabase.from('backups').select('created_at').order('created_at', { ascending: false }).limit(1)))[0];
+    const age = backupAgeDays(last?.created_at);
+    if (age === null || age > 2) bkWarn = age === null ? 'Es gibt noch keine Sicherung im System.' : `Die letzte Sicherung ist ${Math.floor(age)} Tage alt.`;
+  }
   const overdue = my.filter((r) => new Date(r.end_at) < new Date()).length;
 
   const late = (r) => new Date(r.end_at) < new Date();
@@ -33,6 +41,7 @@ export async function render(el) {
   el.querySelector('#ov').innerHTML = `
     ${isManager() ? `<section class="grid grid-cols-[1.8fr_1fr] gap-2 md:col-span-2 md:flex"><a href="#/terminal" class="btn-primary whitespace-nowrap !py-2.5">🛡️ Ausgabe / Rücknahme</a><a href="#/inventur" class="btn-ghost whitespace-nowrap !py-2.5">📋 Inventur</a></section>` : ''}
     <div id="installHint" class="md:col-span-2 empty:hidden"></div>
+    ${bkWarn ? `<a href="#/einstellungen" class="rounded-2xl border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 md:col-span-2">⚠️ ${esc(bkWarn)} → Einstellungen › Betrieb &amp; Sicherung</a>` : ''}
     ${mfaHint ? '<div class="flex items-center gap-2 rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 md:col-span-2"><a href="#/einstellungen" class="flex-1">🔐 Zwei-Faktor-Anmeldung für dein Admin-Konto aktivieren → Einstellungen › Sicherheit</a><button id="mfaOff" class="shrink-0 px-1 text-base leading-none" aria-label="Hinweis 7 Tage ausblenden">✕</button></div>' : ''}
     ${dash ? dash.kpis : ''}
     ${dash ? dash.panels : ''}

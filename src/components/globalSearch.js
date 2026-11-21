@@ -6,7 +6,7 @@ import { isManager } from '../state.js';
 import { openRoom } from '../pages/catalog.js';
 
 const PAGES = [['uebersicht', 'Übersicht', 'home'], ['katalog', 'Katalog', 'package'], ['kalender', 'Kalender', 'calendar'], ['chat', 'Chat & Mitteilungen', 'chat'],
-  ['ich', 'Mein Bereich', 'user'], ['einstellungen', 'Einstellungen', 'settings'], ['terminal', 'Lagerwart-Terminal', 'shield', true], ['protokoll', 'Protokoll', 'file', true]];
+  ['ich', 'Mein Bereich', 'user'], ['hilfe', 'Hilfe', 'help'], ['einstellungen', 'Einstellungen', 'settings'], ['terminal', 'Lagerwart-Terminal', 'shield', true], ['protokoll', 'Protokoll', 'file', true]];
 const go = (hash) => { location.hash = hash; window.dispatchEvent(new Event('hashchange')); };
 const state = (i) => (i.rented_now ? 'ausgeliehen' : i.status === 'maintenance' ? 'defekt' : i.status === 'inventory' ? 'in Inventur' : 'verfügbar');
 let open = false;
