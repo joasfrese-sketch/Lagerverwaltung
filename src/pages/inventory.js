@@ -82,10 +82,10 @@ function drawWork(el) {
   box.innerHTML = `
     <div class="card space-y-3">
       <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="font-bold">${esc(room?.icon || '')} ${esc(room?.name || S.room)}</h2><span class="text-sm font-semibold">${d.found.length} / ${d.expected} gezählt</span></div>
-      <div class="h-2.5 overflow-hidden rounded-full bg-slate-100"><div class="h-full bg-brand-600 transition-all" style="width:${pct}%"></div></div>
+      <div class="h-2.5 overflow-hidden rounded-full bg-slate-100"><div class="h-full bg-brand-700 transition-all" style="width:${pct}%"></div></div>
       <div class="flex flex-wrap gap-2"><button id="cam" class="btn-primary">📷 Kamera-Scan</button>
         <form id="codeForm" class="flex flex-1 gap-2"><input id="codeIn" class="input" placeholder="Code scannen/eintippen + Enter (auch USB-Scanner)" autocomplete="off"><button class="btn-ghost">OK</button></form></div>
-      <div class="flex flex-wrap gap-1.5">${tabs.map(([k, l]) => `<button data-tab="${k}" class="rounded-full px-3 py-1 text-xs font-semibold ${S.tab === k ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700'}">${l}</button>`).join('')}</div>
+      <div class="flex flex-wrap gap-1.5">${tabs.map(([k, l]) => `<button data-tab="${k}" class="rounded-full px-3 py-1 text-xs font-semibold ${S.tab === k ? 'bg-brand-700 text-white' : 'bg-slate-100 text-slate-700'}">${l}</button>`).join('')}</div>
       <div class="max-h-[50vh] space-y-1.5 overflow-y-auto">${cur.length ? cur.join('') : '<p class="py-4 text-center text-sm italic text-slate-400">Keine Einträge.</p>'}</div>
       <div class="space-y-2 rounded-xl bg-slate-50 p-3">
         <input id="note" class="input" placeholder="Notiz zur Inventur (optional)">

@@ -25,7 +25,7 @@ export function renderAuth(root) {
           <div><label class="label">Passwort</label><input id="password" type="password" class="input" required minlength="8" autocomplete="${register ? 'new-password' : 'current-password'}"></div>
           <button class="btn-primary w-full py-3" id="submitBtn">${register ? 'Konto erstellen' : 'Anmelden'} →</button>
           ${register ? '' : '<button type="button" id="forgot" class="w-full text-center text-xs text-slate-500 hover:underline">Passwort vergessen?</button>'}
-          <button type="button" id="toggle" class="w-full text-center text-xs font-semibold text-brand-600">${register ? 'Bereits ein Konto? Anmelden' : 'Noch kein Konto? Registrieren'}</button>
+          <button type="button" id="toggle" class="w-full text-center text-xs font-semibold text-brand-700">${register ? 'Bereits ein Konto? Anmelden' : 'Noch kein Konto? Registrieren'}</button>
         </form>
       </div>
     </div>`;

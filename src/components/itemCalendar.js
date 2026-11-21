@@ -49,7 +49,7 @@ export async function mountItemCalendar(box, itemId, { getRange, onPickDay }) {
       const inRange = start && end && start < d1 && end > d0;
       const past = d1 <= new Date();
       const cls = full ? 'bg-red-100 text-red-700 font-bold' : evs.length ? 'bg-amber-100 text-amber-800 font-semibold' : 'bg-slate-50 text-slate-700';
-      html += `<button type="button" data-d="${d0.getTime()}" class="rounded-lg py-1.5 ${cls} ${inRange ? 'ring-2 ring-brand-500' : ''} ${past ? 'opacity-50' : ''}">${n}</button>`;
+      html += `<button type="button" data-d="${d0.getTime()}" class="rounded-lg py-1.5 ${cls} ${inRange ? 'ring-2 ring-brand-500' : ''} ${past ? 'italic' : ''}">${n}</button>`;
     }
     box.querySelector('#grid').innerHTML = html + '</div>';
     box.querySelectorAll('[data-d]').forEach((b) => (b.onclick = () => onPickDay(new Date(Number(b.dataset.d)))));

@@ -1,3 +1,5 @@
+import { makeDialog } from './a11y.js';
+
 // Alle dynamischen Texte MÜSSEN durch esc() laufen (Schutz vor XSS).
 export const esc = (v) =>
   String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -13,12 +15,14 @@ export function toLocalInput(d) {
 }
 
 export function toast(message, type = 'info') {
-  const colors = { info: 'bg-[#1e293b]', success: 'bg-brand-600', error: 'bg-red-600' };
+  const colors = { info: 'bg-[#1e293b]', success: 'bg-brand-700', error: 'bg-red-600' };
   const el = document.createElement('div');
+  el.setAttribute('role', type === 'error' ? 'alert' : 'status');
   el.className = `fixed left-1/2 top-4 z-[100] -translate-x-1/2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg ${colors[type] || colors.info}`;
   el.textContent = message;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3500);
+  // Fehler bleiben länger stehen, damit man sie in Ruhe lesen kann
+  setTimeout(() => el.remove(), type === 'error' ? 8000 : 3500);
 }
 
 // Einfaches Modal. Gibt { el, close } zurück; Inhalt als HTML-String.
@@ -26,10 +30,12 @@ export function openModal(html, { wide = false, onClose = null } = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-4';
   wrap.innerHTML = `<div class="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-2xl ${wide ? 'sm:max-w-2xl' : 'sm:max-w-md'}">${html}</div>`;
-  const close = () => { if (!wrap.isConnected) return; wrap.remove(); if (onClose) onClose(); };
+  let release = () => {};
+  const close = () => { if (!wrap.isConnected) return; wrap.remove(); release(); if (onClose) onClose(); };
   wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
   wrap.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', close));
   document.body.appendChild(wrap);
+  release = makeDialog(wrap, wrap.firstElementChild, close);
   return { el: wrap, close };
 }
 

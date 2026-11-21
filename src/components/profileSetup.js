@@ -12,7 +12,7 @@ export function openProfileSetup(prefs) {
     <form id="f" class="space-y-3">
       <div><label class="label">Name</label><input name="full_name" class="input" value="${esc(displayName(p) === p.username ? '' : p.full_name)}" required></div>
       <div><label class="label">Benutzername</label><input name="username" class="input" value="${esc(p.username)}" pattern="[a-z0-9._-]{3,30}" required>
-        <button type="button" id="sug" class="mt-1 text-xs font-semibold text-brand-600">Vorschlag aus dem Namen übernehmen</button></div>
+        <button type="button" id="sug" class="mt-1 text-xs font-semibold text-brand-700">Vorschlag aus dem Namen übernehmen</button></div>
       <div class="flex justify-end gap-2 pt-2"><button type="button" id="keep" class="btn-ghost">So lassen</button><button class="btn-primary">Speichern</button></div>
     </form>`);
   const f = el.querySelector('#f');

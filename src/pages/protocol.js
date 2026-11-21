@@ -58,7 +58,7 @@ export async function render(el) {
       }
       const pics = (l) => (photos[l.details?.rental_id] || []).map((u, i) => `<a href="${esc(u)}" target="_blank" rel="noopener" class="mr-1 inline-block"><img src="${esc(u)}" alt="Schadensfoto ${i + 1}" loading="lazy" class="mt-1 inline h-10 w-10 rounded-lg object-cover"></a>`).join('');
       el.querySelector('#rows').innerHTML = data.length ? data.map((l) => `<tr class="border-t"><td class="whitespace-nowrap p-3 text-slate-500">${fmtDateTime(l.created_at)}</td><td class="p-3"><span class="badge bg-slate-100 text-slate-700">${esc(l.action)}</span></td>
-        <td class="p-3"><b>${esc(l.item_name || '–')}</b><div class="font-mono text-[12px] text-slate-400">${esc(l.item_id || '')}</div></td>
+        <td class="p-3"><b>${esc(l.item_name || '–')}</b><div class="font-mono text-[13px] text-slate-400">${esc(l.item_id || '')}</div></td>
         <td class="p-3">${esc(name[l.actor_id] || '–')}${l.subject_id && l.subject_id !== l.actor_id ? ` <span class="text-slate-400">→</span> ${esc(name[l.subject_id] || '?')}` : ''}</td><td class="p-3 text-slate-600">${esc(detail(l.details))}${pics(l) ? `<div>${pics(l)}</div>` : ''}</td></tr>`).join('')
         : '<tr><td colspan="5" class="p-6 text-center italic text-slate-400">Keine Einträge.</td></tr>';
       const pages = Math.max(1, Math.ceil((count || 0) / PAGE));

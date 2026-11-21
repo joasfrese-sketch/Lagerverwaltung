@@ -32,7 +32,7 @@ export function openGlobalSearch() {
 
   function draw() {
     box.innerHTML = results.length ? results.map((r, i) => `<button data-i="${i}" class="flex w-full items-center gap-3 rounded-xl p-2.5 text-left text-sm ${i === idx ? 'bg-brand-50 ring-1 ring-brand-500' : 'hover:bg-slate-100'}">
-      <span class="text-slate-500">${r.icon}</span><span class="min-w-0 flex-1"><b class="block truncate">${esc(r.label)}</b>${r.sub ? `<span class="block truncate text-xs text-slate-500">${esc(r.sub)}</span>` : ''}</span><span class="text-[12px] uppercase text-slate-400">${r.kind}</span></button>`).join('')
+      <span class="text-slate-500">${r.icon}</span><span class="min-w-0 flex-1"><b class="block truncate">${esc(r.label)}</b>${r.sub ? `<span class="block truncate text-xs text-slate-500">${esc(r.sub)}</span>` : ''}</span><span class="text-[13px] uppercase text-slate-400">${r.kind}</span></button>`).join('')
       : '<p class="p-4 text-center text-sm italic text-slate-400">Keine Treffer.</p>';
     box.querySelectorAll('[data-i]').forEach((b) => (b.onclick = () => { const r = results[Number(b.dataset.i)]; close(); r.run(); }));
     box.querySelector('.ring-1')?.scrollIntoView({ block: 'nearest' });

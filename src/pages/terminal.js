@@ -62,7 +62,7 @@ export async function render(el) {
   let mode = 'out'; let cart = [];
   const hint = { out: 'Person oben wählen (oder Personen-QR scannen), dann Artikel nacheinander scannen und gesammelt ausgeben.', in: 'Artikel nacheinander scannen – alle werden gesammelt zurückgenommen, auch von unterschiedlichen Personen.' };
   const drawMode = () => {
-    el.querySelectorAll('[data-mode]').forEach((b) => (b.className = `rounded-lg px-3 py-1.5 ${b.dataset.mode === mode ? 'bg-brand-600 text-white' : 'text-slate-600'}`));
+    el.querySelectorAll('[data-mode]').forEach((b) => (b.className = `rounded-lg px-3 py-1.5 ${b.dataset.mode === mode ? 'bg-brand-700 text-white' : 'text-slate-600'}`));
     el.querySelector('#modeHint').textContent = hint[mode];
     el.querySelector('#outFields').classList.toggle('hidden', mode !== 'out');
     el.querySelector('#inFields').classList.toggle('hidden', mode !== 'in');
@@ -148,7 +148,7 @@ export async function render(el) {
     if (!who.value) { box.innerHTML = ''; return; }
     try {
       rows = unwrap(await supabase.from('rentals').select('id, item_id, start_at, end_at, project, items(name, room_id)').eq('borrower_id', who.value).eq('status', 'active').order('end_at'));
-      box.innerHTML = rows.length ? '<label class="flex items-center gap-2 text-xs font-bold text-brand-600"><input type="checkbox" id="all" checked> Alle auswählen</label>' + rows.map((r) => {
+      box.innerHTML = rows.length ? '<label class="flex items-center gap-2 text-xs font-bold text-brand-700"><input type="checkbox" id="all" checked> Alle auswählen</label>' + rows.map((r) => {
         const late = new Date(r.end_at) < new Date();
         return `<label class="flex items-center gap-3 rounded-xl border p-2.5 ${late ? 'border-red-300 bg-red-50' : 'bg-white'}"><input type="checkbox" class="rc" value="${esc(r.id)}" checked>
           <span class="text-sm"><b>${esc(r.items?.name)}</b> <span class="font-mono text-xs text-slate-400">${esc(r.item_id)}</span>${late ? ' <span class="badge bg-red-600 text-white">Überfällig</span>' : ''}<br><span class="text-xs text-slate-500">Frist ${fmtDateTime(r.end_at)}${r.project ? ' · ' + esc(r.project) : ''}</span></span></label>`;

@@ -40,7 +40,7 @@ async function renderRooms(el) {
     <div class="grid grid-cols-2 gap-3 md:grid-cols-3">
       ${state.rooms.map((r) => `<button data-room="${esc(r.id)}" class="card text-left transition hover:border-brand-500 hover:shadow-md">
         <div class="text-3xl">${esc(r.icon)}</div><div class="mt-2 font-bold">${esc(r.name)}</div>
-        <div class="text-xs text-slate-500">${esc(r.description)}</div><div class="mt-2 text-xs font-semibold text-brand-600">${counts[r.id] || 0} Objekte →</div></button>`).join('')}
+        <div class="text-xs text-slate-500">${esc(r.description)}</div><div class="mt-2 text-xs font-semibold text-brand-700">${counts[r.id] || 0} Objekte →</div></button>`).join('')}
       <button data-room="ALL" class="card !bg-[#0f172a] text-left text-white"><div class="text-3xl">🌐</div><div class="mt-2 font-bold">Gesamtes Lager</div><div class="mt-2 text-xs text-brand-100">${total} Objekte →</div></button>
     </div>`;
   el.querySelectorAll('[data-room]').forEach((b) => (b.onclick = () => { openRoom(b.dataset.room); render(el); }));
@@ -65,7 +65,7 @@ async function renderRoom(el) {
     </div>
     <div class="mb-2 flex gap-2">
       <input id="q" class="input min-w-0 flex-1" placeholder="Artikel suchen…" value="${esc(search)}">
-      <button id="filterBtn" class="btn-ghost shrink-0">⚙️ Filter<span id="fBadge" class="ml-1 hidden rounded-full bg-brand-600 px-1.5 text-[13px] font-bold leading-5 text-white"></span></button>
+      <button id="filterBtn" class="btn-ghost shrink-0">⚙️ Filter<span id="fBadge" class="ml-1 hidden rounded-full bg-brand-700 px-1.5 text-[13px] font-bold leading-5 text-white"></span></button>
     </div>
     <div id="filters" class="mb-3 flex flex-wrap items-center gap-1.5 text-xs"></div>
     <div id="bulkBar"></div>
@@ -123,7 +123,7 @@ function drawFilters(el) {
   if (badge) { badge.textContent = act.length; badge.classList.toggle('hidden', !act.length); }
   box.innerHTML = act.map(([k, l]) => `<button data-rm="${k}" class="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2.5 py-1 font-semibold text-brand-700">${esc(l)} <span aria-hidden="true">✕</span></button>`).join('')
     + (act.length > 1 ? '<button data-rm="all" class="px-1 font-semibold text-slate-500 underline">Alle zurücksetzen</button>' : '')
-    + `<span id="count" class="ml-auto text-slate-400">${lastCount}</span>`;
+    + `<span id="count" class="ml-auto text-slate-500">${lastCount}</span>`;
   box.querySelectorAll('[data-rm]').forEach((b) => (b.onclick = () => {
     const k = b.dataset.rm;
     if (k === 'all') resetFilters(); else if (k === 'status') F.status = 'ALL'; else if (k === 'category') F.category = ''; else if (k === 'type') F.type = ''; else if (k === 'sort') F.sort = 'name';
@@ -144,7 +144,7 @@ function openFilterSheet(el) {
     </div>
     <div class="mt-5 flex gap-2"><button id="dReset" class="btn-ghost flex-1">Zurücksetzen</button><button id="dApply" class="btn-primary flex-[2]">Anwenden</button></div>`);
   const chips = () => {
-    m.querySelector('#chips').innerHTML = STATUS_CHIPS.map(([v, l]) => `<button type="button" data-st="${v}" class="rounded-full px-3 py-1.5 text-xs font-semibold ${d.status === v ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">${l}</button>`).join('');
+    m.querySelector('#chips').innerHTML = STATUS_CHIPS.map(([v, l]) => `<button type="button" data-st="${v}" class="rounded-full px-3 py-1.5 text-xs font-semibold ${d.status === v ? 'bg-brand-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">${l}</button>`).join('');
     m.querySelectorAll('[data-st]').forEach((b) => (b.onclick = () => { d.status = b.dataset.st; chips(); }));
   };
   chips();

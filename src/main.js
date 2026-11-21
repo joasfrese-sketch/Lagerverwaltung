@@ -7,9 +7,11 @@ import { renderShell } from './components/shell.js';
 import { registerServiceWorker } from './lib/push.js';
 import { applyTheme, getTheme, setTheme } from './lib/theme.js';
 import { captureInstallPrompt } from './components/installHint.js';
+import { watchA11y } from './lib/a11y.js';
 
 applyTheme();
 captureInstallPrompt();
+watchA11y();
 
 const root = document.getElementById('app');
 let booted = false;

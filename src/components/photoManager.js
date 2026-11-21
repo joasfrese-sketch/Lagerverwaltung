@@ -25,7 +25,7 @@ export function openPhotoManager(item, done) {
     el.querySelector('#cnt').textContent = `${photos.length} von ${MAX_PHOTOS}`;
     grid.innerHTML = photos.map((u, i) => `
       <div class="relative overflow-hidden rounded-xl border"><img src="${esc(thumbUrl(u))}" alt="" class="aspect-square w-full object-cover">
-        ${i === 0 ? '<span class="badge absolute left-1 top-1 bg-brand-600 text-white">Titelbild</span>' : ''}
+        ${i === 0 ? '<span class="badge absolute left-1 top-1 bg-brand-700 text-white">Titelbild</span>' : ''}
         <div class="absolute inset-x-0 bottom-0 flex gap-1 bg-black/55 p-1">
           ${i > 0 ? `<button data-main="${i}" class="flex-1 rounded bg-white/90 px-1 py-0.5 text-[13px] font-semibold text-slate-800">★ Titelbild</button>` : ''}
           <button data-del="${i}" class="flex-1 rounded bg-red-600 px-1 py-0.5 text-[13px] font-semibold text-white">Löschen</button></div></div>`).join('')

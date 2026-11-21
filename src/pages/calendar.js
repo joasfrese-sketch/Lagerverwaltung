@@ -1,5 +1,6 @@
 import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, fmtDateTime, toast, openModal, busy } from '../lib/ui.js';
+import { emptyState } from '../components/emptyState.js';
 import { state, isManager } from '../state.js';
 import { roomColor, startOfWeek, addDays, isoWeek, overlaps, viewRange, dayLabel } from '../lib/calendar.js';
 import { buildIcs, rentalToEvent } from '../../supabase/functions/_shared/ics.js';
@@ -24,14 +25,14 @@ export async function render(el, opts = {}) {
       <button id="sub" class="btn-ghost !py-1.5 !text-xs">🔗 Abonnieren</button>`}
     </div>
     ${cal.mine ? '' : `<div class="mb-3 flex flex-wrap items-center gap-2">
-      <select id="fRoom" class="input !w-auto !py-1.5 text-xs"><option value="">Alle Räume</option>${state.rooms.map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('')}</select>
-      <select id="fItem" class="input !w-auto max-w-[14rem] !py-1.5 text-xs"></select>
+      <select id="fRoom" aria-label="Raum filtern" class="input !w-auto !py-1.5 text-xs"><option value="">Alle Räume</option>${state.rooms.map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('')}</select>
+      <select id="fItem" aria-label="Artikel filtern" class="input !w-auto max-w-[14rem] !py-1.5 text-xs"></select>
       <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600"><input type="checkbox" id="fRet"> Rückgaben zeigen</label></div>`}
     ${cal.mine ? '<label class="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-600"><input type="checkbox" id="fRet"> Rückgaben zeigen</label>' : ''}
     <div class="card !p-3">
       <div class="mb-3 flex items-center justify-between">
         <button id="prev" class="btn-ghost" aria-label="Zurück">←</button>
-        <div class="text-center"><div id="title" class="font-bold"></div><button id="today" class="text-xs font-semibold text-brand-600">Heute</button></div>
+        <div class="text-center"><div id="title" class="font-bold"></div><button id="today" class="text-xs font-semibold text-brand-700">Heute</button></div>
         <button id="next" class="btn-ghost" aria-label="Weiter">→</button>
       </div>
       <div id="grid"></div>
@@ -48,7 +49,7 @@ export async function render(el, opts = {}) {
     sel.innerHTML = `<option value="">Alle Artikel</option>${opts2.map((i) => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('')}`;
     sel.value = cal.item;
   };
-  const markView = () => el.querySelectorAll('[data-view]').forEach((b) => (b.className = `rounded-lg px-3 py-1.5 ${b.dataset.view === cal.view ? 'bg-brand-600 text-white' : 'text-slate-600'}`));
+  const markView = () => el.querySelectorAll('[data-view]').forEach((b) => (b.className = `rounded-lg px-3 py-1.5 ${b.dataset.view === cal.view ? 'bg-brand-700 text-white' : 'text-slate-600'}`));
   fillItems(); markView();
   const reload = () => load(el, cal);
   el.querySelector('#fRoom')?.addEventListener('change', (e) => { cal.room = e.target.value; cal.item = ''; fillItems(); reload(); });
@@ -101,7 +102,7 @@ function chipStyle(e) {
 }
 const chip = (e, text, extra = '') => {
   const s = chipStyle(e);
-  return `<button data-ev="${esc(e.id)}" style="${s.style}" class="mb-0.5 block w-full truncate rounded px-1 py-0.5 text-left text-[12px] font-semibold text-white ${s.cls} ${extra}" title="${esc(e.item_name)}">${e.overdue ? '⚠ ' : ''}${text}</button>`;
+  return `<button data-ev="${esc(e.id)}" style="${s.style}" class="mb-0.5 block w-full truncate rounded px-1 py-0.5 text-left text-[13px] font-semibold text-white ${s.cls} ${extra}" title="${esc(e.item_name)}">${e.overdue ? '⚠ ' : ''}${text}</button>`;
 };
 
 function drawMonth(grid, cal, first) {
@@ -118,9 +119,9 @@ function drawMonth(grid, cal, first) {
     const evs = cal.events.filter((e) => overlaps(e, d0, d1));
     const isToday = d0.toDateString() === todayStr;
     html += `<div class="min-h-[4.5rem] bg-white p-1 md:min-h-[6rem]">
-      <div class="mb-0.5 text-right"><span class="${isToday ? 'rounded-full bg-brand-600 px-1.5 py-0.5 font-bold text-white' : 'text-slate-500'}">${dayNum}</span></div>
+      <div class="mb-0.5 text-right"><span class="${isToday ? 'rounded-full bg-brand-700 px-1.5 py-0.5 font-bold text-white' : 'text-slate-500'}">${dayNum}</span></div>
       ${evs.slice(0, 3).map((e) => chip(e, esc(e.item_name))).join('')}
-      ${evs.length > 3 ? `<div class="text-[12px] font-semibold text-slate-400">+${evs.length - 3} weitere</div>` : ''}
+      ${evs.length > 3 ? `<div class="text-[13px] font-semibold text-slate-400">+${evs.length - 3} weitere</div>` : ''}
     </div>`;
   }
   grid.innerHTML = html + '</div>';
@@ -133,15 +134,15 @@ function drawWeek(grid, cal, monday) {
     const evs = cal.events.filter((e) => overlaps(e, d0, d1));
     const isToday = d0.toDateString() === todayStr;
     return `<div class="min-w-0 bg-white p-1.5 md:min-h-[14rem]">
-      <div class="mb-1 flex items-baseline justify-between gap-1 border-b border-slate-100 pb-1"><b class="text-xs ${isToday ? 'text-brand-600' : 'text-slate-500'}">${WEEKDAYS[i]}</b><span class="text-[13px] ${isToday ? 'rounded-full bg-brand-600 px-1.5 font-bold text-white' : 'text-slate-400'}">${d0.getDate()}.${d0.getMonth() + 1}.</span></div>
-      ${evs.length ? evs.map((e) => chip(e, `<span class="block truncate">${esc(e.item_name)}</span><span class="block font-normal opacity-90">${esc(dayLabel(e, d0))}${e.borrower_name ? ' · ' + esc(e.borrower_name) : ''}</span>`, '!py-1')).join('') : '<p class="text-center text-[12px] text-slate-300">–</p>'}
+      <div class="mb-1 flex items-baseline justify-between gap-1 border-b border-slate-100 pb-1"><b class="text-xs ${isToday ? 'text-brand-700' : 'text-slate-500'}">${WEEKDAYS[i]}</b><span class="text-[13px] ${isToday ? 'rounded-full bg-brand-700 px-1.5 font-bold text-white' : 'text-slate-400'}">${d0.getDate()}.${d0.getMonth() + 1}.</span></div>
+      ${evs.length ? evs.map((e) => chip(e, `<span class="block truncate">${esc(e.item_name)}</span><span class="block font-normal opacity-90">${esc(dayLabel(e, d0))}${e.borrower_name ? ' · ' + esc(e.borrower_name) : ''}</span>`, '!py-1')).join('') : '<p class="text-center text-[13px] text-slate-300">–</p>'}
     </div>`;
   }).join('');
   grid.innerHTML = `<div class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 sm:grid-cols-7">${cols}</div>`;
 }
 
 function drawList(grid, cal) {
-  if (!cal.events.length) { grid.innerHTML = '<p class="py-8 text-center text-sm italic text-slate-400">Keine Buchungen in diesem Monat.</p>'; return; }
+  if (!cal.events.length) { grid.innerHTML = emptyState({ icon: '📅', title: 'Keine Buchungen in diesem Monat', text: 'Blättere mit den Pfeilen in einen anderen Monat oder buche einen Artikel im Katalog.' }); return; }
   grid.innerHTML = `<div class="space-y-1.5">${cal.events.map((e) => {
     const s = chipStyle(e);
     return `<button data-ev="${esc(e.id)}" class="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-2.5 text-left text-sm hover:border-brand-500">

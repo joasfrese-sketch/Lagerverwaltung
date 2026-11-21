@@ -17,7 +17,7 @@ export async function render(el) {
   const prefs = { notify_deadline: true, notify_rental: true, notify_chat: true, push: true, calendar_view: 'month', ...(settings?.prefs || {}) };
   const pushOn = await pushActive();
   const p = state.profile;
-  const toggle = (k, label, hint = '') => `<label class="flex items-start justify-between gap-3 py-2"><span><b class="text-sm">${label}</b>${hint ? `<span class="block text-xs text-slate-500">${hint}</span>` : ''}</span><input type="checkbox" data-pref="${k}" ${prefs[k] ? 'checked' : ''} class="mt-1 h-5 w-5 rounded text-brand-600"></label>`;
+  const toggle = (k, label, hint = '') => `<label class="flex items-start justify-between gap-3 py-2"><span><b class="text-sm">${label}</b>${hint ? `<span class="block text-xs text-slate-500">${hint}</span>` : ''}</span><input type="checkbox" data-pref="${k}" ${prefs[k] ? 'checked' : ''} class="mt-1 h-5 w-5 rounded text-brand-700"></label>`;
 
   const THEME = { light: 'Hell', dark: 'Dunkel', auto: 'Automatisch' };
   const HINTS = { prof: esc(p.full_name), notif: pushOn ? 'Push-Nachrichten aktiv' : 'Push-Nachrichten aus', look: THEME[getTheme()] || 'Automatisch', app: 'Kalenderansicht, Kalender-Abo', sec: 'Passwort, Zwei-Faktor-Anmeldung', data: 'Sicherung als Excel oder CSV' };
@@ -67,7 +67,7 @@ export async function render(el) {
   // Einstellungen speichern
   const savePrefs = async () => unwrap(await supabase.from('user_settings').upsert({ user_id: state.user.id, prefs }));
   el.querySelectorAll('[data-pref]').forEach((c) => (c.onchange = () => busy(null, async () => { prefs[c.dataset.pref] = c.checked; await savePrefs(); toast('Gespeichert', 'success'); })));
-  const markTheme = () => el.querySelectorAll('[data-theme]').forEach((b) => { const on = b.dataset.theme === getTheme(); b.className = `rounded-lg px-3 py-1.5 ${on ? 'bg-brand-600 text-white' : 'text-slate-600'}`; });
+  const markTheme = () => el.querySelectorAll('[data-theme]').forEach((b) => { const on = b.dataset.theme === getTheme(); b.className = `rounded-lg px-3 py-1.5 ${on ? 'bg-brand-700 text-white' : 'text-slate-600'}`; });
   markTheme();
   el.querySelectorAll('[data-theme]').forEach((b) => (b.onclick = () => busy(null, async () => { setTheme(b.dataset.theme); prefs.theme = b.dataset.theme; markTheme(); await savePrefs(); })));
   el.querySelector('#view').onchange = (e) => busy(null, async () => { prefs.calendar_view = e.target.value; localStorage.setItem('cal_view', e.target.value); await savePrefs(); toast('Gespeichert', 'success'); });

@@ -7,6 +7,7 @@ import * as calendar from './calendar.js';
 import { openExtend } from '../components/extendModal.js';
 import { uploadDamagePhoto, removeDamagePhotos } from '../lib/photos.js';
 import { collapsible, bindCollapsibles, setCount } from '../components/collapse.js';
+import { emptyState } from '../components/emptyState.js';
 
 const MAX_DAMAGE = 5;
 
@@ -15,7 +16,7 @@ export async function render(el) {
   el.innerHTML = `
     <h1 class="mb-3 text-2xl font-bold">Mein Bereich</h1>
     <section class="card mb-3 flex items-center gap-3">
-      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-600 text-lg font-bold text-white">${esc((displayName(p))[0]?.toUpperCase())}</div>
+      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-700 text-lg font-bold text-white">${esc((displayName(p))[0]?.toUpperCase())}</div>
       <div class="min-w-0 flex-1"><div class="truncate font-bold">${esc(p.full_name)}</div><div class="truncate text-xs text-slate-500">@${esc(p.username)} · ${esc(p.email)}</div></div>
       <button id="qrBtn" class="btn-ghost shrink-0">📱 Mein QR-Code</button>
     </section>
@@ -51,7 +52,8 @@ async function load(el) {
           <div class="flex flex-wrap items-center gap-1.5">
             ${p ? `<span class="badge bg-amber-100 text-amber-800">Antrag offen bis ${fmtDateTime(p.new_end_at)}</span><button data-cancel="${esc(p.id)}" class="btn-ghost ${small}">Zurückziehen</button>` : `<button data-ext="${esc(r.id)}" class="btn-ghost ${small}">Verlängern</button>`}
             <button data-ret="${esc(r.id)}" class="btn-primary ${small}">Zurückgeben</button></div></div></div>`;
-    }).join('') : '<p class="italic text-slate-400">Keine aktiven Ausleihen.</p>';
+    }).join('') : emptyState({ icon: '📦', title: 'Gerade nichts ausgeliehen', text: 'Sobald du etwas ausleihst, erscheint es hier – mit Frist, Rückgabe- und Verlängern-Knopf.', actions: [{ id: 'go', label: 'Zum Katalog', primary: true }] });
+    el.querySelector('[data-empty="go"]')?.addEventListener('click', () => { location.hash = '#/katalog'; });
     el.querySelectorAll('[data-ret]').forEach((b) => (b.onclick = () => returnModal(rentals.find((r) => r.id === b.dataset.ret), () => load(el))));
     el.querySelectorAll('[data-ext]').forEach((b) => (b.onclick = () => openExtend(rentals.find((r) => r.id === b.dataset.ext), () => load(el))));
     el.querySelectorAll('[data-cancel]').forEach((b) => (b.onclick = () => busy(b, async () => { unwrap(await supabase.rpc('cancel_extension_request', { p_request_id: b.dataset.cancel })); toast('Antrag zurückgezogen', 'success'); load(el); })));
@@ -65,7 +67,7 @@ async function load(el) {
     const log = unwrap(await supabase.from('activity_log').select('*').or(`actor_id.eq.${state.user.id},subject_id.eq.${state.user.id}`)
       .order('created_at', { ascending: false }).limit(30));
     setCount(el, 'me-log', log.length);
-    el.querySelector('#log').innerHTML = log.length ? log.map((l) => `<div class="flex justify-between gap-2 border-b border-slate-100 pb-1"><span><b class="text-brand-600">[${esc(l.action)}]</b> ${esc(l.item_name || '')}</span><span class="shrink-0 text-slate-400">${fmtDateTime(l.created_at)}</span></div>`).join('')
+    el.querySelector('#log').innerHTML = log.length ? log.map((l) => `<div class="flex justify-between gap-2 border-b border-slate-100 pb-1"><span><b class="text-brand-700">[${esc(l.action)}]</b> ${esc(l.item_name || '')}</span><span class="shrink-0 text-slate-400">${fmtDateTime(l.created_at)}</span></div>`).join('')
       : '<p class="italic text-slate-400">Noch keine Aktivitäten.</p>';
   } catch (e) { toast(e.message, 'error'); }
 }
