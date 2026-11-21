@@ -1,15 +1,8 @@
 import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, toast, openModal, busy, fmtDate } from '../lib/ui.js';
 
-// Prüfstatus für Karten/Listen: null | { level: 'due'|'soon', text }
-export function inspectionState(item, now = new Date()) {
-  if (!item?.next_inspection_at) return null;
-  const next = new Date(item.next_inspection_at);
-  const days = Math.ceil((next - now) / 86400000);
-  if (days < 0) return { level: 'due', text: `Prüfung überfällig seit ${fmtDate(item.next_inspection_at)}` };
-  if (days <= 14) return { level: 'soon', text: `Prüfung fällig am ${fmtDate(item.next_inspection_at)}` };
-  return { level: 'ok', text: `Nächste Prüfung ${fmtDate(item.next_inspection_at)}` };
-}
+export { inspectionState } from '../lib/rules.js';
+import { inspectionState } from '../lib/rules.js';
 
 export const INTERVALS = [['', 'Keine regelmäßige Prüfung'], ['3', 'alle 3 Monate'], ['6', 'alle 6 Monate'], ['12', 'jährlich (z. B. Elektroprüfung)'], ['24', 'alle 2 Jahre'], ['36', 'alle 3 Jahre']];
 export const intervalSelect = (cur) => {

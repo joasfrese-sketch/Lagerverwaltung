@@ -2,13 +2,14 @@ import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, toast, openModal, busy, toLocalInput, fmtDateTime } from '../lib/ui.js';
 import { canManageRoom } from '../state.js';
 import { mountItemCalendar } from './itemCalendar.js';
+import { extensionNeedsApproval, DAY, SELF_EXTEND_DAYS } from '../lib/rules.js';
 
 // Frist verlängern: bis 3 Tage selbst (nicht bei überfälligen), sonst als Antrag; Verantwortliche immer direkt
 export async function openExtend(rental, done) {
   const cur = new Date(rental.end_at);
   const manager = canManageRoom(rental.items?.room_id);
   const overdue = cur < new Date();
-  const day = 24 * 3600 * 1000;
+  const day = DAY;
   const first = new Date(Math.max(cur.getTime(), Date.now()) + day); first.setSeconds(0, 0);
 
   const { el, close } = openModal(`
@@ -29,14 +30,14 @@ export async function openExtend(rental, done) {
 
   const evaluate = () => {
     const end = new Date(ne.value); const days = (end - cur) / day;
-    const needsApproval = !manager && (days > 3 || overdue);
+    const needsApproval = extensionNeedsApproval({ days, overdue, manager });
     el.querySelector('#reasonBox').classList.toggle('hidden', !needsApproval);
     go.textContent = needsApproval ? 'Antrag senden' : 'Verlängern';
     const clash = cal && end > cur ? cal.conflicts(cur, end) : [];
     let msg; let cls = 'bg-slate-50 text-slate-600';
     if (!(end > cur)) { msg = 'Das neue Datum muss nach der aktuellen Frist liegen.'; cls = 'bg-red-50 text-red-700'; }
     else if (clash.length) { msg = 'Der Artikel ist in diesem Zeitraum bereits reserviert.'; cls = 'bg-red-50 text-red-700'; }
-    else if (needsApproval) { msg = overdue ? 'Die Ausleihe ist überfällig – die Verlängerung muss genehmigt werden.' : `Verlängerungen über 3 Tage (hier ${days.toFixed(1).replace('.', ',')}) müssen von der Raum-Verantwortung genehmigt werden.`; cls = 'bg-amber-50 text-amber-800'; }
+    else if (needsApproval) { msg = overdue ? 'Die Ausleihe ist überfällig – die Verlängerung muss genehmigt werden.' : `Verlängerungen über ${SELF_EXTEND_DAYS} Tage (hier ${days.toFixed(1).replace('.', ',')}) müssen von der Raum-Verantwortung genehmigt werden.`; cls = 'bg-amber-50 text-amber-800'; }
     else { msg = '✅ Kann sofort verlängert werden.'; cls = 'bg-emerald-50 text-emerald-800'; }
     hint.className = `rounded-xl p-2 text-xs font-semibold ${cls}`; hint.textContent = msg;
     go.disabled = !(end > cur) || clash.length > 0;

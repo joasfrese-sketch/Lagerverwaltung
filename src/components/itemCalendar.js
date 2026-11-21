@@ -1,5 +1,6 @@
 import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, fmtDateTime } from '../lib/ui.js';
+import { findConflicts, hasOverdue } from '../lib/rules.js';
 
 const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 const WD = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -30,8 +31,8 @@ export async function mountItemCalendar(box, itemId, { getRange, onPickDay }) {
     draw();
   }));
 
-  const conflicts = (start, end) => bk.filter((b) => start < b.e && end > b.s);
-  const overdue = () => bk.some((b) => b.e < new Date());
+  const conflicts = (start, end) => findConflicts(bk, start, end);
+  const overdue = () => hasOverdue(bk);
 
   function draw() {
     box.querySelector('#ttl').textContent = `${MONTHS[view.m]} ${view.y}`;

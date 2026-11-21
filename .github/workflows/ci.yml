@@ -1,5 +1,6 @@
 # Automatische Prüfung bei jedem Push und Pull Request:
-# 1) Unit-Tests + Produktions-Build   2) Datenbank-Tests (Migrationen + Kernabläufe) auf einer leeren Test-Datenbank
+# 1) Typprüfung, Unit-Tests + Produktions-Build   2) End-to-End-Tests im Browser (gefälschtes Backend)
+# 3) Datenbank-Tests (Migrationen + Kernabläufe) auf einer leeren Test-Datenbank
 name: Tests
 
 on:
@@ -17,8 +18,27 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  e2e:
+    name: End-to-End-Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-fehlerbilder
+          path: test-results
 
   database:
     name: Datenbank-Tests
