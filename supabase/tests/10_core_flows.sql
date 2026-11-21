@@ -9,7 +9,7 @@ set client_min_messages = notice;
 \o /dev/null
 
 create schema if not exists tests;
-grant usage on schema tests to authenticated, service_role;
+grant usage on schema tests to authenticated, service_role, anon;
 
 create or replace function tests.ok(p_cond boolean, p_msg text) returns void language plpgsql as $$
 begin
@@ -32,7 +32,7 @@ end $$;
 create or replace function tests.as_user(p_id uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', p_id, 'role', 'authenticated')::text, false);
 $$;
-grant execute on all functions in schema tests to authenticated, service_role;
+grant execute on all functions in schema tests to authenticated, service_role, anon;
 
 -- ---------- Testdaten (als Datenbank-Besitzer) ----------
 insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data) values
@@ -197,6 +197,83 @@ reset role;
 set role authenticated;
 select tests.as_user('00000000-0000-0000-0000-0000000000c1');
 select tests.ok(public.calendar_feed_token(true) <> current_setting('tests.tok_user'), 'Kalender-Link kann zurückgesetzt werden');
+reset role;
+
+-- ======================= Eskalation, Sicherung, Rückmeldungen, Aufräumen (Migration 009) =======================
+reset role;
+-- überfällige Ausleihe (seit 3 Tagen) für Artikel in Technik
+alter table public.rentals disable trigger user;
+insert into public.rentals (item_id, borrower_id, start_at, end_at, status)
+  values ('T-MIC', '00000000-0000-0000-0000-0000000000c1', now() - interval '5 days', now() - interval '3 days', 'active');
+alter table public.rentals enable trigger user;
+select public.run_reminders();
+select tests.ok(exists (select 1 from public.notifications where link like 'escalate:%' and user_id = '00000000-0000-0000-0000-0000000000b1'), 'Überfälligkeit über 2 Tage wird an den Raum-Manager eskaliert');
+select tests.ok(not exists (select 1 from public.notifications where link like 'escalate:%' and user_id = '00000000-0000-0000-0000-0000000000c2'), 'Eskalation geht nicht an unbeteiligte Nutzer');
+select public.run_reminders();
+select tests.ok((select count(*) from public.notifications where link like 'escalate:%' and user_id = '00000000-0000-0000-0000-0000000000b1') = 1, 'Eskalation wird nicht wiederholt');
+
+-- Sicherung
+set role authenticated;
+select tests.as_user('00000000-0000-0000-0000-0000000000c1');
+select tests.throws($$select public.create_backup('manual')$$, 'Administratoren', 'Nutzer darf keine Sicherung anlegen');
+select tests.ok((select count(*) from public.backups) = 0, 'Nutzer sieht keine Sicherungen');
+select tests.as_user('00000000-0000-0000-0000-0000000000a1');
+select set_config('tests.bk', public.create_backup('manual')::text, false);
+select tests.ok((select (counts->>'items')::int from public.backups where id = current_setting('tests.bk')::uuid) = (select count(*) from public.items), 'Sicherung enthält alle Artikel');
+select tests.ok(not exists (select 1 from public.backups, jsonb_array_elements(data->'profiles') p where p ? 'email'), 'Sicherung enthält keine E-Mail-Adressen');
+
+-- Artikel „versehentlich“ löschen und aus der Sicherung zurückholen
+reset role;
+delete from public.items where id = 'B-PAPIER';
+select tests.ok(not exists (select 1 from public.items where id = 'B-PAPIER'), 'Testartikel gelöscht');
+set role authenticated;
+select tests.as_user('00000000-0000-0000-0000-0000000000c1');
+select tests.throws(format($q$select public.restore_deleted_from_backup(%L)$q$, current_setting('tests.bk')), 'Administratoren', 'Nutzer darf nichts wiederherstellen');
+select tests.as_user('00000000-0000-0000-0000-0000000000a1');
+select tests.ok((public.restore_deleted_from_backup(current_setting('tests.bk')::uuid) -> 'items' ->> 'wiederhergestellt')::int = 1, 'Gelöschter Artikel wird wiederhergestellt');
+select tests.ok(exists (select 1 from public.items where id = 'B-PAPIER' and name = 'Druckerpapier' and room_id = 'Büro'), 'Wiederhergestellter Artikel hat seine Daten zurück');
+select tests.ok((public.restore_deleted_from_backup(current_setting('tests.bk')::uuid) -> 'items' ->> 'wiederhergestellt')::int = 0, 'Zweite Wiederherstellung ändert nichts (nichts wird überschrieben)');
+select tests.ok(exists (select 1 from public.activity_log where action = 'WIEDERHERGESTELLT'), 'Wiederherstellung steht im Protokoll');
+
+-- Rückmeldungen
+select tests.as_user('00000000-0000-0000-0000-0000000000c1');
+insert into public.feedback (kind, message, page) values ('problem', 'Der Scanner startet nicht', '#/katalog');
+select tests.throws($$insert into public.feedback (kind, message) values ('problem', 'x')$$, 'check', 'Zu kurze Rückmeldung wird abgelehnt');
+select tests.throws($$insert into public.feedback (user_id, kind, message) values ('00000000-0000-0000-0000-0000000000c2', 'idee', 'Im Namen eines anderen')$$, 'row-level security', 'Rückmeldung nur im eigenen Namen');
+select tests.ok((select count(*) from public.feedback) = 1, 'Nutzer sieht seine eigene Rückmeldung');
+select tests.as_user('00000000-0000-0000-0000-0000000000c2');
+select tests.ok((select count(*) from public.feedback) = 0, 'Andere Nutzer sehen fremde Rückmeldungen nicht');
+select tests.as_user('00000000-0000-0000-0000-0000000000a1');
+select tests.ok((select count(*) from public.feedback) = 1, 'Admin sieht alle Rückmeldungen');
+update public.feedback set status = 'erledigt';
+select tests.ok((select status from public.feedback) = 'erledigt', 'Admin kann Rückmeldungen abschließen');
+select tests.ok(exists (select 1 from public.notifications where link like 'feedback:%' and user_id = '00000000-0000-0000-0000-0000000000a1'), 'Admin wird über neue Rückmeldung benachrichtigt');
+
+-- Fehlerbericht
+select tests.as_user('00000000-0000-0000-0000-0000000000c1');
+insert into public.client_errors (message, page) values ('TypeError: x is undefined', '#/kalender');
+select tests.ok((select count(*) from public.client_errors) = 0, 'Nutzer kann Fehlerberichte nicht lesen');
+select tests.as_user('00000000-0000-0000-0000-0000000000a1');
+select tests.ok((select count(*) from public.client_errors) = 1, 'Admin sieht Fehlerberichte');
+
+-- Protokoll aufräumen
+reset role;
+insert into public.activity_log (action, item_name, created_at) values ('TEST', 'alt1', now() - interval '200 days'), ('TEST', 'alt2', now() - interval '150 days'), ('TEST', 'neu', now() - interval '10 days');
+set role authenticated;
+select tests.as_user('00000000-0000-0000-0000-0000000000c1');
+select tests.throws($$select public.purge_activity_log(now() - interval '100 days', 2)$$, 'Administratoren', 'Nutzer darf das Protokoll nicht aufräumen');
+select tests.as_user('00000000-0000-0000-0000-0000000000a1');
+select tests.throws($$select public.purge_activity_log(now() - interval '30 days', 2)$$, '90 Tage', 'Aufräumen nur für Einträge älter als 90 Tage');
+select tests.throws($$select public.purge_activity_log(now() - interval '100 days', 5)$$, 'Anzahl hat sich geändert', 'Aufräumen nur mit passender Export-Anzahl');
+select tests.ok(public.purge_activity_log(now() - interval '100 days', (select count(*)::int from public.activity_log where created_at < now() - interval '100 days')) >= 2, 'Altes Protokoll wird nach Export gelöscht');
+select tests.ok(exists (select 1 from public.activity_log where item_name = 'neu') and not exists (select 1 from public.activity_log where item_name = 'alt1'), 'Neue Einträge bleiben, alte sind weg');
+select tests.ok(exists (select 1 from public.activity_log where action = 'AUFGERÄUMT'), 'Aufräumen steht im Protokoll');
+
+-- Statusprüfung ohne Anmeldung
+reset role;
+set role anon;
+select tests.ok((public.ping() ->> 'ok')::boolean, 'Statusprüfung (ping) ist ohne Anmeldung erreichbar');
+select tests.throws($$select * from public.items$$, 'permission denied', 'Anonyme sehen weiterhin keine Daten');
 reset role;
 
 \echo 'ALLE DATENBANK-TESTS BESTANDEN'
