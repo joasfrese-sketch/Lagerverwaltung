@@ -1,0 +1,20 @@
+# Statusprüfung: alle 30 Minuten werden Webseite und Datenbank angefragt.
+# Schlägt eine Prüfung fehl, schlägt der Lauf fehl – GitHub schickt dann eine E-Mail an den Repository-Besitzer.
+# Der Schlüssel unten ist der ÖFFENTLICHE „publishable key“ (steckt ohnehin in der App) und gibt keinen Datenzugriff.
+name: Statusprüfung
+on:
+  schedule: [{ cron: '*/30 * * * *' }]
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Webseite erreichbar?
+        run: curl -fsS --retry 3 --retry-delay 10 -o /dev/null https://lagerverwaltung-mbg.vercel.app/
+      - name: Datenbank erreichbar?
+        run: |
+          out=$(curl -fsS --retry 3 --retry-delay 10 -X POST \
+            -H "apikey: sb_publishable_Q7rXTPgk9oZVj86Cpow8Dw_0mK2K3Aa" -H "Content-Type: application/json" -d '{}' \
+            https://qqjtlcdqhyglhbcixvbr.supabase.co/rest/v1/rpc/ping)
+          echo "$out"; echo "$out" | grep -q '"ok": *true'

@@ -31,6 +31,9 @@ supabase functions deploy calendar-feed --no-verify-jwt
 ```
 (Die Funktion liefert den abonnierbaren Kalender-Link; ohne sie zeigt „Abonnieren" einen Hinweis.)
 
+### 1h. Migration 009 (Eskalation, Sicherung, Rückmeldungen, Fehlerbericht)
+SQL Editor → `supabase/migrations/009_reminders_backup_feedback_monitoring.sql` ausführen (wiederholbar, löscht keine Daten). Aktiviert die nächtliche Sicherung (pg_cron), die Eskalation überfälliger Rückgaben, Rückmeldungen, Fehlerberichte und `ping()` für die Statusprüfung.
+
 ### 2. Auth (Supabase → Authentication)
 - Providers → Email: **Confirm email = an**; Multi-Factor (TOTP) muss aktiviert sein (Standard) (Voraussetzung dafür, dass die Admin-Zuweisung per E-Mail sicher ist)
 - URL Configuration: **Site URL** = Vercel-URL, **Redirect URLs** zusätzlich `http://localhost:5173`
@@ -81,7 +84,10 @@ Empfohlener Ablauf mit zwei getrennten Supabase-Projekten:
   PGHOST=localhost PGPORT=54329 PGUSER=postgres PGPASSWORD=postgres npm run test:db
   ```
   Das Skript verweigert die Ausführung gegen `*.supabase.co`.
-- GitHub Actions (`.github/workflows/ci.yml`) führt beides bei jedem Push und Pull Request aus.
+- `npm run typecheck` – Typprüfung (JSDoc) der Kern-Module; `npm run test:e2e` – Browser-Tests (Playwright) gegen den Produktions-Build mit gefälschtem Backend, inkl. Barrierefreiheit (axe). Einmalig: `npx playwright install chromium`.
+- GitHub Actions (`.github/workflows/ci.yml`) führt alles bei jedem Push und Pull Request aus; `uptime.yml` prüft alle 30 Min den Betrieb.
+
+Betrieb, Sicherung, Wiederherstellung, Fehlersuche: siehe **[docs/BETRIEB.md](docs/BETRIEB.md)**.
 
 ## Lokal
 `cp .env.example .env && npm install && npm run dev` (Service Worker/Push nur im Produktions-Build aktiv)
