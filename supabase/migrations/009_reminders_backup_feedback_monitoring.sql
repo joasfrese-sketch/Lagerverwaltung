@@ -184,6 +184,7 @@ grant select, insert on public.client_errors to authenticated;
 -- Einfache Statusprüfung für Überwachungsdienste (ohne Anmeldung aufrufbar, liefert keine Daten)
 create or replace function public.ping() returns jsonb language sql stable as
 $$ select jsonb_build_object('ok', true, 'time', now()) $$;
+alter function public.ping() set search_path = public;
 grant execute on function public.ping() to anon, authenticated;
 
 -- ---------- 6) Zeitpläne (nur wenn pg_cron vorhanden ist) ----------
