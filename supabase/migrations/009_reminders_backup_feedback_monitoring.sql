@@ -181,6 +181,8 @@ create policy client_errors_insert on public.client_errors for insert to authent
 create policy client_errors_admin on public.client_errors for select to authenticated using (public.is_admin());
 grant select, insert on public.client_errors to authenticated;
 
+revoke all on public.feedback, public.client_errors, public.backups from anon;
+
 -- Einfache Statusprüfung für Überwachungsdienste (ohne Anmeldung aufrufbar, liefert keine Daten)
 create or replace function public.ping() returns jsonb language sql stable as
 $$ select jsonb_build_object('ok', true, 'time', now()) $$;
