@@ -35,7 +35,7 @@ export async function render(el) {
       <div class="flex flex-wrap gap-2"><button id="camScan" class="btn-primary">📷 Kamera-Scan starten</button>
         <form id="codeForm" class="flex flex-1 gap-2"><input id="codeIn" class="input" placeholder="Code scannen/eintippen + Enter (auch USB-Scanner)" autocomplete="off"><button class="btn-ghost">Hinzufügen</button></form></div>
       <div id="cart" class="space-y-1.5"></div>
-      <div class="flex flex-wrap items-center justify-between gap-2"><label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" id="mProt" checked> Protokoll danach drucken</label>
+      <div class="flex flex-wrap items-center justify-between gap-2"><label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" id="mProt"> Protokoll danach drucken</label>
         <div class="flex gap-2"><button id="mClear" class="btn-ghost">Leeren</button><button id="mGo" class="btn-primary" disabled>Buchen</button></div></div>
     </div>
 
@@ -44,7 +44,7 @@ export async function render(el) {
       <div class="grid gap-3 rounded-xl bg-slate-50 p-3 md:grid-cols-2">
         <div><label class="label">Abgebende Person</label><select id="by" class="input"><option value="">Ausleiher selbst</option>${people.map((p) => `<option value="${esc(p.id)}">${esc(label(p))}</option>`).join('')}</select></div>
         <div><label class="label">Notiz / Vermerk</label><input id="note" class="input"></div>
-        <label class="flex items-center gap-2 text-sm font-semibold md:col-span-2"><input type="checkbox" id="prot" checked> Protokoll danach drucken</label></div>
+        <label class="flex items-center gap-2 text-sm font-semibold md:col-span-2"><input type="checkbox" id="prot"> Protokoll danach drucken</label></div>
       <div class="flex justify-end"><button id="go" class="btn-primary">✅ Ausgewählte zurücknehmen</button></div></div>`;
 
   const who = el.querySelector('#who');

@@ -47,3 +47,10 @@ test('Zeitraum-Schnellwahl "Heute" ist nur vor 17 Uhr da, andere immer', async (
   await expect(page.locator('[data-q="tomorrow"]')).toBeVisible();
   await expect(page.locator('[data-q="week"]')).toBeVisible();
 });
+
+test('Terminal: Protokoll-Druck ist standardmäßig aus', async ({ page, context }) => {
+  await installFake(context);
+  await open(page, 'terminal');
+  await expect(page.locator('#mProt')).not.toBeChecked();
+  await expect(page.locator('#prot')).not.toBeChecked();
+});
