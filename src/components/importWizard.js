@@ -14,7 +14,7 @@ export function openImportWizard({ defaultRoom, done }) {
     <div id="up" class="rounded-2xl border-2 border-dashed border-slate-300 p-5 text-center">
       <p class="mb-2 text-sm text-slate-600">Datei auswählen oder hierher ziehen (<b>.xlsx</b> oder <b>.csv</b>)</p>
       <input id="file" type="file" accept=".xlsx,.csv,.txt" class="text-sm">
-      <div class="mt-2"><button id="tpl" type="button" class="text-xs font-semibold text-brand-600">⬇️ Vorlage herunterladen</button></div></div>
+      <div class="mt-2"><button id="tpl" type="button" class="text-xs font-semibold text-brand-700">⬇️ Vorlage herunterladen</button></div></div>
     <div id="work" class="mt-4 hidden space-y-4"></div>`, { wide: true });
   el.firstElementChild.classList.add('sm:max-w-4xl');
   el.querySelector('#tpl').onclick = downloadTemplate;
@@ -72,7 +72,7 @@ export function openImportWizard({ defaultRoom, done }) {
         <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           ${Array.from({ length: colsN }, (_, i) => {
             const f = S.mapping[i]; const sample = rows.slice(0, 2).map((r) => r.cells[i]).filter(Boolean).join(' · ');
-            return `<div class="rounded-xl border p-2.5 ${f ? '' : 'opacity-60'}"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="truncate text-xs font-bold">${esc(header(i))}</div><div class="truncate text-[11px] text-slate-400">${esc(sample) || '—'}</div></div>
+            return `<div class="rounded-xl border p-2.5 ${f ? '' : 'opacity-60'}"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="truncate text-xs font-bold">${esc(header(i))}</div><div class="truncate text-[13px] text-slate-400">${esc(sample) || '—'}</div></div>
               ${f ? `<button data-rm="${i}" title="Spalte nicht importieren" class="text-slate-400 hover:text-red-600">✕</button>` : ''}</div>
               <select data-map="${i}" class="input mt-1.5 !py-1.5 text-xs"><option value="">— nicht importieren —</option>${FIELDS.map((x) => `<option value="${x.key}" ${f === x.key ? 'selected' : ''}>${esc(x.label)}${x.required ? ' *' : ''}</option>`).join('')}</select></div>`;
           }).join('')}</div>
@@ -91,7 +91,7 @@ export function openImportWizard({ defaultRoom, done }) {
         ${S.results.length > 100 ? `<p class="mt-1 text-xs text-slate-400">Vorschau zeigt die ersten 100 von ${S.results.length} Zeilen – alle werden importiert.</p>` : ''}
         <p class="mt-1 text-xs text-slate-500">Mit dem Haken links kannst du einzelne Zeilen vom Import ausnehmen.</p></div>
 
-      <div class="flex flex-wrap items-center justify-between gap-2"><span class="text-sm"><b class="text-brand-600">${ok.length}</b> werden importiert${bad.length ? ` · <b class="text-red-600">${bad.length}</b> mit Fehlern (übersprungen)` : ''}</span>
+      <div class="flex flex-wrap items-center justify-between gap-2"><span class="text-sm"><b class="text-brand-700">${ok.length}</b> werden importiert${bad.length ? ` · <b class="text-red-600">${bad.length}</b> mit Fehlern (übersprungen)` : ''}</span>
         <div class="flex gap-2"><button data-close class="btn-ghost">Abbrechen</button><button id="go" class="btn-primary" ${!hasName || !ok.length ? 'disabled' : ''}>${ok.length} Artikel importieren</button></div></div>`;
 
     work.querySelectorAll('[data-map]').forEach((s) => (s.onchange = () => setMap(Number(s.dataset.map), s.value)));

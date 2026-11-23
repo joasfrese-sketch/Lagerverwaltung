@@ -35,7 +35,7 @@ export async function render(el) {
       <div class="flex flex-wrap gap-2"><button id="camScan" class="btn-primary">📷 Kamera-Scan starten</button>
         <form id="codeForm" class="flex flex-1 gap-2"><input id="codeIn" class="input" placeholder="Code scannen/eintippen + Enter (auch USB-Scanner)" autocomplete="off"><button class="btn-ghost">Hinzufügen</button></form></div>
       <div id="cart" class="space-y-1.5"></div>
-      <div class="flex flex-wrap items-center justify-between gap-2"><label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" id="mProt" checked> Protokoll danach drucken</label>
+      <div class="flex flex-wrap items-center justify-between gap-2"><label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" id="mProt"> Protokoll danach drucken</label>
         <div class="flex gap-2"><button id="mClear" class="btn-ghost">Leeren</button><button id="mGo" class="btn-primary" disabled>Buchen</button></div></div>
     </div>
 
@@ -44,7 +44,7 @@ export async function render(el) {
       <div class="grid gap-3 rounded-xl bg-slate-50 p-3 md:grid-cols-2">
         <div><label class="label">Abgebende Person</label><select id="by" class="input"><option value="">Ausleiher selbst</option>${people.map((p) => `<option value="${esc(p.id)}">${esc(label(p))}</option>`).join('')}</select></div>
         <div><label class="label">Notiz / Vermerk</label><input id="note" class="input"></div>
-        <label class="flex items-center gap-2 text-sm font-semibold md:col-span-2"><input type="checkbox" id="prot" checked> Protokoll danach drucken</label></div>
+        <label class="flex items-center gap-2 text-sm font-semibold md:col-span-2"><input type="checkbox" id="prot"> Protokoll danach drucken</label></div>
       <div class="flex justify-end"><button id="go" class="btn-primary">✅ Ausgewählte zurücknehmen</button></div></div>`;
 
   const who = el.querySelector('#who');
@@ -62,7 +62,7 @@ export async function render(el) {
   let mode = 'out'; let cart = [];
   const hint = { out: 'Person oben wählen (oder Personen-QR scannen), dann Artikel nacheinander scannen und gesammelt ausgeben.', in: 'Artikel nacheinander scannen – alle werden gesammelt zurückgenommen, auch von unterschiedlichen Personen.' };
   const drawMode = () => {
-    el.querySelectorAll('[data-mode]').forEach((b) => (b.className = `rounded-lg px-3 py-1.5 ${b.dataset.mode === mode ? 'bg-brand-600 text-white' : 'text-slate-600'}`));
+    el.querySelectorAll('[data-mode]').forEach((b) => (b.className = `rounded-lg px-3 py-1.5 ${b.dataset.mode === mode ? 'bg-brand-700 text-white' : 'text-slate-600'}`));
     el.querySelector('#modeHint').textContent = hint[mode];
     el.querySelector('#outFields').classList.toggle('hidden', mode !== 'out');
     el.querySelector('#inFields').classList.toggle('hidden', mode !== 'in');
@@ -148,7 +148,7 @@ export async function render(el) {
     if (!who.value) { box.innerHTML = ''; return; }
     try {
       rows = unwrap(await supabase.from('rentals').select('id, item_id, start_at, end_at, project, items(name, room_id)').eq('borrower_id', who.value).eq('status', 'active').order('end_at'));
-      box.innerHTML = rows.length ? '<label class="flex items-center gap-2 text-xs font-bold text-brand-600"><input type="checkbox" id="all" checked> Alle auswählen</label>' + rows.map((r) => {
+      box.innerHTML = rows.length ? '<label class="flex items-center gap-2 text-xs font-bold text-brand-700"><input type="checkbox" id="all" checked> Alle auswählen</label>' + rows.map((r) => {
         const late = new Date(r.end_at) < new Date();
         return `<label class="flex items-center gap-3 rounded-xl border p-2.5 ${late ? 'border-red-300 bg-red-50' : 'bg-white'}"><input type="checkbox" class="rc" value="${esc(r.id)}" checked>
           <span class="text-sm"><b>${esc(r.items?.name)}</b> <span class="font-mono text-xs text-slate-400">${esc(r.item_id)}</span>${late ? ' <span class="badge bg-red-600 text-white">Überfällig</span>' : ''}<br><span class="text-xs text-slate-500">Frist ${fmtDateTime(r.end_at)}${r.project ? ' · ' + esc(r.project) : ''}</span></span></label>`;
@@ -200,7 +200,7 @@ function printProtocol({ title, borrower, by, rows, note }) {
   if (!w) return toast('Pop-up blockiert – Protokoll konnte nicht geöffnet werden.', 'error');
   const multi = rows.some((r) => r.borrower);
   w.document.write(`<html><head><title>${esc(title)}</title><style>body{font-family:sans-serif;padding:24px;color:#0f172a}h1{margin:0}table{width:100%;border-collapse:collapse;margin:16px 0}td,th{border:1px solid #cbd5e1;padding:6px;text-align:left;font-size:13px}.s{display:flex;gap:40px;margin-top:70px}.s div{flex:1;border-top:1px solid #64748b;padding-top:6px;font-size:12px;text-align:center}</style></head><body>
-  <h1>${esc(title)}</h1><p>Lagerverwaltung Pro · ${fmtDate(new Date().toISOString())} · ID PRT-${Date.now().toString().slice(-6)}</p>
+  <h1>${esc(title)}</h1><p>MBG Lemgo · Lagerverwaltung · ${fmtDate(new Date().toISOString())} · ID PRT-${Date.now().toString().slice(-6)}</p>
   <p><b>Ausleiher:</b> ${esc(borrower)}${by ? `<br><b>Abgegeben durch:</b> ${esc(by)}` : ''}<br><b>Bearbeitet von:</b> ${esc(state.profile.full_name || state.profile.username)}</p>
   <table><tr><th>ID</th><th>Bezeichnung</th>${multi ? '<th>Ausleiher</th>' : ''}<th>Frist</th></tr>${rows.map((r) => `<tr><td>${esc(r.id)}</td><td>${esc(r.name)}</td>${multi ? `<td>${esc(r.borrower || '')}</td>` : ''}<td>${fmtDateTime(r.end)}</td></tr>`).join('')}</table>
   ${note ? `<p><b>Vermerk:</b> ${esc(note)}</p>` : ''}

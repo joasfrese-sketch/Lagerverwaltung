@@ -9,7 +9,7 @@ export function applyTheme() {
   const dark = t === 'dark' || (t === 'auto' && mq.matches);
   document.documentElement.classList.toggle('dark', dark);
   document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0f172a' : '#059669');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0f172a' : '#ffffff');
 }
 
 export function setTheme(t) {

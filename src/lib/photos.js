@@ -62,3 +62,18 @@ export async function uploadPhoto(item, file) {
   if (r.error) { await supabase.storage.from(BUCKET).remove([`${base}.jpg`]); throw new Error(`Upload fehlgeschlagen: ${r.error.message}`); }
   return supabase.storage.from(BUCKET).getPublicUrl(`${base}.jpg`).data.publicUrl;
 }
+
+// ----- Schadensfotos bei der Rückgabe (eigener Ordner pro Nutzer im Bucket damage-photos) -----
+export const DAMAGE_BUCKET = 'damage-photos';
+export async function uploadDamagePhoto(userId, file) {
+  const { full } = await prepare(file);
+  const path = `${userId}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.jpg`;
+  const r = await supabase.storage.from(DAMAGE_BUCKET).upload(path, full, { contentType: 'image/jpeg', cacheControl: '31536000' });
+  if (r.error) throw new Error(`Foto-Upload fehlgeschlagen: ${r.error.message}`);
+  return supabase.storage.from(DAMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+export async function removeDamagePhotos(urls) {
+  const marker = `/object/public/${DAMAGE_BUCKET}/`;
+  const paths = (urls || []).map((u) => { const i = String(u).indexOf(marker); return i < 0 ? null : decodeURIComponent(u.slice(i + marker.length).split('?')[0]); }).filter(Boolean);
+  if (paths.length) { try { await supabase.storage.from(DAMAGE_BUCKET).remove(paths); } catch { /* best-effort */ } }
+}

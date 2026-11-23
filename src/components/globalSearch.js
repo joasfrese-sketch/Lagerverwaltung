@@ -6,7 +6,7 @@ import { isManager } from '../state.js';
 import { openRoom } from '../pages/catalog.js';
 
 const PAGES = [['uebersicht', 'Übersicht', 'home'], ['katalog', 'Katalog', 'package'], ['kalender', 'Kalender', 'calendar'], ['chat', 'Chat & Mitteilungen', 'chat'],
-  ['ich', 'Mein Bereich', 'user'], ['einstellungen', 'Einstellungen', 'settings'], ['terminal', 'Lagerwart-Terminal', 'shield', true], ['protokoll', 'Protokoll', 'file', true]];
+  ['ich', 'Mein Bereich', 'user'], ['hilfe', 'Hilfe', 'help'], ['einstellungen', 'Einstellungen', 'settings'], ['terminal', 'Lagerwart-Terminal', 'shield', true], ['protokoll', 'Protokoll', 'file', true]];
 const go = (hash) => { location.hash = hash; window.dispatchEvent(new Event('hashchange')); };
 const state = (i) => (i.rented_now ? 'ausgeliehen' : i.status === 'maintenance' ? 'defekt' : i.status === 'inventory' ? 'in Inventur' : 'verfügbar');
 let open = false;
@@ -26,13 +26,13 @@ export function openGlobalSearch() {
     <div class="flex items-center gap-2 rounded-xl border border-slate-200 px-3">${icon('search', 'h-5 w-5 text-slate-400')}
       <input id="gq" class="w-full bg-transparent py-3 text-sm outline-none" placeholder="Artikel, Seite${isManager() ? ' oder Person' : ''} suchen…" autocomplete="off" autofocus></div>
     <div id="gr" class="mt-3 max-h-80 space-y-1 overflow-y-auto"></div>
-    <p class="mt-3 text-[11px] text-slate-400">↑↓ wählen · Enter öffnen · Esc schließen</p>`, { onClose: () => { open = false; document.removeEventListener('keydown', onKey); } });
+    <p class="mt-3 text-[13px] text-slate-400">↑↓ wählen · Enter öffnen · Esc schließen</p>`, { onClose: () => { open = false; document.removeEventListener('keydown', onKey); } });
   document.addEventListener('keydown', onKey);
   const box = el.querySelector('#gr'); const input = el.querySelector('#gq');
 
   function draw() {
     box.innerHTML = results.length ? results.map((r, i) => `<button data-i="${i}" class="flex w-full items-center gap-3 rounded-xl p-2.5 text-left text-sm ${i === idx ? 'bg-brand-50 ring-1 ring-brand-500' : 'hover:bg-slate-100'}">
-      <span class="text-slate-500">${r.icon}</span><span class="min-w-0 flex-1"><b class="block truncate">${esc(r.label)}</b>${r.sub ? `<span class="block truncate text-xs text-slate-500">${esc(r.sub)}</span>` : ''}</span><span class="text-[10px] uppercase text-slate-400">${r.kind}</span></button>`).join('')
+      <span class="text-slate-500">${r.icon}</span><span class="min-w-0 flex-1"><b class="block truncate">${esc(r.label)}</b>${r.sub ? `<span class="block truncate text-xs text-slate-500">${esc(r.sub)}</span>` : ''}</span><span class="text-[13px] uppercase text-slate-400">${r.kind}</span></button>`).join('')
       : '<p class="p-4 text-center text-sm italic text-slate-400">Keine Treffer.</p>';
     box.querySelectorAll('[data-i]').forEach((b) => (b.onclick = () => { const r = results[Number(b.dataset.i)]; close(); r.run(); }));
     box.querySelector('.ring-1')?.scrollIntoView({ block: 'nearest' });

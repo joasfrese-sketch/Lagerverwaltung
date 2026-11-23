@@ -3,8 +3,9 @@ import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, toast, openModal, busy } from '../lib/ui.js';
 import { state, GLOBAL_CHAT_ID, isManager } from '../state.js';
 import { timeAgo } from '../lib/format.js';
+import { unreadSummary, countUnreadMessages } from '../lib/unread.js';
 
-const S = { tab: 'chats', chats: [], names: {}, unread: new Set(), current: null, channel: null, root: null };
+const S = { tab: 'chats', chats: [], names: {}, unread: new Set(), unreadCount: {}, current: null, channel: null, root: null };
 const ICONS = { overdue: '⏰', due_soon: '⏳', rental: '📦', return: '✅', damage: '🛠️', stock: '📉', chat: '💬', info: 'ℹ️', system: '⚙️' };
 
 export async function render(el) {
@@ -12,8 +13,8 @@ export async function render(el) {
   el.innerHTML = `
     <div class="mb-3 flex items-center gap-2"><h1 class="mr-auto text-2xl font-bold">Chat</h1>
       <div class="flex rounded-xl bg-slate-200 p-0.5 text-sm font-semibold">
-        <button id="tChats" class="rounded-lg px-3 py-1.5">💬 Chats</button>
-        <button id="tNotif" class="rounded-lg px-3 py-1.5">🔔 Mitteilungen</button></div></div>
+        <button id="tChats" class="flex items-center gap-1.5 rounded-lg px-3 py-1.5">💬 Chats<span id="bChats" class="hidden min-w-[1.25rem] rounded-full bg-red-500 px-1.5 text-center text-[13px] font-bold leading-5 text-white"></span></button>
+        <button id="tNotif" class="flex items-center gap-1.5 rounded-lg px-3 py-1.5">🔔 Mitteilungen<span id="bNotif" class="hidden min-w-[1.25rem] rounded-full bg-red-500 px-1.5 text-center text-[13px] font-bold leading-5 text-white"></span></button></div></div>
     <div id="body"></div>`;
   el.querySelector('#tChats').onclick = () => { S.tab = 'chats'; draw(); };
   el.querySelector('#tNotif').onclick = () => { S.tab = 'notif'; draw(); };
@@ -22,16 +23,30 @@ export async function render(el) {
       if (S.tab === 'chats' && S.current === p.new.chat_id) { loadMessages(); markRead(S.current); }
       else if (S.tab === 'chats') loadList();
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${state.user.id}` }, () => { if (S.tab === 'notif') drawNotifs(); else loadList(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${state.user.id}` }, () => { if (S.tab === 'notif') drawNotifs(); else loadList(); updateTabBadges(); })
     .subscribe();
+  window.addEventListener('notifications-changed', updateTabBadges);
   await draw();
 }
 
-export function unmount() { if (S.channel) { supabase.removeChannel(S.channel); S.channel = null; } }
+export function unmount() {
+  if (S.channel) { supabase.removeChannel(S.channel); S.channel = null; }
+  window.removeEventListener('notifications-changed', updateTabBadges);
+}
+
+// Ungelesenes getrennt nach „Chats" (Nachrichten) und „Mitteilungen" (alles andere)
+async function updateTabBadges() {
+  const root = S.root; if (!root?.isConnected) return;
+  const u = await unreadSummary();
+  const set = (id, n, title) => { const b = root.querySelector(id); if (!b) return; b.textContent = n > 99 ? '99+' : String(n); b.classList.toggle('hidden', !n); b.title = title; };
+  set('#bChats', u.messages, `${u.messages} ungelesene Nachricht(en) in ${u.chats} Chat(s)`);
+  set('#bNotif', u.notifications, `${u.notifications} ungelesene Mitteilung(en)`);
+}
 
 async function draw() {
-  S.root.querySelector('#tChats').className = `rounded-lg px-3 py-1.5 ${S.tab === 'chats' ? 'bg-white shadow' : 'text-slate-600'}`;
-  S.root.querySelector('#tNotif').className = `rounded-lg px-3 py-1.5 ${S.tab === 'notif' ? 'bg-white shadow' : 'text-slate-600'}`;
+  S.root.querySelector('#tChats').className = `flex items-center gap-1.5 rounded-lg px-3 py-1.5 ${S.tab === 'chats' ? 'bg-white shadow' : 'text-slate-600'}`;
+  S.root.querySelector('#tNotif').className = `flex items-center gap-1.5 rounded-lg px-3 py-1.5 ${S.tab === 'notif' ? 'bg-white shadow' : 'text-slate-600'}`;
+  updateTabBadges();
   if (S.tab === 'notif') return drawNotifs();
   S.root.querySelector('#body').innerHTML = `
     <div class="md:grid md:grid-cols-[16rem_1fr] md:gap-3">
@@ -52,6 +67,7 @@ async function loadList() {
     unwrap(await supabase.from('public_profiles').select('id, full_name, username').in('id', ids)).forEach((p) => (S.names[p.id] = displayName(p)));
     const un = unwrap(await supabase.from('notifications').select('link').eq('type', 'chat').is('read_at', null));
     S.unread = new Set(un.map((n) => (n.link || '').replace('chat:', '')));
+    S.unreadCount = await countUnreadMessages([...S.unread]);
     S.chats.forEach((c) => {
       if (c.type === 'global') c.title = '🌐 Alle';
       else if (c.type === 'group') c.title = '👥 ' + (c.name || 'Gruppe');
@@ -59,7 +75,7 @@ async function loadList() {
     });
     S.chats.sort((a, b) => (a.type === 'global' ? -1 : b.type === 'global' ? 1 : a.title.localeCompare(b.title)));
     list.innerHTML = `<button id="newChat" class="btn-primary mb-2 w-full">+ Neuer Chat</button><div class="space-y-1.5">
-      ${S.chats.map((c) => `<button data-chat="${esc(c.id)}" class="card flex w-full items-center justify-between !p-3 text-left text-sm font-semibold ${S.current === c.id ? 'ring-2 ring-brand-500' : ''}">${esc(c.title)}${S.unread.has(c.id) ? '<span class="h-2.5 w-2.5 rounded-full bg-red-500"></span>' : ''}</button>`).join('')}</div>`;
+      ${S.chats.map((c) => `<button data-chat="${esc(c.id)}" class="card flex w-full items-center justify-between !p-3 text-left text-sm font-semibold ${S.current === c.id ? 'ring-2 ring-brand-500' : ''}">${esc(c.title)}${S.unread.has(c.id) ? `<span class="min-w-[1.25rem] rounded-full bg-red-500 px-1.5 text-center text-[13px] font-bold leading-5 text-white" title="ungelesene Nachrichten">${S.unreadCount[c.id] || '•'}</span>` : ''}</button>`).join('')}</div>`;
     list.querySelector('#newChat').onclick = newChatModal;
     list.querySelectorAll('[data-chat]').forEach((b) => (b.onclick = () => openChat(b.dataset.chat)));
   } catch (e) { toast(e.message, 'error'); }
@@ -107,8 +123,8 @@ async function loadMessages() {
     box.innerHTML = msgs.reverse().map((m) => {
       const mine = m.sender_id === state.user.id;
       const t = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      return `<div class="flex flex-col ${mine ? 'items-end' : 'items-start'}"><div class="text-[10px] text-slate-400">${mine ? 'Du' : esc(S.names[m.sender_id] || 'Unbekannt')} · ${t}</div>
-        <div class="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${mine ? 'rounded-tr-none bg-brand-600 text-white' : 'rounded-tl-none bg-slate-100'}">${esc(m.body)}</div></div>`;
+      return `<div class="flex flex-col ${mine ? 'items-end' : 'items-start'}"><div class="text-[13px] text-slate-400">${mine ? 'Du' : esc(S.names[m.sender_id] || 'Unbekannt')} · ${t}</div>
+        <div class="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${mine ? 'rounded-tr-none bg-brand-700 text-white' : 'rounded-tl-none bg-slate-100'}">${esc(m.body)}</div></div>`;
     }).join('') || '<p class="py-8 text-center text-sm italic text-slate-400">Noch keine Nachrichten.</p>';
     box.scrollTop = box.scrollHeight;
   } catch (e) { toast(e.message, 'error'); }
@@ -148,7 +164,7 @@ async function drawNotifs() {
     body.innerHTML = `<div class="mb-2 flex justify-end"><button id="allRead" class="btn-ghost !py-1 !text-xs">Alle als gelesen markieren</button></div>
       <div class="space-y-2">${list.map((n) => `<button data-n="${esc(n.id)}" class="card flex w-full gap-3 !p-3 text-left ${n.read_at ? 'opacity-60' : 'border-brand-500/40 bg-brand-50/50'}">
         <span class="text-xl">${ICONS[n.type] || 'ℹ️'}</span><span class="min-w-0 flex-1"><b class="block text-sm">${esc(n.title)}</b><span class="block text-xs text-slate-600">${esc(n.body)}</span>
-        <span class="text-[10px] text-slate-400">${timeAgo(n.created_at)}</span></span></button>`).join('') || '<p class="card py-10 text-center text-sm italic text-slate-400">Keine Mitteilungen.</p>'}</div>`;
+        <span class="text-[13px] text-slate-400">${timeAgo(n.created_at)}</span></span></button>`).join('') || '<p class="card py-10 text-center text-sm italic text-slate-400">Keine Mitteilungen.</p>'}</div>`;
     body.querySelector('#allRead').onclick = async () => {
       await supabase.from('notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
       window.dispatchEvent(new Event('notifications-changed')); drawNotifs();

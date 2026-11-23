@@ -4,50 +4,66 @@ import { esc, toast, busy, openModal } from '../lib/ui.js';
 import { state, isAdmin, isManager } from '../state.js';
 import { getTheme, setTheme } from '../lib/theme.js';
 import { roleName } from '../lib/format.js';
-import { fetchAll } from '../lib/export.js';
+import { fetchAll, exportWorkbook } from '../lib/export.js';
+import { getView, openSubscribe } from './calendar.js';
 import { openExport } from '../components/exportDialog.js';
 import { fmtDateTime } from '../lib/ui.js';
 import { enablePush, disablePush, pushActive, pushSupported, pushConfigured } from '../lib/push.js';
+import { collapsible, bindCollapsibles, setCount } from '../components/collapse.js';
+import { generatePassword, checkPassword } from '../lib/password.js';
+import { mountOps } from '../components/opsTools.js';
+import { openFeedback } from '../components/feedback.js';
+import { openTour } from '../components/tour.js';
 
 export async function render(el) {
   const settings = unwrap(await supabase.from('user_settings').select('prefs').eq('user_id', state.user.id).maybeSingle());
   const prefs = { notify_deadline: true, notify_rental: true, notify_chat: true, push: true, calendar_view: 'month', ...(settings?.prefs || {}) };
   const pushOn = await pushActive();
   const p = state.profile;
-  const toggle = (k, label, hint = '') => `<label class="flex items-start justify-between gap-3 py-2"><span><b class="text-sm">${label}</b>${hint ? `<span class="block text-xs text-slate-500">${hint}</span>` : ''}</span><input type="checkbox" data-pref="${k}" ${prefs[k] ? 'checked' : ''} class="mt-1 h-5 w-5 rounded text-brand-600"></label>`;
+  const toggle = (k, label, hint = '') => `<label class="flex items-start justify-between gap-3 py-2"><span><b class="text-sm">${label}</b>${hint ? `<span class="block text-xs text-slate-500">${hint}</span>` : ''}</span><input type="checkbox" data-pref="${k}" ${prefs[k] ? 'checked' : ''} class="mt-1 h-5 w-5 rounded text-brand-700"></label>`;
 
-  el.innerHTML = `<h1 class="mb-4 text-2xl font-bold">Einstellungen</h1><div class="space-y-4">
-    <section class="card"><h2 class="mb-3 font-bold">👤 Profil</h2>
+  const THEME = { light: 'Hell', dark: 'Dunkel', auto: 'Automatisch' };
+  const HINTS = { prof: esc(p.full_name), notif: pushOn ? 'Push-Nachrichten aktiv' : 'Push-Nachrichten aus', look: THEME[getTheme()] || 'Automatisch', app: 'Kalenderansicht, Kalender-Abo', sec: 'Passwort, Zwei-Faktor-Anmeldung', data: 'Sicherung als Excel oder CSV' };
+  const sec = (id, title, hint, body, count = null) => collapsible({ id: 'set-' + id, title, hint, body, count });
+  el.innerHTML = `<h1 class="mb-3 text-2xl font-bold">Einstellungen</h1><div class="space-y-3">
+    ${sec('prof', '👤 Profil', HINTS.prof, `
       <form id="prof" class="grid gap-3 md:grid-cols-2"><div><label class="label">Name</label><input name="full_name" class="input" value="${esc(p.full_name)}" required></div>
       <div><label class="label">Benutzername</label><input name="username" class="input" value="${esc(p.username)}" pattern="[a-z0-9._-]{3,30}" title="3–30 Zeichen: a–z, 0–9, . _ -" required></div>
-      <div class="md:col-span-2 text-xs text-slate-500">E-Mail: ${esc(p.email)}</div><div class="md:col-span-2"><button class="btn-primary">Speichern</button></div></form></section>
+      <div class="md:col-span-2 text-xs text-slate-500">E-Mail: ${esc(p.email)}</div><div class="md:col-span-2"><button class="btn-primary">Speichern</button></div></form>`)}
 
-    <section class="card"><h2 class="mb-1 font-bold">🔔 Benachrichtigungen</h2><div class="divide-y">
+    ${sec('notif', '🔔 Benachrichtigungen', HINTS.notif, `<div class="divide-y">
       ${toggle('notify_rental', 'Ausleihen & Rückgaben', 'Bestätigungen in der App')}
       ${toggle('notify_chat', 'Chat-Nachrichten', 'Direkt- und Gruppenchats')}
       ${toggle('notify_deadline', 'Fristen & Überfälligkeit', 'Erinnerung 24 h vorher und bei Überfälligkeit')}</div>
       <div class="mt-2 flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"><span class="text-sm"><b>📲 Push-Nachrichten</b><span class="block text-xs text-slate-500">${!pushSupported() ? 'Dieser Browser unterstützt kein Push (iPhone: erst zum Home-Bildschirm hinzufügen).' : !pushConfigured() ? 'Noch nicht eingerichtet (VAPID-Schlüssel fehlt).' : 'Für deine eigenen Aktivitäten (Fristen, Ausleihen durch andere für dich, Chat). Gilt für dieses Gerät.'}</span></span>
-      <button id="pushBtn" class="${pushOn ? 'btn-ghost' : 'btn-primary'}" ${!pushSupported() || !pushConfigured() ? 'disabled' : ''}>${pushOn ? 'Deaktivieren' : 'Aktivieren'}</button></div></section>
+      <button id="pushBtn" class="${pushOn ? 'btn-ghost' : 'btn-primary'}" ${!pushSupported() || !pushConfigured() ? 'disabled' : ''}>${pushOn ? 'Deaktivieren' : 'Aktivieren'}</button></div>`)}
 
-    <section class="card"><h2 class="mb-2 font-bold">🌓 Darstellung</h2>
+    ${sec('look', '🌓 Darstellung', HINTS.look, `
       <div id="themeSeg" class="inline-flex rounded-xl bg-slate-100 p-0.5 text-sm font-semibold">
         <button data-theme="light" class="rounded-lg px-3 py-1.5">☀️ Hell</button>
         <button data-theme="dark" class="rounded-lg px-3 py-1.5">🌙 Dunkel</button>
         <button data-theme="auto" class="rounded-lg px-3 py-1.5">🖥️ Automatisch</button></div>
-      <p class="mt-1 text-xs text-slate-500">„Automatisch" folgt der Einstellung deines Geräts.</p></section>
+      <p class="mt-1 text-xs text-slate-500">„Automatisch" folgt der Einstellung deines Geräts.</p>`)}
 
-    <section class="card"><h2 class="mb-2 font-bold">🎛️ App</h2><label class="label">Kalenderansicht</label>
-      <select id="view" class="input !w-auto"><option value="month" selected>Monat</option><option value="week" disabled>Woche (folgt)</option><option value="list" disabled>Liste (folgt)</option></select></section>
+    ${sec('app', '🎛️ App', HINTS.app, `<label class="label">Kalenderansicht</label>
+      <select id="view" class="input !w-auto">${[['month', 'Monat'], ['week', 'Woche'], ['list', 'Liste']].map(([v, l]) => `<option value="${v}" ${getView() === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+      <div class="mt-3"><button id="calSub" class="btn-ghost">🔗 Kalender abonnieren (Google/Outlook)</button></div>`)}
 
-    <section class="card"><h2 class="mb-2 font-bold">🔒 Sicherheit</h2>
+    ${sec('sec', '🔒 Sicherheit', HINTS.sec, `
       <div id="mfaBox" class="mb-4 rounded-xl bg-slate-50 p-3 text-sm"></div>
-      <form id="pw" class="flex flex-wrap gap-2"><input name="pw" type="password" minlength="8" required class="input !w-auto flex-1" placeholder="Neues Passwort (min. 8 Zeichen)" autocomplete="new-password"><button class="btn-primary">Ändern</button></form></section>
+      <form id="pw" class="flex flex-wrap gap-2"><input name="pw" type="password" minlength="8" required class="input !w-auto flex-1" placeholder="Neues Passwort (min. 8 Zeichen)" autocomplete="new-password"><button class="btn-primary">Ändern</button></form>`)}
 
-    ${isManager() ? '<section class="card"><h2 class="mb-2 font-bold">⬇️ Daten & Export</h2><p class="mb-3 text-xs text-slate-500">Sicherung als Excel oder CSV.</p><div class="flex flex-wrap gap-2"><button id="exItems" class="btn-ghost">Artikel</button><button id="exRentals" class="btn-ghost">Ausleihen (inkl. Historie)</button></div></section>' : ''}
-    ${isAdmin() ? '<section class="card"><div class="mb-3 flex items-center justify-between"><h2 class="font-bold">🎟️ Einladungs-Codes</h2><button id="newInvite" class="btn-primary !py-1.5">+ Code</button></div><p class="mb-2 text-xs text-slate-500">Nur wer einen gültigen Code hat, kann sich registrieren.</p><div id="invites" class="space-y-2"></div></section>' : ''}
-    ${isManager() ? '<section class="card"><div class="mb-3 flex items-center justify-between"><h2 class="font-bold">🛡️ Benutzer & Berechtigungen</h2>' + (isAdmin() ? '<button id="newUser" class="btn-primary !py-1.5">+ Benutzer</button>' : '') + '</div><div id="users" class="space-y-2"><p class="text-sm text-slate-400">Lade…</p></div></section>' : ''}
+    ${isManager() ? `${sec('data', '⬇️ Daten & Export', HINTS.data, `<p class="mb-3 text-xs text-slate-500">Sicherung als Excel oder CSV.</p><div class="flex flex-wrap gap-2"><button id="exItems" class="btn-ghost">Artikel</button><button id="exRentals" class="btn-ghost">Ausleihen (inkl. Historie)</button>${isAdmin() ? '<button id="backup" class="btn-primary">🗄️ Vollständige Sicherung (Excel)</button>' : ''}</div>${isAdmin() ? '<p class="mt-2 text-xs text-slate-500">Die Vollsicherung enthält Räume, Artikel, Ausleihen, Protokoll, Benutzer, Berechtigungen, Inventuren und Verlängerungsanträge in einer Datei mit mehreren Blättern. Empfehlung: einmal im Monat herunterladen und sicher ablegen.</p>' : ''}`)}` : ''}
+    ${isAdmin() ? sec('invites', '🎟️ Einladungs-Codes', 'Registrierung nur mit Code', '<div class="mb-3 flex items-center justify-between gap-2"><p class="text-xs text-slate-500">Nur wer einen gültigen Code hat, kann sich registrieren.</p><button id="newInvite" class="btn-primary shrink-0 !py-1.5">+ Code</button></div><div id="invites" class="space-y-2"></div>', '…') : ''}
+    ${isManager() ? sec('users', '🛡️ Benutzer & Berechtigungen', 'Rollen und Rechte verwalten', (isAdmin() ? '<div class="mb-3 flex justify-end"><button id="newUser" class="btn-primary !py-1.5">+ Benutzer</button></div>' : '') + '<div id="users" class="space-y-2"><p class="text-sm text-slate-400">Lade…</p></div>', '…') : ''}
+    ${sec('help', '💬 Hilfe & Rückmeldung', 'Tour, Hilfeseite, Ideen und Probleme melden', `<div class="flex flex-wrap gap-2"><a href="#/hilfe" class="btn-ghost">❓ Hilfe öffnen</a><button id="tourBtn" class="btn-ghost">▶️ Tour wiederholen</button><button id="fbBtn" class="btn-primary">Rückmeldung geben</button></div>`)}
+    ${isAdmin() ? sec('ops', '🛠 Betrieb & Sicherung', 'Sicherungen, Protokoll aufräumen, Rückmeldungen, Fehlerberichte', '<div id="opsBox"><p class="text-sm text-slate-500">Lade…</p></div>') : ''}
   </div>`;
 
+  bindCollapsibles(el);
+  el.querySelector('#tourBtn').onclick = () => openTour();
+  el.querySelector('#fbBtn').onclick = () => openFeedback('idee');
+  if (isAdmin()) { const ops = el.querySelector('#sec-set-ops'); const load = () => { if (ops.open && !ops.dataset.loaded) { ops.dataset.loaded = '1'; mountOps(el.querySelector('#opsBox')); } }; ops.addEventListener('toggle', load); load(); }
   // Profil
   el.querySelector('#prof').onsubmit = (e) => { e.preventDefault(); const f = new FormData(e.target);
     busy(e.target.querySelector('button'), async () => {
@@ -59,10 +75,12 @@ export async function render(el) {
   // Einstellungen speichern
   const savePrefs = async () => unwrap(await supabase.from('user_settings').upsert({ user_id: state.user.id, prefs }));
   el.querySelectorAll('[data-pref]').forEach((c) => (c.onchange = () => busy(null, async () => { prefs[c.dataset.pref] = c.checked; await savePrefs(); toast('Gespeichert', 'success'); })));
-  const markTheme = () => el.querySelectorAll('[data-theme]').forEach((b) => { const on = b.dataset.theme === getTheme(); b.className = `rounded-lg px-3 py-1.5 ${on ? 'bg-brand-600 text-white' : 'text-slate-600'}`; });
+  const markTheme = () => el.querySelectorAll('[data-theme]').forEach((b) => { const on = b.dataset.theme === getTheme(); b.className = `rounded-lg px-3 py-1.5 ${on ? 'bg-brand-700 text-white' : 'text-slate-600'}`; });
   markTheme();
   el.querySelectorAll('[data-theme]').forEach((b) => (b.onclick = () => busy(null, async () => { setTheme(b.dataset.theme); prefs.theme = b.dataset.theme; markTheme(); await savePrefs(); })));
-  el.querySelector('#view').onchange = (e) => busy(null, async () => { prefs.calendar_view = e.target.value; localStorage.setItem('cal_view', e.target.value); await savePrefs(); });
+  el.querySelector('#view').onchange = (e) => busy(null, async () => { prefs.calendar_view = e.target.value; localStorage.setItem('cal_view', e.target.value); await savePrefs(); toast('Gespeichert', 'success'); });
+  el.querySelector('#calSub').onclick = openSubscribe;
+  el.querySelector('#backup')?.addEventListener('click', (e) => busy(e.target, fullBackup));
   el.querySelector('#pushBtn').onclick = (e) => busy(e.target, async () => {
     if (pushOn) await disablePush(); else await enablePush();
     toast(pushOn ? 'Push deaktiviert' : 'Push aktiviert', 'success'); render(el);
@@ -96,13 +114,15 @@ async function loadUsers(el) {
   const box = el.querySelector('#users');
   try {
     const users = unwrap(await supabase.from('profiles').select('*').order('full_name'));
+    setCount(el, 'set-users', users.length);
     const perms = unwrap(await supabase.from('permissions').select('*'));
     const known = [...new Set([...perms.map((x) => x.permission_name), ...unwrap(await supabase.from('items').select('required_permission').not('required_permission', 'is', null)).map((i) => i.required_permission)])];
     box.innerHTML = `<datalist id="pl">${known.map((k) => `<option value="${esc(k)}">`).join('')}</datalist>` + users.map((u) => {
       const mine = perms.filter((x) => x.user_id === u.id);
       return `<div class="rounded-xl border p-3" data-u="${esc(u.id)}"><div class="flex flex-wrap items-center gap-2"><div class="mr-auto min-w-0"><b class="text-sm">${esc(displayName(u))}</b><div class="truncate text-xs text-slate-500">@${esc(u.username)} · ${esc(u.email)}</div></div>
         ${isAdmin() && u.id !== state.user.id ? `<select data-role class="input !w-auto !py-1.5 text-xs"><option value="user" ${u.role === 'user' ? 'selected' : ''}>Benutzer</option><option value="raum_manager" ${u.role === 'raum_manager' ? 'selected' : ''}>Raum-Manager</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrator</option></select>
-        <select data-room class="input !w-auto !py-1.5 text-xs ${u.role === 'raum_manager' ? '' : 'hidden'}"><option value="">Alle Räume</option>${state.rooms.map((r) => `<option value="${esc(r.id)}" ${u.managed_room === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select>` : `<span class="badge bg-slate-100 text-slate-600">${esc(roleName(u.role))}</span>`}</div>
+        <select data-room class="input !w-auto !py-1.5 text-xs ${u.role === 'raum_manager' ? '' : 'hidden'}"><option value="">Alle Räume</option>${state.rooms.map((r) => `<option value="${esc(r.id)}" ${u.managed_room === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select>
+        <button data-pw class="btn-ghost !px-2.5 !py-1.5 !text-xs" title="Passwort dieser Person neu setzen">🔑 Passwort</button>` : `<span class="badge bg-slate-100 text-slate-600">${esc(roleName(u.role))}</span>`}</div>
         <div class="mt-2 flex flex-wrap items-center gap-1.5">${mine.map((x) => `<span class="badge bg-brand-100 text-brand-700">${esc(x.permission_name)} <button data-delperm="${esc(x.permission_name)}" class="ml-1">✕</button></span>`).join('')}
         <form data-addperm class="flex gap-1"><input list="pl" name="p" class="input !w-36 !py-1 text-xs" placeholder="+ Berechtigung" required><button class="btn-ghost !px-2 !py-1 !text-xs">+</button></form></div></div>`;
     }).join('');
@@ -110,12 +130,42 @@ async function loadUsers(el) {
       const id = row.dataset.u;
       const upd = (patch) => busy(null, async () => { unwrap(await supabase.from('profiles').update(patch).eq('id', id)); toast('Gespeichert', 'success'); loadUsers(el); });
       row.querySelector('[data-role]')?.addEventListener('change', (e) => upd({ role: e.target.value, managed_room: e.target.value === 'raum_manager' ? row.querySelector('[data-room]').value || null : null }));
+      row.querySelector('[data-pw]')?.addEventListener('click', () => passwordModal(users.find((x) => x.id === id)));
       row.querySelector('[data-room]')?.addEventListener('change', (e) => upd({ managed_room: e.target.value || null }));
       row.querySelectorAll('[data-delperm]').forEach((b) => (b.onclick = () => busy(null, async () => { unwrap(await supabase.from('permissions').delete().eq('user_id', id).eq('permission_name', b.dataset.delperm)); loadUsers(el); })));
       row.querySelector('[data-addperm]').onsubmit = (e) => { e.preventDefault(); const name = new FormData(e.target).get('p').trim();
         busy(null, async () => { unwrap(await supabase.from('permissions').upsert({ user_id: id, permission_name: name }, { onConflict: 'user_id,permission_name', ignoreDuplicates: true })); loadUsers(el); }); };
     });
   } catch (e) { box.innerHTML = `<p class="text-red-600">${esc(e.message)}</p>`; }
+}
+
+// Administrator setzt das Passwort einer anderen Person neu
+function passwordModal(u) {
+  const { el, close } = openModal(`<h3 class="mb-1 text-lg font-bold">🔑 Passwort setzen</h3>
+    <p class="mb-3 text-sm text-slate-500">Für <b>${esc(displayName(u))}</b> (@${esc(u.username)}). Teile das neue Passwort der Person auf sicherem Weg mit und bitte sie, es nach der Anmeldung unter Einstellungen → Sicherheit zu ändern.</p>
+    <form id="npwForm" class="space-y-3">
+      <div><label class="label">Neues Passwort (mindestens 8 Zeichen)</label>
+        <div class="flex gap-2"><input id="npw" name="npw" type="text" minlength="8" maxlength="72" required class="input font-mono" autocomplete="off" spellcheck="false"><button type="button" id="ngen" class="btn-ghost shrink-0">Zufällig</button></div>
+        <p id="nhint" class="mt-1 text-xs text-slate-500">Tipp: „Zufällig“ erzeugt ein sicheres Passwort ohne verwechselbare Zeichen.</p></div>
+      <div class="flex flex-wrap justify-end gap-2"><button type="button" id="ncopy" class="btn-ghost">Kopieren</button><button type="button" data-close class="btn-ghost">Abbrechen</button><button class="btn-primary">Passwort setzen</button></div></form>`);
+  const pw = el.querySelector('#npw');
+  const check = () => { const m = pw.value ? checkPassword(pw.value) : null; el.querySelector('#nhint').textContent = m || 'Tipp: „Zufällig“ erzeugt ein sicheres Passwort ohne verwechselbare Zeichen.'; el.querySelector('#nhint').className = `mt-1 text-xs ${m ? 'text-red-600' : 'text-slate-500'}`; return m; };
+  pw.oninput = check;
+  el.querySelector('#ngen').onclick = () => { pw.value = generatePassword(); check(); };
+  el.querySelector('#ncopy').onclick = async () => { try { await navigator.clipboard.writeText(pw.value); toast('Kopiert', 'success'); } catch { pw.select(); } };
+  el.querySelector('#npwForm').onsubmit = (e) => {
+    e.preventDefault();
+    const m = checkPassword(pw.value); if (m) return toast(m, 'error');
+    busy(e.target.querySelector('.btn-primary'), async () => {
+      const { data, error } = await supabase.functions.invoke('admin-set-password', { body: { user_id: u.id, password: pw.value } });
+      if (error || data?.error) {
+        let msg = data?.error;
+        if (!msg && error?.context?.json) { try { msg = (await error.context.json())?.error; } catch { /* keine Details */ } }
+        throw new Error(msg || error.message);
+      }
+      close(); toast(`Passwort für ${displayName(u)} gesetzt`, 'success');
+    });
+  };
 }
 
 function newUserModal(done) {
@@ -129,7 +179,11 @@ function newUserModal(done) {
   el.querySelector('#f').onsubmit = (e) => { e.preventDefault(); const body = Object.fromEntries(new FormData(e.target)); body.username = body.username.toLowerCase(); body.email = body.email.toLowerCase(); body.managed_room = body.managed_room || null;
     busy(e.target.querySelector('.btn-primary'), async () => {
       const { data, error } = await supabase.functions.invoke('admin-create-user', { body });
-      if (error || data?.error) throw new Error(data?.error || error.message);
+      if (error || data?.error) {
+        let msg = data?.error;
+        if (!msg && error?.context?.json) { try { msg = (await error.context.json())?.error; } catch { /* keine Details */ } }
+        throw new Error(msg || error.message);
+      }
       close(); toast('Benutzer angelegt', 'success'); done();
     }); };
 }
@@ -177,6 +231,7 @@ async function loadInvites(el) {
   const box = el.querySelector('#invites');
   try {
     const rows = unwrap(await supabase.from('invite_codes').select('*').order('created_at', { ascending: false }));
+    setCount(el, 'set-invites', rows.filter((c) => c.active && !(c.expires_at && new Date(c.expires_at) < new Date()) && !(c.max_uses && c.uses >= c.max_uses)).length + ' aktiv');
     box.innerHTML = rows.length ? rows.map((c) => {
       const expired = c.expires_at && new Date(c.expires_at) < new Date(); const full = c.max_uses && c.uses >= c.max_uses;
       const live = c.active && !expired && !full;
@@ -206,4 +261,25 @@ function inviteModal(done) {
       const code = unwrap(await supabase.rpc('create_invite', { p_max_uses: f.get('max') ? Number(f.get('max')) : null, p_days: Number(f.get('days')) || 0, p_note: f.get('note') }));
       close(); toast(`Code ${code} erstellt`, 'success'); done();
     }); };
+}
+
+// ----- Vollständige Sicherung (nur Admin): alle wichtigen Tabellen, ein Blatt pro Tabelle -----
+async function fullBackup() {
+  toast('Sicherung wird erstellt…');
+  const all = (table, order) => fetchAll(() => supabase.from(table).select('*').order(order), 500000);
+  const safe = async (table, order) => { try { return await all(table, order); } catch { return []; } };
+  const json = (v) => (v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : v);
+  const sheet = (name, rows) => {
+    const keys = [...new Set(rows.flatMap((r) => Object.keys(r)))];
+    return { name, columns: keys.map((k) => ({ key: k, label: k })), rows: rows.map((r) => Object.fromEntries(keys.map((k) => [k, json(r[k])]))) };
+  };
+  const [rooms, items, rentals, log, profiles, perms, inv, ext] = await Promise.all([
+    all('rooms', 'sort_order'), all('items', 'id'), all('rentals', 'start_at'), all('activity_log', 'created_at'),
+    all('profiles', 'username'), safe('permissions', 'user_id'), safe('inventory_counts', 'created_at'), safe('extension_requests', 'created_at'),
+  ]);
+  await exportWorkbook('lager-sicherung', [
+    sheet('Räume', rooms), sheet('Artikel', items), sheet('Ausleihen', rentals), sheet('Protokoll', log),
+    sheet('Benutzer', profiles), sheet('Berechtigungen', perms), sheet('Inventuren', inv), sheet('Verlängerungen', ext),
+  ]);
+  toast(`Sicherung gespeichert (${items.length} Artikel, ${rentals.length} Ausleihen)`, 'success');
 }

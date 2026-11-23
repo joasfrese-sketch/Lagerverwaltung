@@ -1,7 +1,8 @@
 import { supabase, unwrap } from '../lib/supabase.js';
 import { esc, openModal, toast, fmtDateTime } from '../lib/ui.js';
 import { state, isManager } from '../state.js';
-import { rentModal, openRoom } from '../pages/catalog.js';
+import { rentModal } from './rentModals.js';
+import { openRoom } from '../pages/catalog.js';
 import { returnModal } from '../pages/me.js';
 
 // Unterstützte Codes: ITEM:<id> | USER:<uuid> | ROOM:<id> | reine Artikel-ID | URL mit ?item=<id>
