@@ -54,3 +54,17 @@ test('Terminal: Protokoll-Druck ist standardmäßig aus', async ({ page, context
   await expect(page.locator('#mProt')).not.toBeChecked();
   await expect(page.locator('#prot')).not.toBeChecked();
 });
+
+test('Desktop-Seitenleiste: alle Menüpunkte erreichbar, nichts überlappt (auch bei niedrigem Fenster)', async ({ page, context }) => {
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await installFake(context);
+  await open(page, 'uebersicht');
+  const nav = page.locator('#sideNav');
+  const box = page.locator('aside > div.shrink-0');
+  const nb = await nav.boundingBox(); const bb = await box.boundingBox();
+  expect(nb.y + nb.height).toBeLessThanOrEqual(bb.y + 1); // Menü endet über dem Benutzerfeld
+  // letzter Punkt ist per Scrollen erreichbar und klickbar
+  await page.locator('#sideNav a[data-route="einstellungen"]').scrollIntoViewIfNeeded();
+  await page.locator('#sideNav a[data-route="einstellungen"]').click();
+  await expect(page.getByRole('heading', { name: 'Einstellungen' })).toBeVisible();
+});
