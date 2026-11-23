@@ -68,3 +68,15 @@ test('Desktop-Seitenleiste: alle Menüpunkte erreichbar, nichts überlappt (auch
   await page.locator('#sideNav a[data-route="einstellungen"]').click();
   await expect(page.getByRole('heading', { name: 'Einstellungen' })).toBeVisible();
 });
+
+test('Seitenmenü: keine sichtbare Scrollleiste, aber scrollbar', async ({ page, context }) => {
+  await page.setViewportSize({ width: 1280, height: 520 });
+  await installFake(context);
+  await open(page, 'uebersicht');
+  const m = await page.locator('#sideNav').evaluate((n) => ({ scrollable: n.scrollHeight > n.clientHeight, barWidth: n.offsetWidth - n.clientWidth, overflowY: getComputedStyle(n).overflowY }));
+  expect(m.overflowY).toBe('auto');
+  expect(m.scrollable).toBe(true);   // Scrollfunktion bleibt
+  expect(m.barWidth).toBe(0);        // keine Leiste belegt Platz
+  await page.locator('#sideNav').evaluate((n) => { n.scrollTop = n.scrollHeight; });
+  expect(await page.locator('#sideNav').evaluate((n) => n.scrollTop)).toBeGreaterThan(0);
+});

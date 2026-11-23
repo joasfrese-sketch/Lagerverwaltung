@@ -51,7 +51,7 @@ export function renderShell(root) {
         <div class="mb-6 flex items-center gap-3 px-2 text-white">${logoMark('h-8 w-auto shrink-0')}<span class="leading-tight"><span class="block font-bold">MBG Lemgo</span><span class="block text-[13px] font-medium text-[#94a3b8]">Lagerverwaltung</span></span></div>
         <button id="searchBtn" class="mb-2 flex w-full items-center gap-2 rounded-xl bg-[#1e293b] px-3 py-2 text-sm text-[#94a3b8] hover:text-white">${icon('search', 'h-4 w-4')}<span>Suchen</span><kbd class="ml-auto rounded bg-[#0f172a] px-1.5 text-[13px]">Strg K</kbd></button>
         <button id="scanBtn" class="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 px-3 py-2.5 text-sm font-bold text-white hover:bg-brand-800">${icon('camera', 'h-4 w-4')} Scannen</button>
-        <nav class="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1" id="sideNav" aria-label="Hauptmenü">
+        <nav class="no-scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto" id="sideNav" aria-label="Hauptmenü">
           ${routes.map(([k, r]) => `<a href="#/${k}" data-route="${k}" class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[#1e293b]">${icon(r.icon, 'h-5 w-5 shrink-0')}<span class="truncate">${esc(r.label)}</span>${r.badge ? badge('ml-auto') : ''}</a>`).join('')}
         </nav>
       </div>
